@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: EchoCampus-Backend
+
+logging:
+  level:
+    com.echocampus: INFO
