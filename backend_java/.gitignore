@@ -3,7 +3,7 @@
 *.iml
 *.ipr
 *.iws
-
+.ai/
 # 编译产物
 target/
 build/
