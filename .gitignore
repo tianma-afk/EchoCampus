@@ -4,3 +4,6 @@
 # IDE配置
 .trae/
 .vscode/
+
+# java运行生成的文件
+target/
