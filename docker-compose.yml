@@ -1,0 +1,28 @@
+services:
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: minio
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9090:9090"
+    environment:
+      MINIO_ACCESS_KEY: echo_campus
+      MINIO_SECRET_KEY: echo_campus
+    volumes:
+      - /home/data:/data
+      - /home/config:/root/.minio
+    command: server /data --address ":9000" --console-address ":9090"
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: echo_campus
+      RABBITMQ_DEFAULT_PASS: echo_campus
+    ports:
+      - "15672:15672"   # 管理界面端口
+      - "5672:5672"     # 消息通信端口
+    volumes:
+      - /usr/local/docker/rabbitmq:/var/lib/rabbitmq
