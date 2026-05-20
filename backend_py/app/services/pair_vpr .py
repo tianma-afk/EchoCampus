@@ -37,17 +37,54 @@ class PairVPRvitBNet(nn.Module):
         # 全连接降维投影层
         self.fc = nn.Linear(768, out_dim)
 
+        self.classvprmodule = nn.Sequential(
+            nn.Linear(768 * 2, 512),
+            nn.ReLU(),
+            nn.Linear(512, 1)
+        )
+
     def forward(self, x):
         """🌟 严格对齐类级别的 forward 函数，确保 PyTorch 能够正常识别调用"""
         # 直接使用 timm 原生的高性能特征提取流
         features = self.backbone.forward_features(x)
         
         # 提取首位 CLS 全局通识 Token
-        if len(features.shape) == 3:
-            features = features[:, 0, :] 
-            
-        out = self.fc(features)
-        return F.normalize(out, p=2, dim=1) # 输出标准的 L2 归一化向量
+        cls_token = features[:, 0, :] 
+        global_vector = self.fc(cls_token)
+        global_vector = F.normalize(global_vector, p=2, dim=1)
+        
+        # 完好无损地返回全局向量和包含所有空间位置的 Tokens 矩阵
+        return global_vector, features
+    
+    def forward_features(self, x):
+        """
+        🚀 核心修改 1：阶段一调用。同时提取粗筛向量和完整精排 Token
+        """
+        # features 形状: [B, 1370, 768] (包含 1 个 CLS Token + 1369 个 Patch Tokens)
+        all_tokens = self.backbone.forward_features(x)
+        
+        # 提取首位 CLS 全局通识 Token 用于全局粗筛
+        cls_token = all_tokens[:, 0, :] 
+        global_vector = self.fc(cls_token)
+        global_vector = F.normalize(global_vector, p=2, dim=1)
+        
+        # 完好无损地返回全局向量和包含所有空间位置的 Tokens 矩阵
+        return global_vector, all_tokens
+
+    def forward_rerank(self, q_tokens, c_tokens):
+        """
+        🚀 核心修改 2：阶段二调用。计算查询图和候选图两两配对的得分
+        """
+        # 提取两张图的 CLS Token 进行交互
+        q_cls = q_tokens[:, 0, :]  # [B, 768]
+        c_cls = c_tokens[:, 0, :]  # [B, 768]
+        
+        # 特征拼接
+        interaction = torch.cat([q_cls, c_cls], dim=-1)  # [B, 1536]
+        
+        # 经过微调好的分类头，输出 0~1 之间的同地点概率置信度得分
+        score = torch.sigmoid(self.classvprmodule(interaction))
+        return score
 
 
 # ==================== 2. ViT-B 权重载入提取器 ====================
@@ -127,16 +164,14 @@ class PairVPRExtractor:
         except requests.exceptions.RequestException as e:
             print(f"下载失败: {e}")
 
-    def extract_vector(self, image_path):
+    def extract_complete_features(self, image_path):
+        """🚀 新提供的方法。同时返回粗筛向量（List）和本地缓存用的 Token 矩阵（Tensor）"""
         if not os.path.exists(image_path):
             print(f" ❌ 提取失败: 文件未找到 -> {image_path}")
-            return None
+            return None, None
             
         transform = transforms.Compose([
-            # 1. 按照短边等比例缩放（比如短边缩放到512，长边等比例变大，绝对不扭曲变形）
             transforms.Resize(self.processing_size), 
-    
-            # 2. 从正中央裁剪出 512x512 的正方形（切掉两边多余的教学楼或天空）
             transforms.CenterCrop((self.processing_size, self.processing_size)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -146,12 +181,18 @@ class PairVPRExtractor:
             img = Image.open(image_path).convert("RGB")
             img_tensor = transform(img).unsqueeze(0).to(self.device)
             with torch.no_grad():
-                vpr_tensor = self.model(img_tensor)
-                vector = vpr_tensor.cpu().numpy().flatten().tolist()
-            return vector
+                # 调用不截断的 forward_features 函数
+                global_vector, all_tokens = self.model.forward_features(img_tensor)
+                
+                # 转换成普通的列表供 Milvus 使用
+                vector_list = global_vector.cpu().numpy().flatten().tolist()
+                # 移除 Batch 维度，保持 [1370, 768] 形状返回
+                tokens_tensor = all_tokens.squeeze(0)
+                
+            return vector_list, tokens_tensor
         except Exception as e:
             print(f" ❌ 提取失败: {image_path}, 错误: {e}")
-            return None
+            return None, None
         
 if __name__ == "__main__":
     import torch
