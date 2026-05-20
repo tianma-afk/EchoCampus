@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
+
+// API 配置
+const API_BASE_URL = 'http://127.0.0.1:4523/m1/8240840-8002104-default/api' // Mock URL
+const LANDMARK_API = `${API_BASE_URL}/landmarks` // 地标列表接口
 
 interface Landmark {
   name: string
@@ -8,7 +13,7 @@ interface Landmark {
   openTime: string
   category: string
   tags: string[]
-  color: string
+  img: string
   buildYear: string
   openTimeDetail: string
   floors: string
@@ -18,6 +23,12 @@ interface Landmark {
   recommendRate: number
 }
 
+interface LandmarkQueryParams {
+  category?: string
+  searchQuery?: string
+  sortBy?: string
+}
+
 const emit = defineEmits<{
   select: [landmark: Landmark]
 }>()
@@ -25,99 +36,111 @@ const emit = defineEmits<{
 const searchQuery = ref('')
 const activeCategory = ref('全部')
 const sortBy = ref('默认排序')
+const landmarks = ref<Landmark[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
 
 const categories = ['全部', '教学楼', '活动场馆', '运动场馆', '景观']
 
-const landmarks: Landmark[] = [
-  {
-    name: '图书馆',
-    rating: 4.8,
-    checkins: 4821,
-    openTime: '周一至周日',
-    category: '教学楼',
-    tags: ['阅读', '自习', '文化地标'],
-    color: '#4a8c7a',
-    buildYear: '1985年',
-    openTimeDetail: '周一至周日 08:00 - 22:00',
-    floors: '共6层（含地下1层）',
-    location: '主校区·中轴线区域',
-    description: '建于1985年，馆藏图书200余万册，是师生学习研究的重要场所。馆内设有自习室、研讨间、数字阅览室等多种功能区域，全年大部分时间对外开放。',
-    totalFloors: 6,
-    recommendRate: 96,
-  },
-  {
-    name: '综合大礼堂',
-    rating: 4.6,
-    checkins: 2356,
-    openTime: '活动期间开放',
-    category: '活动场馆',
-    tags: ['活动', '典礼'],
-    color: '#d4a056',
-    buildYear: '1992年',
-    openTimeDetail: '活动期间开放',
-    floors: '共3层',
-    location: '主校区·南区',
-    description: '建于1992年，可容纳2000余人，是学校举办开学典礼、毕业典礼、大型文艺演出的重要场所。',
-    totalFloors: 3,
-    recommendRate: 92,
-  },
-  {
-    name: '理工实验楼',
-    rating: 4.5,
-    checkins: 1893,
-    openTime: '周一至周五',
-    category: '教学楼',
-    tags: ['实验', '研究'],
-    color: '#5b9bd5',
-    buildYear: '2005年',
-    openTimeDetail: '周一至周五 08:00 - 21:00',
-    floors: '共8层',
-    location: '主校区·东区',
-    description: '建于2005年，配备先进实验设备，涵盖物理、化学、生物等多个学科实验室，是理工科学生实践教学的核心基地。',
-    totalFloors: 8,
-    recommendRate: 88,
-  },
-  {
-    name: '体育馆',
-    rating: 4.7,
-    checkins: 3102,
-    openTime: '周一至周日',
-    category: '运动场馆',
-    tags: ['运动', '健身'],
-    color: '#7b5ea7',
-    buildYear: '2010年',
-    openTimeDetail: '周一至周日 06:00 - 22:00',
-    floors: '共4层',
-    location: '主校区·西区',
-    description: '建于2010年，内设篮球场、羽毛球场、游泳馆、健身房等设施，是师生日常锻炼和举办体育赛事的重要场所。',
-    totalFloors: 4,
-    recommendRate: 94,
-  },
-  {
-    name: '枫林广场',
-    rating: 4.9,
-    checkins: 6520,
-    openTime: '全天开放',
-    category: '景观',
-    tags: ['景观', '打卡'],
-    color: '#d47a4a',
-    buildYear: '1980年',
-    openTimeDetail: '全天开放',
-    floors: '开放式广场',
-    location: '主校区·中心区域',
-    description: '建于1980年，种植枫树百余棵，秋季红叶满园，是校园最具代表性的景观之一，也是师生休闲散步、拍照打卡的热门地点。',
-    totalFloors: 1,
-    recommendRate: 98,
-  },
-]
+/**
+ * 获取地标列表
+ * @param params - 查询参数
+ *   - category: 分类筛选（可选）
+ *   - searchQuery: 搜索关键词（可选）
+ *   - sortBy: 排序方式（可选）
+ * @returns Promise<Landmark[]>
+ */
+const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
+  loading.value = true
+  error.value = null
+  
+  try {
+    const response = await axios.get(LANDMARK_API, {
+      params: {
+        category: params?.category !== '全部' ? params?.category : undefined,
+        searchQuery: params?.searchQuery || undefined,
+        sortBy: params?.sortBy !== '默认排序' ? params?.sortBy : undefined
+      }
+    })
+    
+    // 假设后端返回格式为: { code: 200, data: [...], message: 'success' }
+    if (response.data.code === 200) {
+      landmarks.value = response.data.data || []
+    } else {
+      error.value = response.data.message || '获取地标数据失败'
+    }
+  } catch (err: any) {
+    console.error('获取地标列表失败:', err)
+    error.value = err.response?.data?.message || '网络请求失败，请检查后端服务是否启动'
+  } finally {
+    loading.value = false
+  }
+}
 
-const filteredLandmarks = landmarks
+/**
+ * 根据分类和搜索条件筛选地标（前端二次过滤）
+ */
+const filteredLandmarks = computed(() => {
+  let result = landmarks.value
+  
+  // 按分类筛选
+  if (activeCategory.value !== '全部') {
+    result = result.filter(landmark => landmark.category === activeCategory.value)
+  }
+  
+  // 按搜索词筛选
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    result = result.filter(landmark => 
+      landmark.name.toLowerCase().includes(query) ||
+      landmark.category.toLowerCase().includes(query) ||
+      landmark.tags.some(tag => tag.toLowerCase().includes(query))
+    )
+  }
+  
+  return result
+})
+
+/**
+ * 监听筛选条件变化，重新请求数据
+ */
+const handleFilterChange = () => {
+  fetchLandmarks({
+    category: activeCategory.value,
+    searchQuery: searchQuery.value,
+    sortBy: sortBy.value
+  })
+}
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchLandmarks()
+})
 
 const renderStars = (rating: number) => {
   const full = Math.floor(rating)
   const half = rating - full >= 0.5
   const empty = 5 - full - (half ? 1 : 0)
   return { full, half, empty }
+}
+
+/**
+ * 处理分类切换
+ */
+const handleCategoryChange = (category: string) => {
+  activeCategory.value = category
+  handleFilterChange()
+}
+
+/**
+ * 处理排序切换（示例：循环切换排序方式）
+ */
+const sortOptions = ['默认排序', '评分最高', '打卡最多', '名称A-Z']
+const handleSortChange = () => {
+  const currentIndex = sortOptions.indexOf(sortBy.value)
+  const nextIndex = (currentIndex + 1) % sortOptions.length
+  sortBy.value = sortOptions[nextIndex]
+  handleFilterChange()
 }
 </script>
 
@@ -164,27 +187,45 @@ const renderStars = (rating: number) => {
           :key="cat"
           class="category-tab"
           :class="{ active: activeCategory === cat }"
-          @click="activeCategory = cat"
+          @click="handleCategoryChange(cat)"
         >
           {{ cat }}
         </button>
       </div>
 
       <div class="landmark-stats">
-        <span class="stats-text">共 <strong>{{ landmarks.length }}</strong> 个地标</span>
-        <button class="sort-btn">{{ sortBy }}</button>
+        <span class="stats-text">共 <strong>{{ filteredLandmarks.length }}</strong> 个地标</span>
+        <button class="sort-btn" @click="handleSortChange">{{ sortBy }}</button>
       </div>
     </div>
 
     <div class="landmark-list-scroll">
-      <div class="landmark-list">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+      </div>
+      
+      <!-- 错误提示 -->
+      <div v-else-if="error" class="error-container">
+        <p class="error-message">{{ error }}</p>
+        <button class="retry-btn" @click="fetchLandmarks()">重试</button>
+      </div>
+      
+      <!-- 空数据提示 -->
+      <div v-else-if="filteredLandmarks.length === 0" class="empty-container">
+        <p>暂无地标数据</p>
+      </div>
+      
+      <!-- 地标列表 -->
+      <div v-else class="landmark-list">
         <div
           v-for="(landmark, index) in filteredLandmarks"
           :key="index"
           class="landmark-card"
           @click="emit('select', landmark)"
         >
-          <div class="landmark-image" :style="{ background: landmark.color }">
+          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
             <div class="image-decoration"></div>
           </div>
           <div class="landmark-info">
@@ -582,5 +623,70 @@ const renderStars = (rating: number) => {
   height: 16px;
   color: #d1d5db;
   flex-shrink: 0;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e8f5e9;
+  border-top-color: #2d8a6e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 错误提示 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 14px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.retry-btn {
+  padding: 10px 24px;
+  background: #2d8a6e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.retry-btn:hover {
+  background: #237a5e;
+}
+
+/* 空数据提示 */
+.empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  font-size: 14px;
 }
 </style>
