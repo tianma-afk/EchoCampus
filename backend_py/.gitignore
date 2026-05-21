@@ -4,3 +4,6 @@
 __pycache__/
 .trae/
 *.pth
+
+#数据文件
+user_config.json

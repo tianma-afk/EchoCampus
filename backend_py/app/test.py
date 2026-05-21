@@ -2,6 +2,7 @@ import core.milvus_lite
 from services.pair_vpr import PairVPRExtractor
 import os
 from pathlib import Path
+import core.select_pic as select_pic
 
 extractor = PairVPRExtractor(model_type="vitL")
 id = 0;
@@ -24,7 +25,12 @@ core.milvus_lite.insert_vectors(vectors, ids)
 
 print(f"特征提取完成，开始搜索相似图片...")
 
-result = core.milvus_lite.search_similar(vectors[0])
+print("选择你要搜索的图片:")
+
+goal_path = select_pic.select_single_file()
+goal_vector = extractor.extract_vector(goal_path)
+
+result = core.milvus_lite.search_similar(goal_vector)
 print("搜索结果:")
 for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
     img_id = hit['id']

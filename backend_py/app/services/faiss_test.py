@@ -16,7 +16,6 @@ import torch
 from PIL import Image
 from io import BytesIO
 import torchvision.transforms as transforms
-import CosineSimilarityTool
 
 
 #读取索引文件
