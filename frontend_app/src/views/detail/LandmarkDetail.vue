@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 
 interface LandmarkDetail {
+  id?: number
   name: string
   rating: number
   checkins: number

@@ -7,6 +7,7 @@ const API_BASE_URL = 'http://127.0.0.1:4523/m1/8240840-8002104-default/api' // M
 const LANDMARK_API = `${API_BASE_URL}/landmarks` // 地标列表接口
 
 interface Landmark {
+  id: number
   name: string
   rating: number
   checkins: number
@@ -14,6 +15,7 @@ interface Landmark {
   category: string
   tags: string[]
   img: string
+  color: string
   buildYear: string
   openTimeDetail: string
   floors: string
@@ -86,6 +88,35 @@ const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
     error.value = err.response?.data?.message || '网络请求失败，请检查后端服务是否启动'
   } finally {
     loading.value = false
+  }
+}
+
+/**
+ * 根据 ID 获取地标详情（路径参数）
+ */
+const fetchLandmarkDetail = async (id: number): Promise<Landmark | null> => {
+  loading.value = true
+  try {
+    const response = await axios.get(`${LANDMARK_API}/${id}`)
+    if (response.data.code === 200) {
+      return response.data.data
+    }
+    return null
+  } catch (err: any) {
+    console.error('获取地标详情失败:', err)
+    return null
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * 处理卡片点击：先请求详情接口，成功后跳转
+ */
+const handleCardClick = async (landmark: Landmark) => {
+  const detail = await fetchLandmarkDetail(landmark.id)
+  if (detail) {
+    emit('select', detail)
   }
 }
 
@@ -229,7 +260,7 @@ const handleSortChange = () => {
           v-for="(landmark, index) in filteredLandmarks"
           :key="index"
           class="landmark-card"
-          @click="emit('select', landmark)"
+          @click="handleCardClick(landmark)"
         >
           <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
             <div class="image-decoration"></div>

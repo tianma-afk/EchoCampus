@@ -8,6 +8,7 @@ import ProfilePage from './views/profile/ProfilePage.vue'
 import BottomNav from './components/BottomNav.vue'
 
 interface LandmarkData {
+  id: number
   name: string
   rating: number
   checkins: number
