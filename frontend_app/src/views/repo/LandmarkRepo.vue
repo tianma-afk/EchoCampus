@@ -78,28 +78,9 @@ const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
 }
 
 /**
- * 根据分类和搜索条件筛选地标（前端二次过滤）
+ * 地标列表（由后端返回已筛选排序的数据，前端直接展示）
  */
-const filteredLandmarks = computed(() => {
-  let result = landmarks.value
-  
-  // 按分类筛选
-  if (activeCategory.value !== '全部') {
-    result = result.filter(landmark => landmark.category === activeCategory.value)
-  }
-  
-  // 按搜索词筛选
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(landmark => 
-      landmark.name.toLowerCase().includes(query) ||
-      landmark.category.toLowerCase().includes(query) ||
-      landmark.tags.some(tag => tag.toLowerCase().includes(query))
-    )
-  }
-  
-  return result
-})
+const filteredLandmarks = computed(() => landmarks.value)
 
 /**
  * 监听筛选条件变化，重新请求数据
@@ -125,10 +106,20 @@ const renderStars = (rating: number) => {
 }
 
 /**
- * 处理分类切换
+ * 处理关键词搜索（点击搜索按钮或按回车，重置分类和排序）
+ */
+const handleKeywordSearch = () => {
+  activeCategory.value = '全部'
+  sortBy.value = '默认排序'
+  handleFilterChange()
+}
+
+/**
+ * 处理分类切换（重置排序）
  */
 const handleCategoryChange = (category: string) => {
   activeCategory.value = category
+  sortBy.value = '默认排序'
   handleFilterChange()
 }
 
@@ -169,15 +160,18 @@ const handleSortChange = () => {
       </header>
 
       <div class="search-bar">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+        <button class="search-btn" @click="handleKeywordSearch">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
         <input
           v-model="searchQuery"
           type="text"
           placeholder="搜索地标、类别..."
           class="search-input"
+          @keyup.enter="handleKeywordSearch"
         />
       </div>
 
@@ -372,11 +366,27 @@ const handleSortChange = () => {
   margin-bottom: 12px;
 }
 
-.search-icon {
+.search-btn {
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1;
+}
+
+.search-btn:hover .search-icon {
+  color: #2d8a6e;
+}
+
+.search-icon {
   width: 18px;
   height: 18px;
   color: #9ca3af;
