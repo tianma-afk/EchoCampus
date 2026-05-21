@@ -17,12 +17,14 @@ interface LandmarkDetail {
   location: string
   description: string
   totalFloors: number
+  floorList: FloorInfo[]
   color: string
 }
 
-interface FloorArea {
-  floor: number
-  areas: string[]
+interface FloorInfo {
+  floorNumber: number
+  floorName: string
+  tags: string[]
 }
 
 const props = defineProps<{
@@ -33,19 +35,10 @@ const emit = defineEmits<{
   back: []
 }>()
 
-const selectedFloor = ref(1)
+const selectedFloorNumber = ref(1)
 
-const floorAreas: FloorArea[] = [
-  { floor: 1, areas: ['入口大厅', '借阅服务台', '新书展示区', '咖啡休闲区'] },
-  { floor: 2, areas: ['中文图书区', '期刊阅览室', '电子阅览区'] },
-  { floor: 3, areas: ['外文图书区', '学术报告厅', '研讨室'] },
-  { floor: 4, areas: ['自习室', '多媒体教室', '创客空间'] },
-  { floor: 5, areas: ['特藏文献室', '档案室', '研究室'] },
-  { floor: 6, areas: ['行政办公区', '会议室', '数据中心'] },
-]
-
-const currentFloorAreas = computed(() =>
-  floorAreas.find(f => f.floor === selectedFloor.value)?.areas || []
+const currentFloor = computed(() =>
+  props.landmark.floorList?.find(f => f.floorNumber === selectedFloorNumber.value)
 )
 
 const renderStars = (rating: number) => {
@@ -55,8 +48,8 @@ const renderStars = (rating: number) => {
   return { full, half, empty }
 }
 
-const selectFloor = (floor: number) => {
-  selectedFloor.value = floor
+const selectFloor = (floorNumber: number) => {
+  selectedFloorNumber.value = floorNumber
 }
 
 const currentImageIndex = ref(0)
@@ -318,26 +311,26 @@ const bubblePositions = computed(() => {
           </div>
           <div class="floor-buttons">
             <button
-              v-for="floor in props.landmark.totalFloors"
-              :key="floor"
+              v-for="f in props.landmark.floorList"
+              :key="f.floorNumber"
               class="floor-btn"
-              :class="{ active: selectedFloor === floor }"
-              @click="selectFloor(floor)"
+              :class="{ active: selectedFloorNumber === f.floorNumber }"
+              @click="selectFloor(f.floorNumber)"
             >
-              {{ floor }}F
+              {{ f.floorName }}
             </button>
           </div>
           <div class="floor-areas">
             <div class="floor-area-header">
-              <span class="floor-area-label">{{ selectedFloor }}F 功能区域</span>
+              <span class="floor-area-label">{{ currentFloor?.floorName }} 功能区域</span>
             </div>
             <div class="area-tags">
               <span
-                v-for="area in currentFloorAreas"
-                :key="area"
+                v-for="tag in currentFloor?.tags"
+                :key="tag"
                 class="area-tag"
               >
-                {{ area }}
+                {{ tag }}
               </span>
             </div>
           </div>

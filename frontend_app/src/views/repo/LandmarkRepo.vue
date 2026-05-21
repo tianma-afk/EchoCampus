@@ -24,7 +24,14 @@ interface Landmark {
   location: string
   description: string
   totalFloors: number
+  floorList: FloorInfo[]
   recommendRate: number
+}
+
+interface FloorInfo {
+  floorNumber: number
+  floorName: string
+  tags: string[]
 }
 
 interface LandmarkQueryParams {

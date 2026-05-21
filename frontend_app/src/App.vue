@@ -25,7 +25,14 @@ interface LandmarkData {
   location: string
   description: string
   totalFloors: number
+  floorList: FloorInfo[]
   recommendRate: number
+}
+
+interface FloorInfo {
+  floorNumber: number
+  floorName: string
+  tags: string[]
 }
 
 const currentTab = ref('repo')
