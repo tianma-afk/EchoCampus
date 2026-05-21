@@ -24,7 +24,7 @@ interface Landmark {
 }
 
 interface LandmarkQueryParams {
-  category?: string
+  category?: number | null
   searchQuery?: string
   sortBy?: string
 }
@@ -40,7 +40,19 @@ const landmarks = ref<Landmark[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const categories = ['全部', '教学楼', '活动场馆', '运动场馆', '景观']
+const categories = ['全部', '教学楼', '图书馆', '体育场馆', '生活区', '活动场馆', '景观景点']
+
+const categoryToId = (name: string): number | null => {
+  const map: Record<string, number> = {
+    '教学楼': 1,
+    '图书馆': 2,
+    '体育场馆': 3,
+    '生活区': 4,
+    '活动场馆': 5,
+    '景观景点': 6,
+  }
+  return map[name] ?? null
+}
 
 /**
  * 获取地标列表
@@ -57,7 +69,7 @@ const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
   try {
     const response = await axios.get(LANDMARK_API, {
       params: {
-        category: params?.category !== '全部' ? params?.category : undefined,
+        category: params?.category ?? null,
         searchQuery: params?.searchQuery || undefined,
         sortBy: params?.sortBy !== '默认排序' ? params?.sortBy : undefined
       }
@@ -87,7 +99,7 @@ const filteredLandmarks = computed(() => landmarks.value)
  */
 const handleFilterChange = () => {
   fetchLandmarks({
-    category: activeCategory.value,
+    category: categoryToId(activeCategory.value),
     searchQuery: searchQuery.value,
     sortBy: sortBy.value
   })
