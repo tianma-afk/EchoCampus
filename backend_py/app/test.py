@@ -3,6 +3,7 @@ import core.token_manager
 from services.pair_vpr import PairVPRExtractor
 import os
 from pathlib import Path
+import core.select_pic as select_pic
 
 extractor = PairVPRExtractor(model_type="vitB")
 id = 0;
@@ -27,8 +28,13 @@ core.milvus_lite.insert_vectors(vectors, ids)
 
 core.milvus_lite.load_collection()
 print(f"特征提取完成，开始搜索相似图片...")
-vector, token = extractor.extract_complete_features(all_image_paths[12])
-result = core.milvus_lite.search_similar(vector,top_k=20)
+
+print("选择你要搜索的图片:")
+
+goal_path = select_pic.select_single_file()
+goal_vector = extractor.extract_vector(goal_path)
+
+result = core.milvus_lite.search_similar(goal_vector)
 print("搜索结果:")
 results_with_scores = []
 for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
