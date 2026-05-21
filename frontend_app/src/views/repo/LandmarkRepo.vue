@@ -15,6 +15,8 @@ interface Landmark {
   category: string
   tags: string[]
   imgs: string[]
+  campusName: string
+  universityName: string
   color: string
   buildYear: string
   openTimeDetail: string
