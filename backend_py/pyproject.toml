@@ -20,11 +20,13 @@ dependencies = [
     "timm>=1.0.27",
     "pymilvus>=3.0.0",
     "milvus-lite>=3.0",
+    "omegaconf>=2.3.0",
+    "xformers>=0.0.35",
 ]
 
 [project.optional-dependencies]
-cpu = ["torch>=2.8.0", "torchvision>=0.23.0"]
-cu126 = ["torch>=2.8.0", "torchvision>=0.23.0"]
+cpu = ["torch>=2.12.0", "torchvision>=0.27.0"]
+cu126 = ["torch>=2.12.0", "torchvision>=0.27.0"]
 
 # 声明 cpu 和 cu126 互斥，让 uv 不会同时解析它们
 [tool.uv]
@@ -53,8 +55,3 @@ torchvision = [
     { index = "pytorch-cpu", extra = "cpu" },
     { index = "pytorch-cu126", extra = "cu126" },
 ]
-
-[[uv.index]]
-name = "pytorch-cu126"
-url = "https://download.pytorch.org/whl/cu126"
-explicit = true

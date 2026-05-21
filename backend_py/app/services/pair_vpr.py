@@ -1,100 +1,73 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-import timm
 from PIL import Image
 import numpy as np
 import os
 from pathlib import Path
 import requests
+import sys
+from omegaconf import OmegaConf
+import re
 
 print(f"PyTorch版本: {torch.__version__}")
 print(f"CUDA是否可用: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"当前CUDA设备: {torch.cuda.get_device_name(0)}")
+
 BACKEND_PY_PATH = Path(__file__).resolve().parents[2]
 
-# ==================== 1. ViT-B 专用 Pair-VPR 网络骨架 ====================
-class PairVPRvitBNet(nn.Module):
-    """
-    专门适配 pairvpr-vitB.pth 官方权重的标准 Transformer 架构
-    骨干网络采用标准的 ViT-B/14 (特征维度为 768)
-    """
-    def __init__(self, out_dim=4096):
-        super().__init__()
-        print("正在构建标准的 ViT-B/14 视觉骨干网络...")
-        # 直接通过 timm 的 VisionTransformer 构造函数创建，参数完美对齐
-        from timm.models.vision_transformer import VisionTransformer
-        self.backbone = VisionTransformer(
-            img_size=512,      # 💡 核心修复：直接对齐官方模型预期的 512 尺寸位置编码
-            patch_size=14, 
-            embed_dim=768, 
-            depth=12, 
-            num_heads=12, 
-            num_classes=0
-        )
-        # 全连接降维投影层
-        self.fc = nn.Linear(768, out_dim)
+# ==================== 添加官方仓库到路径 ====================
+PAIR_VPR_ROOT = BACKEND_PY_PATH / "Pair-VPR"
+if not PAIR_VPR_ROOT.exists():
+    print(f"❌ 未找到官方仓库，请执行:")
+    print(f"   cd {BACKEND_PY_PATH}")
+    print(f"   git clone https://github.com/csiro-robotics/Pair-VPR.git")
+    exit(1)
 
-        self.classvprmodule = nn.Sequential(
-            nn.Linear(768 * 2, 512),
-            nn.ReLU(),
-            nn.Linear(512, 1)
-        )
+sys.path.insert(0, str(PAIR_VPR_ROOT))
+print(f"✅ 已加载官方 Pair-VPR 库: {PAIR_VPR_ROOT}")
 
-    def forward(self, x):
-        """🌟 严格对齐类级别的 forward 函数，确保 PyTorch 能够正常识别调用"""
-        # 直接使用 timm 原生的高性能特征提取流
-        features = self.backbone.forward_features(x)
-        
-        # 提取首位 CLS 全局通识 Token
-        cls_token = features[:, 0, :] 
-        global_vector = self.fc(cls_token)
-        global_vector = F.normalize(global_vector, p=2, dim=1)
-        
-        # 完好无损地返回全局向量和包含所有空间位置的 Tokens 矩阵
-        return global_vector, features
-    
-    def forward_features(self, x):
-        """
-        🚀 核心修改 1：阶段一调用。同时提取粗筛向量和完整精排 Token
-        """
-        # features 形状: [B, 1370, 768] (包含 1 个 CLS Token + 1369 个 Patch Tokens)
-        all_tokens = self.backbone.forward_features(x)
-        
-        # 提取首位 CLS 全局通识 Token 用于全局粗筛
-        cls_token = all_tokens[:, 0, :] 
-        global_vector = self.fc(cls_token)
-        global_vector = F.normalize(global_vector, p=2, dim=1)
-        
-        # 完好无损地返回全局向量和包含所有空间位置的 Tokens 矩阵
-        return global_vector, all_tokens
-
-    def forward_rerank(self, q_tokens, c_tokens):
-        """
-        🚀 核心修改 2：阶段二调用。计算查询图和候选图两两配对的得分
-        """
-        # 提取两张图的 CLS Token 进行交互
-        q_cls = q_tokens[:, 0, :]  # [B, 768]
-        c_cls = c_tokens[:, 0, :]  # [B, 768]
-        
-        # 特征拼接
-        interaction = torch.cat([q_cls, c_cls], dim=-1)  # [B, 1536]
-        
-        # 经过微调好的分类头，输出 0~1 之间的同地点概率置信度得分
-        score = torch.sigmoid(self.classvprmodule(interaction))
-        return score
+from pairvpr.models.pairvpr import PairVPRNet
 
 
-# ==================== 2. ViT-B 权重载入提取器 ====================
-class PairVPRExtractor:
-    model_dict ={
-        "vitB": {"path": "pairvpr-vitB.pth","download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitB.pth"},
-        "vitL": {"path": "pairvpr-vitL.pth","download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitL.pth"},
-        "vitG": {"path": "pairvpr-vitH.pth","download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitG.pth"},
+# ==================== 配置加载 ====================
+def get_cfg(model_type="vitB"):
+    config_map = {
+        "vitB": "stagetwo_default_config.yaml",
+        "vitL": "stagetwo_default_config.yaml",
+        "vitG": "stagetwo_default_config.yaml"
     }
-    def __init__(self, model_type = "vitB",  processing_size=512, out_dim=4096, weight_dir= str(BACKEND_PY_PATH/"weights/vpr_weights")):
+    config_name = config_map.get(model_type, "stagetwo_default_config.yaml")
+    config_path = PAIR_VPR_ROOT / "pairvpr/configs" / config_name
+    
+    if not config_path.exists():
+        raise FileNotFoundError(f"配置文件不存在: {config_path}")
+    
+    cfg = OmegaConf.load(config_path)
+    
+    encoder_map = {
+        "vitB": "dinov2_vitb14",
+        "vitL": "dinov2_vitl14",
+        "vitG": "dinov2_vitg14"
+    }
+    cfg.encoder.model_name = encoder_map.get(model_type, "dinov2_vitb14")
+    cfg.globaldesc.dim = 512
+    
+    
+    return cfg
+
+
+# ==================== 官方权重加载器 ====================
+class PairVPRExtractor:
+    model_dict = {
+        "vitB": {"path": "pairvpr-vitB.pth", "download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitB.pth"},
+        "vitL": {"path": "pairvpr-vitL.pth", "download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitL.pth"},
+        "vitG": {"path": "pairvpr-vitH.pth", "download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitG.pth"},
+    }
+    
+    def __init__(self, model_type="vitB", processing_size=322, out_dim=512, 
+                 weight_dir=str(BACKEND_PY_PATH / "weights/vpr_weights")):
         self.model_type = model_type
         self.processing_size = processing_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -103,50 +76,72 @@ class PairVPRExtractor:
         
         self.model_path = os.path.join(self.weights_dir, self.model_dict[model_type]["path"])
         
-        self.model = PairVPRvitBNet(out_dim=out_dim)
-        self._load_official_weights()
+        if not os.path.exists(self.model_path):
+            self.download_file()
+        
+        cfg = get_cfg(model_type)
+        cfg.globaldesc.dim = out_dim
+        
+        self.model = PairVPRNet(cfg)
+        self._load_weights()
+
+        print(f"self.model 类型: {type(self.model)}")
+        print(f"self.model 是否有 forward 方法: {hasattr(self.model, 'forward')}")
+    # 🔥 添加完整诊断
+        print("\n" + "="*50)
+        print("🔍 模型诊断信息:")
+        print(f"  cfg.encoder.model_name: {cfg.encoder.model_name}")
+        print(f"  cfg.masking.patch_size: {cfg.masking.patch_size}")
+        print(f"  cfg.augmentation.img_res: {cfg.augmentation.img_res}")
+        print(f"  model.img_res: {self.model.img_res}")
+        print(f"  model.num_patches: {self.model.num_patches}")
+        print(f"  model.enc_embed_dim: {self.model.enc_embed_dim}")
+        print(f"  model.dec_embed_dim: {self.model.dec_embed_dim}")
+        print(f"  model.decoder_embed.weight.shape: {self.model.decoder_embed.weight.shape}")
+        print("="*50 + "\n")
+
         self.model.to(self.device)
         self.model.eval()
         
-        print(f"✨ Pair-VPR 部署成功！(特征维度: {out_dim})")
-
-    def _load_official_weights(self):
-        """核心挂载逻辑：安全解包并注入官方 ViT-B 权重"""
-        if not os.path.exists(self.model_path):
-            print(f"⚠️ [未发现文件] 尝试下载官方权重文件...")
-            self.download_file()
-            if not os.path.exists(self.model_path): # 确保文件下载成功
-                print(f"❌ [未发现文件] 下载权重失败，请检查网络连接。")
-                exit(0)
-        print(f"🔥 [核心挂载] 正在读取官方 {self.model_type} 预训练权重: {self.model_path}")
-        try:
-            state_dict = torch.load(self.model_path, map_location="cpu")
-            
-            if isinstance(state_dict, dict) and "state_dict" in state_dict:
-                state_dict = state_dict["state_dict"]
-            elif isinstance(state_dict, dict) and "model" in state_dict:
-                state_dict = state_dict["model"]
-            
-            fixed_state_dict = {}
-            for k, v in state_dict.items():
-                new_key = k.replace("module.", "").replace("backbone.", "")
-                fixed_state_dict[new_key] = v
-
-            msg = self.model.load_state_dict(fixed_state_dict, strict=False)
-            print(f"✅ ViT-B 官方街景知识成功注入！完美打通自监督注意力机制。")
-            state_dict = torch.load(self.model_path, map_location="cpu")
-            print("权重文件中的键：", list(state_dict.keys())[:10])  # 打印前10个键名
-        except Exception as e:
-            print(f"⚠️ 载入官方权重失败，错误原因: {e}。已降级为安全空间初始化。")
-
+        # 🔥 关键：提取解码器组件（用于直接处理 tokens）
+        self.decoder_embed = self.model.decoder_embed
+        self.decoder_clstoken = self.model.decoder_clstoken
+        self.decoder_pos_embed = self.model.dec_pos_embed
+        self.dec_blocks = self.model.dec_blocks
+        self.dec_norm = self.model.dec_norm
+        self.classvprmodule = self.model.classvprmodule
+        
+        print(f"✨ 官方 Pair-VPR 部署成功！(模型: {model_type}, 特征维度: {out_dim})")
+    
+    def _load_weights(self):
+        print(f"🔥 加载权重: {self.model_path}")
+        state_dict = torch.load(self.model_path, map_location="cpu")
+        
+        if isinstance(state_dict, dict) and "state_dict" in state_dict:
+            state_dict = state_dict["state_dict"]
+        elif isinstance(state_dict, dict) and "model" in state_dict:
+            state_dict = state_dict["model"]
+        
+        fixed_state_dict = {}
+        for k, v in state_dict.items():
+            new_key = k.replace("module.", "")
+            # 修正历史命名：classvpr0/1/2 -> classvprmodule.0/1/2
+            new_key = re.sub(r"^classvpr(\d+)\.", r"classvprmodule.\1.", new_key)
+            fixed_state_dict[new_key] = v
+        
+        missing, unexpected = self.model.load_state_dict(fixed_state_dict, strict=False)
+        if missing:
+            print(f"⚠️ 缺失的键: {missing}")
+        if unexpected:
+            print(f"⚠️ 多余的键: {unexpected}")
+        print(f"✅ 权重加载成功")
+    
     def download_file(self):
-        """下载大文件，带进度条"""
         try:
+            print(f"📥 下载权重: {self.model_dict[self.model_type]['path']}")
             response = requests.get(self.model_dict[self.model_type]["download_url"], stream=True)
             response.raise_for_status()
-            
             total_size = int(response.headers.get('content-length', 0))
-            
             os.makedirs(self.weights_dir, exist_ok=True)
             
             downloaded = 0
@@ -158,90 +153,90 @@ class PairVPRExtractor:
                         if total_size > 0:
                             percent = (downloaded / total_size) * 100
                             print(f"\r下载进度: {percent:.1f}%", end='')
-            
-            print(f"\n下载完成: {self.model}")
-            
-        except requests.exceptions.RequestException as e:
-            print(f"下载失败: {e}")
-
-    def extract_complete_features(self, image_path):
-        """🚀 新提供的方法。同时返回粗筛向量（List）和本地缓存用的 Token 矩阵（Tensor）"""
-        if not os.path.exists(image_path):
-            print(f" ❌ 提取失败: 文件未找到 -> {image_path}")
-            return None, None
-            
-        transform = transforms.Compose([
-            transforms.Resize(self.processing_size), 
+            print(f"\n✅ 下载完成: {self.model_path}")
+        except Exception as e:
+            print(f"❌ 下载失败: {e}")
+            raise
+    
+    def _get_transform(self):
+        return transforms.Compose([
+            transforms.Resize(self.processing_size),
             transforms.CenterCrop((self.processing_size, self.processing_size)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
+    
+    def extract_vector(self, image_path):
+        """第一阶段：提取向量（给 Milvus）"""
+        if not os.path.exists(image_path):
+            return None
         
-        try:
-            img = Image.open(image_path).convert("RGB")
-            img_tensor = transform(img).unsqueeze(0).to(self.device)
-            with torch.no_grad():
-                # 调用不截断的 forward_features 函数
-                global_vector, all_tokens = self.model.forward_features(img_tensor)
-                
-                # 转换成普通的列表供 Milvus 使用
-                vector_list = global_vector.cpu().numpy().flatten().tolist()
-                # 移除 Batch 维度，保持 [1370, 768] 形状返回
-                tokens_tensor = all_tokens.squeeze(0)
-                
-            return vector_list, tokens_tensor
-        except Exception as e:
-            print(f" ❌ 提取失败: {image_path}, 错误: {e}")
+        transform = self._get_transform()
+        img = Image.open(image_path).convert("RGB")
+        img_tensor = transform(img).unsqueeze(0).to(self.device)
+        
+        with torch.no_grad():
+            _, global_desc = self.model(img_tensor, None, mode="global")
+            return global_desc.cpu().numpy().flatten().tolist()
+    
+    def extract_complete_features(self, image_path):
+        """返回向量和 dense_features（缓存用）"""
+        if not os.path.exists(image_path):
             return None, None
         
+        transform = self._get_transform()
+        img = Image.open(image_path).convert("RGB")
+        img_tensor = transform(img).unsqueeze(0).to(self.device)
+        
+        with torch.no_grad():
+            dense_features, global_desc = self.model(img_tensor, None, mode="global")
+            vector = global_desc.cpu().numpy().flatten().tolist()
+            tokens = dense_features.squeeze(0).cpu()
+        return vector, tokens
+    
+    def pair_similarity_from_cached_tokens(self, q_tokens, c_tokens):
+        """
+        q_tokens, c_tokens: 已经是 torch.Tensor 或 numpy.ndarray，形状为 [1, L, D] 或 [L, D]
+        返回: float，相似度分数（raw score，越大越相似，行为上与官方 eval 保持一致）
+        """
+        self.model.eval()
+        with torch.no_grad():
+            def ensure_tensor(data):
+                if isinstance(data, np.ndarray):
+                    return torch.from_numpy(data)
+                return data
+
+            q = ensure_tensor(q_tokens)
+            c = ensure_tensor(c_tokens)
+
+            # 规范为 3D [1, L, D]
+            if q.dim() == 2: q = q.unsqueeze(0)
+            if c.dim() == 2: c = c.unsqueeze(0)
+
+            q = q.to(self.device)
+            c = c.to(self.device)
+
+            # 采用官方 eval 的做法：双向打分并融合（scoresa + scoresb），这里使用均值
+            decfeat_ab = self.model._decoder(q, c)
+            cls_ab = decfeat_ab[:, 0]
+            score_ab = self.model.classvprmodule(cls_ab)
+
+            decfeat_ba = self.model._decoder(c, q)
+            cls_ba = decfeat_ba[:, 0]
+            score_ba = self.model.classvprmodule(cls_ba)
+
+            # 使用原始分数相加，与官方 eval 保持一致（越大越相似）
+            similarity = (score_ab + score_ba).item()
+
+        return similarity
+    
+
 if __name__ == "__main__":
-    import torch
+    extractor = PairVPRExtractor(model_type="vitB")
     
-    # 1. 加载权重文件
-    weight_path = str(BACKEND_PY_PATH / "weights/vpr_weights/pairvpr-vitB.pth")
-    print(f"正在检查权重文件: {weight_path}")
-    
-    if not os.path.exists(weight_path):
-        print(f"❌ 权重文件不存在: {weight_path}")
-        exit(0)
-    
-    state_dict = torch.load(weight_path, map_location="cpu")
-    
-    # 解包（处理可能的嵌套）
-    if isinstance(state_dict, dict) and "state_dict" in state_dict:
-        state_dict = state_dict["state_dict"]
-    elif isinstance(state_dict, dict) and "model" in state_dict:
-        state_dict = state_dict["model"]
-    
-    # 2. 检查键名，判断权重类型
-    all_keys = list(state_dict.keys())
-    print(f"\n权重文件中共有 {len(all_keys)} 个键")
-    
-    # 关键判断条件
-    has_decoder = any("decoder" in k for k in all_keys)
-    has_classifier = any("classvprmodule" in k or "pair" in k for k in all_keys)
-    has_encoder = any("encoder" in k for k in all_keys)
-    
-    print(f"\n🔍 键名分析:")
-    print(f"  - 包含 'encoder' 相关键: {'✅ 是' if has_encoder else '❌ 否'}")
-    print(f"  - 包含 'decoder' 相关键: {'✅ 是' if has_decoder else '❌ 否'}")
-    print(f"  - 包含分类器相关键: {'✅ 是' if has_classifier else '❌ 否'}")
-    
-    # 3. 打印前20个键名示例
-    print(f"\n📋 前20个键名示例:")
-    for i, key in enumerate(all_keys[:20]):
-        print(f"    {i+1}. {key}")
-    
-    # 4. 判断结果
-    print(f"\n{'='*50}")
-    print(f"📊 判断结果:")
-    
-    if has_classifier:
-        print("✅ 包含分类器相关键 -> 这是【阶段二】微调权重")
-        print("   支持配对分类器重排序功能！")
-    elif has_decoder and not has_classifier:
-        print("⚠️ 包含 decoder 但无分类器键 -> 这是【阶段一】预训练权重")
-        print("   解码器用于图像重建，不能直接用于地点判断")
-        print("   建议: 寻找 stage2 版本权重，或使用降级方案")
-    else:
-        print("❌ 未找到 decoder 或 classifier 键 -> 可能仅为编码器权重")
+    test_img = str(BACKEND_PY_PATH / "app/temp_resources/B1.jpg")
+    if os.path.exists(test_img):
+        vector, tokens = extractor.extract_complete_features(test_img)
+        if vector:
+            print(f"✅ 向量维度: {len(vector)}")
+            print(f"✅ tokens 形状: {tokens.shape}")

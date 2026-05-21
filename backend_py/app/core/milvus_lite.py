@@ -6,7 +6,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 MILVUS_DB_PATH = DATA_DIR / "milvus_lite.db"
 
 COLLECTION_NAME = "image_collection"
-VECTOR_DIM = 4096
+VECTOR_DIM = 512
 METRIC_TYPE = "IP"
 
 # 索引参数（HNSW 算法，在速度和准确率之间取得很好的平衡）
@@ -82,6 +82,9 @@ def insert_vectors(vectors, ids=None):
     )
     client.load_collection(collection_name=COLLECTION_NAME)
     return result
+
+def load_collection():
+    client.load_collection(collection_name=COLLECTION_NAME)
 
 def search_similar(query_vector, top_k=10):
     results = client.search(
