@@ -8,6 +8,7 @@ interface LandmarkDetail {
   checkins: number
   recommendRate: number
   tags: string[]
+  imgs: string[]
   buildYear: string
   openTimeDetail: string
   floors: string
@@ -55,11 +56,42 @@ const renderStars = (rating: number) => {
 const selectFloor = (floor: number) => {
   selectedFloor.value = floor
 }
+
+const currentImageIndex = ref(0)
+const touchStartX = ref(0)
+
+const selectImage = (index: number) => {
+  currentImageIndex.value = index
+}
+
+const handleTouchStart = (e: TouchEvent) => {
+  touchStartX.value = e.touches[0].clientX
+}
+
+const handleTouchEnd = (e: TouchEvent) => {
+  const deltaX = e.changedTouches[0].clientX - touchStartX.value
+  const imgs = props.landmark.imgs
+  if (!imgs || imgs.length <= 1) return
+  if (deltaX < -40 && currentImageIndex.value < imgs.length - 1) {
+    currentImageIndex.value++
+  } else if (deltaX > 40 && currentImageIndex.value > 0) {
+    currentImageIndex.value--
+  }
+}
 </script>
 
 <template>
   <div class="landmark-detail">
-    <div class="detail-header" :style="{ background: props.landmark.color }">
+    <div
+      class="detail-header"
+      :style="{
+        backgroundImage: props.landmark.imgs?.length ? `url(${props.landmark.imgs[currentImageIndex]})` : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }"
+      @touchstart="handleTouchStart"
+      @touchend="handleTouchEnd"
+    >
       <div class="header-overlay"></div>
       <div class="header-top">
         <button class="header-btn" @click="emit('back')">
@@ -85,9 +117,13 @@ const selectFloor = (floor: number) => {
       <div class="header-bottom">
         <h1 class="detail-title">{{ props.landmark.name }}</h1>
         <div class="image-dots">
-          <span class="dot active"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
+          <span
+            v-for="(_img, i) in props.landmark.imgs"
+            :key="i"
+            class="dot"
+            :class="{ active: i === currentImageIndex }"
+            @click="selectImage(i)"
+          ></span>
         </div>
       </div>
     </div>

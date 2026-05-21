@@ -14,7 +14,7 @@ interface Landmark {
   openTime: string
   category: string
   tags: string[]
-  img: string
+  imgs: string[]
   color: string
   buildYear: string
   openTimeDetail: string
@@ -262,7 +262,7 @@ const handleSortChange = () => {
           class="landmark-card"
           @click="handleCardClick(landmark)"
         >
-          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
+          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.imgs?.[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
             <div class="image-decoration"></div>
           </div>
           <div class="landmark-info">

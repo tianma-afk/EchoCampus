@@ -15,6 +15,7 @@ interface LandmarkData {
   openTime: string
   category: string
   tags: string[]
+  imgs: string[]
   color: string
   buildYear: string
   openTimeDetail: string
