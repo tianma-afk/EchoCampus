@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
 // API 配置
-const API_BASE_URL = 'http://127.0.0.1:4523/m1/8240840-8002104-default/api' // Mock URL
+const API_BASE_URL = 'http://localhost:8080/api' // 本地后端地址
 const LANDMARK_API = `${API_BASE_URL}/landmarks` // 地标列表接口
 
 interface Landmark {
