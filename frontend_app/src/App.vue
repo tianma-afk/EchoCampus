@@ -8,12 +8,16 @@ import ProfilePage from './views/profile/ProfilePage.vue'
 import BottomNav from './components/BottomNav.vue'
 
 interface LandmarkData {
+  id: number
   name: string
   rating: number
   checkins: number
   openTime: string
   category: string
   tags: string[]
+  imgs: string[]
+  campusName: string
+  universityName: string
   color: string
   buildYear: string
   openTimeDetail: string
@@ -21,7 +25,14 @@ interface LandmarkData {
   location: string
   description: string
   totalFloors: number
+  floorList: FloorInfo[]
   recommendRate: number
+}
+
+interface FloorInfo {
+  floorNumber: number
+  floorName: string
+  tags: string[]
 }
 
 const currentTab = ref('repo')

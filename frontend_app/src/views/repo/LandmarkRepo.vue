@@ -3,28 +3,38 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 
 // API 配置
-const API_BASE_URL = 'http://127.0.0.1:4523/m1/8240840-8002104-default/api' // Mock URL
+const API_BASE_URL = 'http://localhost:8080/api' // 本地后端地址
 const LANDMARK_API = `${API_BASE_URL}/landmarks` // 地标列表接口
 
 interface Landmark {
+  id: number
   name: string
   rating: number
   checkins: number
   openTime: string
   category: string
   tags: string[]
-  img: string
+  imgs: string[]
+  campusName: string
+  universityName: string
   buildYear: string
   openTimeDetail: string
   floors: string
   location: string
   description: string
   totalFloors: number
+  floorList: FloorInfo[]
   recommendRate: number
 }
 
+interface FloorInfo {
+  floorNumber: number
+  floorName: string
+  tags: string[]
+}
+
 interface LandmarkQueryParams {
-  category?: string
+  category?: number | null
   searchQuery?: string
   sortBy?: string
 }
@@ -40,7 +50,19 @@ const landmarks = ref<Landmark[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
-const categories = ['全部', '教学楼', '活动场馆', '运动场馆', '景观']
+const categories = ['全部', '教学楼', '图书馆', '体育场馆', '生活区', '活动场馆', '景观景点']
+
+const categoryToId = (name: string): number | null => {
+  const map: Record<string, number> = {
+    '教学楼': 1,
+    '图书馆': 2,
+    '体育场馆': 3,
+    '生活区': 4,
+    '活动场馆': 5,
+    '景观景点': 6,
+  }
+  return map[name] ?? null
+}
 
 /**
  * 获取地标列表
@@ -57,7 +79,7 @@ const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
   try {
     const response = await axios.get(LANDMARK_API, {
       params: {
-        category: params?.category !== '全部' ? params?.category : undefined,
+        category: params?.category ?? null,
         searchQuery: params?.searchQuery || undefined,
         sortBy: params?.sortBy !== '默认排序' ? params?.sortBy : undefined
       }
@@ -78,35 +100,45 @@ const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
 }
 
 /**
- * 根据分类和搜索条件筛选地标（前端二次过滤）
+ * 根据 ID 获取地标详情（路径参数）
  */
-const filteredLandmarks = computed(() => {
-  let result = landmarks.value
-  
-  // 按分类筛选
-  if (activeCategory.value !== '全部') {
-    result = result.filter(landmark => landmark.category === activeCategory.value)
+const fetchLandmarkDetail = async (id: number): Promise<Landmark | null> => {
+  loading.value = true
+  try {
+    const response = await axios.get(`${LANDMARK_API}/${id}`)
+    if (response.data.code === 200) {
+      return response.data.data
+    }
+    return null
+  } catch (err: any) {
+    console.error('获取地标详情失败:', err)
+    return null
+  } finally {
+    loading.value = false
   }
-  
-  // 按搜索词筛选
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.toLowerCase()
-    result = result.filter(landmark => 
-      landmark.name.toLowerCase().includes(query) ||
-      landmark.category.toLowerCase().includes(query) ||
-      landmark.tags.some(tag => tag.toLowerCase().includes(query))
-    )
+}
+
+/**
+ * 处理卡片点击：先请求详情接口，成功后跳转
+ */
+const handleCardClick = async (landmark: Landmark) => {
+  const detail = await fetchLandmarkDetail(landmark.id)
+  if (detail) {
+    emit('select', detail)
   }
-  
-  return result
-})
+}
+
+/**
+ * 地标列表（由后端返回已筛选排序的数据，前端直接展示）
+ */
+const filteredLandmarks = computed(() => landmarks.value)
 
 /**
  * 监听筛选条件变化，重新请求数据
  */
 const handleFilterChange = () => {
   fetchLandmarks({
-    category: activeCategory.value,
+    category: categoryToId(activeCategory.value),
     searchQuery: searchQuery.value,
     sortBy: sortBy.value
   })
@@ -125,10 +157,20 @@ const renderStars = (rating: number) => {
 }
 
 /**
- * 处理分类切换
+ * 处理关键词搜索（点击搜索按钮或按回车，重置分类和排序）
+ */
+const handleKeywordSearch = () => {
+  activeCategory.value = '全部'
+  sortBy.value = '默认排序'
+  handleFilterChange()
+}
+
+/**
+ * 处理分类切换（重置排序）
  */
 const handleCategoryChange = (category: string) => {
   activeCategory.value = category
+  sortBy.value = '默认排序'
   handleFilterChange()
 }
 
@@ -169,15 +211,18 @@ const handleSortChange = () => {
       </header>
 
       <div class="search-bar">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+        <button class="search-btn" @click="handleKeywordSearch">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
         <input
           v-model="searchQuery"
           type="text"
           placeholder="搜索地标、类别..."
           class="search-input"
+          @keyup.enter="handleKeywordSearch"
         />
       </div>
 
@@ -223,9 +268,9 @@ const handleSortChange = () => {
           v-for="(landmark, index) in filteredLandmarks"
           :key="index"
           class="landmark-card"
-          @click="emit('select', landmark)"
+          @click="handleCardClick(landmark)"
         >
-          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
+          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.imgs?.[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
             <div class="image-decoration"></div>
           </div>
           <div class="landmark-info">
@@ -372,11 +417,27 @@ const handleSortChange = () => {
   margin-bottom: 12px;
 }
 
-.search-icon {
+.search-btn {
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1;
+}
+
+.search-btn:hover .search-icon {
+  color: #2d8a6e;
+}
+
+.search-icon {
   width: 18px;
   height: 18px;
   color: #9ca3af;
