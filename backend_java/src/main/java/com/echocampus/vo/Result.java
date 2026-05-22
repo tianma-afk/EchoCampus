@@ -1,4 +1,4 @@
-package com.echocampus.pojo;
+package com.echocampus.vo;
 
 public class Result<T> {
 	private int code;

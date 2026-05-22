@@ -9,13 +9,20 @@ spring:
     username: ${DB_USERNAME:echo_campus}
     password: ${DB_PASSWORD:echo_campus}
     driver-class-name: org.postgresql.Driver
+  flyway:
+    clean-disabled: false
+    clean-on-migrate: true
+    validate-on-migrate: false
 
-mybatis:
+mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.echocampus.pojo
+  type-aliases-package: com.echocampus.entity
+  type-handlers-package: com.echocampus.handler
   configuration:
     map-underscore-to-camel-case: true
-
+  global-config:
+    db-config:
+      id-type: none
 logging:
   level:
     com.echocampus: INFO

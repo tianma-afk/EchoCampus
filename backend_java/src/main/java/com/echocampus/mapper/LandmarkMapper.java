@@ -1,28 +1,11 @@
 package com.echocampus.mapper;
 
-import com.echocampus.entity.FloorEntity;
-import com.echocampus.entity.LandmarkDetailEntity;
-import com.echocampus.entity.LandmarkPageEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.echocampus.entity.LandmarkEntity;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
-import java.util.List;
 
 @Mapper
-public interface LandmarkMapper {
-	long countLandmarks(@Param("category") String category, @Param("keyword") String keyword);
+public interface LandmarkMapper extends BaseMapper<LandmarkEntity> {
 
-	List<LandmarkPageEntity> selectLandmarks(
-			@Param("offset") int offset,
-			@Param("limit") int limit,
-			@Param("category") String category,
-			@Param("keyword") String keyword,
-			@Param("sortByScore") boolean sortByScore
-	);
 
-	LandmarkDetailEntity selectLandmarkDetail(@Param("id") String id);
-
-	List<String> selectImagesByLandmarkId(@Param("id") String id);
-
-	List<FloorEntity> selectFloorsByLandmarkId(@Param("id") String id);
 }

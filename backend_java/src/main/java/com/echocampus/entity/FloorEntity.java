@@ -1,14 +1,27 @@
 package com.echocampus.entity;
 
-public class FloorEntity {
-    private Integer floorNumber;
-    private String floorName;
-    private String tags; // JSON text
+import lombok.Data;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 
-    public Integer getFloorNumber() { return floorNumber; }
-    public void setFloorNumber(Integer floorNumber) { this.floorNumber = floorNumber; }
-    public String getFloorName() { return floorName; }
-    public void setFloorName(String floorName) { this.floorName = floorName; }
-    public String getTags() { return tags; }
-    public void setTags(String tags) { this.tags = tags; }
+import java.util.List;
+import java.util.UUID;
+
+@Data
+@TableName(value = "floor", autoResultMap = true)
+public class FloorEntity {
+
+    @TableId
+    private UUID id;
+
+    private UUID landmarkId;
+
+    private Integer floorNumber;
+
+    private String floorName;
+
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> tags;
 }
