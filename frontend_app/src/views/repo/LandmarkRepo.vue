@@ -1,13 +1,24 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 
 // API 配置
-const API_BASE_URL = 'http://localhost:8080/api' // 本地后端地址
+const API_BASE_URL = 'http://localhost:8080/api/v1' // 本地后端地址
 const LANDMARK_API = `${API_BASE_URL}/landmarks` // 地标列表接口
 
+interface LandmarkSummary {
+  id: string
+  name: string
+  rating: number
+  checkins: number
+  openTime: string
+  category: string
+  tags: string[]
+  coverImg: string
+}
+
 interface Landmark {
-  id: number
+  id: string
   name: string
   rating: number
   checkins: number
@@ -46,9 +57,37 @@ const emit = defineEmits<{
 const searchQuery = ref('')
 const activeCategory = ref('全部')
 const sortBy = ref('默认排序')
-const landmarks = ref<Landmark[]>([])
+const landmarks = ref<LandmarkSummary[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+const currentPage = ref(1)
+const pageSize = ref(6)
+const total = ref(0)
+const loadingMore = ref(false)
+const initialLoadDone = ref(false)
+
+let sentinelEl: HTMLElement | null = null
+let observer: IntersectionObserver | null = null
+
+const setSentinelRef = (el: any) => {
+  if (el && el !== sentinelEl) {
+    sentinelEl = el
+    observer?.disconnect()
+    observer?.observe(el)
+  }
+}
+
+const noMore = computed(() => total.value > 0 && landmarks.value.length >= total.value)
+
+const sortByKey = computed(() => {
+  const map: Record<string, string> = {
+    '评分最高': 'rate',
+    '打卡最多': 'hot',
+    '名称A-Z': 'nameAsc',
+  }
+  return map[sortBy.value] || undefined
+})
 
 const categories = ['全部', '教学楼', '图书馆', '体育场馆', '生活区', '活动场馆', '景观景点']
 
@@ -79,15 +118,20 @@ const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
   try {
     const response = await axios.get(LANDMARK_API, {
       params: {
+        page: currentPage.value,
+        pageSize: pageSize.value,
         category: params?.category ?? null,
         searchQuery: params?.searchQuery || undefined,
-        sortBy: params?.sortBy !== '默认排序' ? params?.sortBy : undefined
+        sortBy: sortByKey.value
       }
     })
     
-    // 假设后端返回格式为: { code: 200, data: [...], message: 'success' }
     if (response.data.code === 200) {
-      landmarks.value = response.data.data || []
+      const data = response.data.data
+      landmarks.value = data.records || []
+      currentPage.value = data.current || 1
+      total.value = data.total || 0
+      initialLoadDone.value = true
     } else {
       error.value = response.data.message || '获取地标数据失败'
     }
@@ -99,10 +143,37 @@ const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
   }
 }
 
+const loadMore = async () => {
+  if (!initialLoadDone.value || loadingMore.value || noMore.value) return
+  loadingMore.value = true
+  const nextPage = currentPage.value + 1
+  try {
+    const response = await axios.get(LANDMARK_API, {
+      params: {
+        page: nextPage,
+        pageSize: pageSize.value,
+        category: categoryToId(activeCategory.value),
+        searchQuery: searchQuery.value || undefined,
+        sortBy: sortByKey.value
+      }
+    })
+    if (response.data.code === 200) {
+      const data = response.data.data
+      landmarks.value.push(...(data.records || []))
+      currentPage.value = data.current || nextPage
+      total.value = data.total || 0
+    }
+  } catch (err: any) {
+    console.error('加载更多失败:', err)
+  } finally {
+    loadingMore.value = false
+  }
+}
+
 /**
  * 根据 ID 获取地标详情（路径参数）
  */
-const fetchLandmarkDetail = async (id: number): Promise<Landmark | null> => {
+const fetchLandmarkDetail = async (id: string): Promise<Landmark | null> => {
   loading.value = true
   try {
     const response = await axios.get(`${LANDMARK_API}/${id}`)
@@ -121,7 +192,7 @@ const fetchLandmarkDetail = async (id: number): Promise<Landmark | null> => {
 /**
  * 处理卡片点击：先请求详情接口，成功后跳转
  */
-const handleCardClick = async (landmark: Landmark) => {
+const handleCardClick = async (landmark: LandmarkSummary) => {
   const detail = await fetchLandmarkDetail(landmark.id)
   if (detail) {
     emit('select', detail)
@@ -137,6 +208,9 @@ const filteredLandmarks = computed(() => landmarks.value)
  * 监听筛选条件变化，重新请求数据
  */
 const handleFilterChange = () => {
+  currentPage.value = 1
+  total.value = 0
+  initialLoadDone.value = false
   fetchLandmarks({
     category: categoryToId(activeCategory.value),
     searchQuery: searchQuery.value,
@@ -147,6 +221,21 @@ const handleFilterChange = () => {
 // 组件挂载时获取数据
 onMounted(() => {
   fetchLandmarks()
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting) {
+        loadMore()
+      }
+    },
+    { rootMargin: '100px' }
+  )
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
 })
 
 const renderStars = (rating: number) => {
@@ -239,7 +328,7 @@ const handleSortChange = () => {
       </div>
 
       <div class="landmark-stats">
-        <span class="stats-text">共 <strong>{{ filteredLandmarks.length }}</strong> 个地标</span>
+        <span class="stats-text">共 <strong>{{ total }}</strong> 个地标</span>
         <button class="sort-btn" @click="handleSortChange">{{ sortBy }}</button>
       </div>
     </div>
@@ -264,13 +353,12 @@ const handleSortChange = () => {
       
       <!-- 地标列表 -->
       <div v-else class="landmark-list">
-        <div
-          v-for="(landmark, index) in filteredLandmarks"
-          :key="index"
-          class="landmark-card"
-          @click="handleCardClick(landmark)"
-        >
-          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.imgs?.[0]})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
+        <template v-for="(landmark, index) in filteredLandmarks" :key="index">
+          <div
+            class="landmark-card"
+            @click="handleCardClick(landmark)"
+          >
+          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.coverImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
             <div class="image-decoration"></div>
           </div>
           <div class="landmark-info">
@@ -349,7 +437,14 @@ const handleSortChange = () => {
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </div>
-      </div>
+        <div v-if="index === landmarks.length - 3" :ref="setSentinelRef" class="scroll-sentinel"></div>
+      </template>
+    </div>
+        <div v-if="loadingMore" class="loading-more">
+          <div class="loading-spinner-small"></div>
+          <span>加载中...</span>
+        </div>
+        <div v-else-if="noMore && landmarks.length > 0" class="no-more">没有更多了</div>
     </div>
   </div>
 </template>
@@ -749,5 +844,37 @@ const handleSortChange = () => {
   padding: 60px 20px;
   color: #9ca3af;
   font-size: 14px;
+}
+
+.scroll-sentinel {
+  height: 1px;
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.loading-spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #e8f5e9;
+  border-top-color: #2d8a6e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.no-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: #9ca3af;
+  font-size: 13px;
 }
 </style>

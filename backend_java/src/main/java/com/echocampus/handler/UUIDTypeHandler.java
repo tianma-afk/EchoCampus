@@ -9,15 +9,16 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.UUID;
 
 @MappedTypes(UUID.class)
-@MappedJdbcTypes(JdbcType.VARCHAR)
+@MappedJdbcTypes(JdbcType.OTHER)
 public class UUIDTypeHandler extends BaseTypeHandler<UUID> {
 
     @Override
     public void setNonNullParameter(PreparedStatement ps, int i, UUID parameter, JdbcType jdbcType) throws SQLException {
-        ps.setString(i, parameter.toString());
+        ps.setObject(i, parameter, Types.OTHER);
     }
 
     @Override

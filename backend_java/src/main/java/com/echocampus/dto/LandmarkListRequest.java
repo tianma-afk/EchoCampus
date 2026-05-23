@@ -15,7 +15,7 @@ public class LandmarkListRequest {
     @Schema(description = "每页条数", example = "10")
     @Min(value = 1, message = "每页条数不能小于1")
     @Max(value = 100, message = "每页条数不能大于100")
-    private Integer pageSize = 10;
+    private Integer pageSize = 6;
 
     @Schema(description = "分类筛选，null表示不限分类，1-6表示筛选特定分类",
             allowableValues = {"1", "2", "3", "4", "5", "6", "null"},

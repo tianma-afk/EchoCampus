@@ -65,6 +65,8 @@ public class LandmarkServiceImpl implements LandmarkService {
 			wrapper.orderByDesc(LandmarkEntity::getRating);
 		} else if ("hot".equals(sortBy)) {
 			wrapper.orderByDesc(LandmarkEntity::getCheckInCount);
+		} else if ("nameAsc".equals(sortBy)) {
+			wrapper.last(" ORDER BY convert_to(name, 'GBK') ASC");
 		} else {
 			wrapper.orderByAsc(LandmarkEntity::getId);
 		}
