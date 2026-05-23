@@ -10,9 +10,11 @@ spring:
     password: ${DB_PASSWORD:echo_campus}
     driver-class-name: org.postgresql.Driver
   flyway:
-    clean-disabled: false
-    clean-on-migrate: true
+    enabled: true
+    clean-disabled: true
+    clean-on-migrate: false
     validate-on-migrate: false
+    locations: classpath:db/migration
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml

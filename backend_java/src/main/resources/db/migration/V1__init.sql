@@ -69,6 +69,7 @@ CREATE TABLE landmark (
     category_id UUID NOT NULL,
     tags JSONB,
     imgs JSONB,
+    cover_img VARCHAR(256),
     build_year VARCHAR(10),
     open_time_detail VARCHAR(200),
     floors VARCHAR(20),
