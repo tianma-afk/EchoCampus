@@ -2,23 +2,29 @@
 import { ref, computed } from 'vue'
 
 interface LandmarkDetail {
+  id?: number
   name: string
   rating: number
   checkins: number
   recommendRate: number
   tags: string[]
+  imgs: string[]
+  campusName: string
+  universityName: string
   buildYear: string
   openTimeDetail: string
   floors: string
   location: string
   description: string
   totalFloors: number
+  floorList: FloorInfo[]
   color: string
 }
 
-interface FloorArea {
-  floor: number
-  areas: string[]
+interface FloorInfo {
+  floorNumber: number
+  floorName: string
+  tags: string[]
 }
 
 const props = defineProps<{
@@ -29,19 +35,10 @@ const emit = defineEmits<{
   back: []
 }>()
 
-const selectedFloor = ref(1)
+const selectedFloorNumber = ref(1)
 
-const floorAreas: FloorArea[] = [
-  { floor: 1, areas: ['入口大厅', '借阅服务台', '新书展示区', '咖啡休闲区'] },
-  { floor: 2, areas: ['中文图书区', '期刊阅览室', '电子阅览区'] },
-  { floor: 3, areas: ['外文图书区', '学术报告厅', '研讨室'] },
-  { floor: 4, areas: ['自习室', '多媒体教室', '创客空间'] },
-  { floor: 5, areas: ['特藏文献室', '档案室', '研究室'] },
-  { floor: 6, areas: ['行政办公区', '会议室', '数据中心'] },
-]
-
-const currentFloorAreas = computed(() =>
-  floorAreas.find(f => f.floor === selectedFloor.value)?.areas || []
+const currentFloor = computed(() =>
+  props.landmark.floorList?.find(f => f.floorNumber === selectedFloorNumber.value)
 )
 
 const renderStars = (rating: number) => {
@@ -51,14 +48,74 @@ const renderStars = (rating: number) => {
   return { full, half, empty }
 }
 
-const selectFloor = (floor: number) => {
-  selectedFloor.value = floor
+const selectFloor = (floorNumber: number) => {
+  selectedFloorNumber.value = floorNumber
 }
+
+const currentImageIndex = ref(0)
+const touchStartX = ref(0)
+
+const selectImage = (index: number) => {
+  currentImageIndex.value = index
+}
+
+const handleTouchStart = (e: TouchEvent) => {
+  touchStartX.value = e.touches[0].clientX
+}
+
+const handleTouchEnd = (e: TouchEvent) => {
+  const deltaX = e.changedTouches[0].clientX - touchStartX.value
+  const imgs = props.landmark.imgs
+  if (!imgs || imgs.length <= 1) return
+  if (deltaX < -40 && currentImageIndex.value < imgs.length - 1) {
+    currentImageIndex.value++
+  } else if (deltaX > 40 && currentImageIndex.value > 0) {
+    currentImageIndex.value--
+  }
+}
+
+const tagBubbleSizes = computed(() => {
+  return props.landmark.tags.map((_, i) => {
+    const sizes = [56, 66, 74, 60, 68, 58]
+    return sizes[i % sizes.length]
+  })
+})
+
+const tagBubbleGradients = [
+  'linear-gradient(135deg, #d4edda, #8ed1a8)',
+  'linear-gradient(135deg, #c8e6d3, #6cba90)',
+  'linear-gradient(135deg, #e8f5e9, #a8dfc0)',
+  'linear-gradient(135deg, #d0f0de, #7dbf9a)',
+  'linear-gradient(135deg, #b8e6cc, #5fa87a)',
+  'linear-gradient(135deg, #e2f5e8, #95c9aa)',
+]
+
+const bubblePositions = computed(() => {
+  const count = props.landmark.tags.length
+  const sets: Record<number, { left: number; top: number }[]> = {
+    1: [{ left: 42, top: 32 }],
+    2: [{ left: 50, top: 8 },  { left: 6, top: 50 }],
+    3: [{ left: 42, top: 0 },  { left: 0, top: 40 },   { left: 60, top: 54 }],
+    4: [{ left: 34, top: 0 },  { left: 74, top: 12 },  { left: 0, top: 34 },   { left: 56, top: 62 }],
+    5: [{ left: 22, top: 0 },  { left: 68, top: 6 },   { left: 0, top: 34 },   { left: 80, top: 40 },  { left: 38, top: 62 }],
+    6: [{ left: 16, top: 0 },  { left: 62, top: 2 },   { left: 0, top: 32 },   { left: 78, top: 30 },  { left: 22, top: 62 },  { left: 60, top: 66 }],
+  }
+  return sets[Math.min(count, 6)] || sets[6]
+})
 </script>
 
 <template>
   <div class="landmark-detail">
-    <div class="detail-header" :style="{ background: props.landmark.color }">
+    <div
+      class="detail-header"
+      :style="{
+        backgroundImage: props.landmark.imgs?.length ? `url(${props.landmark.imgs[currentImageIndex]})` : 'none',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }"
+      @touchstart="handleTouchStart"
+      @touchend="handleTouchEnd"
+    >
       <div class="header-overlay"></div>
       <div class="header-top">
         <button class="header-btn" @click="emit('back')">
@@ -84,9 +141,13 @@ const selectFloor = (floor: number) => {
       <div class="header-bottom">
         <h1 class="detail-title">{{ props.landmark.name }}</h1>
         <div class="image-dots">
-          <span class="dot active"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
+          <span
+            v-for="(_img, i) in props.landmark.imgs"
+            :key="i"
+            class="dot"
+            :class="{ active: i === currentImageIndex }"
+            @click="selectImage(i)"
+          ></span>
         </div>
       </div>
     </div>
@@ -95,53 +156,64 @@ const selectFloor = (floor: number) => {
       <div class="scroll-content">
         <div class="info-card">
           <div class="tags-row">
-            <div class="tags-left">
+            <div class="campus-info">
+              <span class="campus-name">{{ props.landmark.campusName }}</span>
+              <span class="university-name">{{ props.landmark.universityName }}</span>
+              <div class="rating-inline">
+                <div class="stars">
+                  <template v-for="i in 5" :key="i">
+                    <svg
+                      v-if="i <= renderStars(props.landmark.rating).full"
+                      class="star-icon filled"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                    <svg
+                      v-else-if="i === renderStars(props.landmark.rating).full + 1 && renderStars(props.landmark.rating).half"
+                      class="star-icon half"
+                      viewBox="0 0 24 24"
+                    >
+                      <defs>
+                        <linearGradient id="half-detail">
+                          <stop offset="50%" stop-color="#f59e0b" />
+                          <stop offset="50%" stop-color="#e5e7eb" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        fill="url(#half-detail)"
+                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                      />
+                    </svg>
+                    <svg
+                      v-else
+                      class="star-icon empty"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </template>
+                </div>
+                <span class="rating-value">{{ props.landmark.rating }}</span>
+              </div>
+            </div>
+            <div class="tags-bubbles">
               <span
-                v-for="tag in props.landmark.tags"
+                v-for="(tag, i) in props.landmark.tags"
                 :key="tag"
-                class="tag"
+                class="tag-bubble"
+                :style="{
+                  width: tagBubbleSizes[i] + 'px',
+                  height: tagBubbleSizes[i] + 'px',
+                  background: tagBubbleGradients[i % tagBubbleGradients.length],
+                  left: bubblePositions[i]?.left + 'px',
+                  top: bubblePositions[i]?.top + 'px'
+                }"
               >
                 {{ tag }}
               </span>
-            </div>
-            <div class="rating-inline">
-              <div class="stars">
-                <template v-for="i in 5" :key="i">
-                  <svg
-                    v-if="i <= renderStars(props.landmark.rating).full"
-                    class="star-icon filled"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                  <svg
-                    v-else-if="i === renderStars(props.landmark.rating).full + 1 && renderStars(props.landmark.rating).half"
-                    class="star-icon half"
-                    viewBox="0 0 24 24"
-                  >
-                    <defs>
-                      <linearGradient id="half-detail">
-                        <stop offset="50%" stop-color="#f59e0b" />
-                        <stop offset="50%" stop-color="#e5e7eb" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      fill="url(#half-detail)"
-                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                    />
-                  </svg>
-                  <svg
-                    v-else
-                    class="star-icon empty"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                  </svg>
-                </template>
-              </div>
-              <span class="rating-value">{{ props.landmark.rating }}</span>
             </div>
           </div>
 
@@ -239,26 +311,26 @@ const selectFloor = (floor: number) => {
           </div>
           <div class="floor-buttons">
             <button
-              v-for="floor in props.landmark.totalFloors"
-              :key="floor"
+              v-for="f in props.landmark.floorList"
+              :key="f.floorNumber"
               class="floor-btn"
-              :class="{ active: selectedFloor === floor }"
-              @click="selectFloor(floor)"
+              :class="{ active: selectedFloorNumber === f.floorNumber }"
+              @click="selectFloor(f.floorNumber)"
             >
-              {{ floor }}F
+              {{ f.floorName }}
             </button>
           </div>
           <div class="floor-areas">
             <div class="floor-area-header">
-              <span class="floor-area-label">{{ selectedFloor }}F 功能区域</span>
+              <span class="floor-area-label">{{ currentFloor?.floorName }} 功能区域</span>
             </div>
             <div class="area-tags">
               <span
-                v-for="area in currentFloorAreas"
-                :key="area"
+                v-for="tag in currentFloor?.tags"
+                :key="tag"
                 class="area-tag"
               >
-                {{ area }}
+                {{ tag }}
               </span>
             </div>
           </div>
@@ -431,22 +503,58 @@ const selectFloor = (floor: number) => {
 
 .tags-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
-.tags-left {
+.campus-info {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
-.tag {
-  font-size: 13px;
+.campus-name {
+  font-size: 15px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.university-name {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.tags-bubbles {
+  position: relative;
+  width: 150px;
+  height: 120px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.tag-bubble {
+  position: absolute;
+  border-radius: 50%;
   color: #2d8a6e;
-  background: #e8f5e9;
-  padding: 4px 12px;
-  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px;
+  overflow: hidden;
+  word-break: break-all;
+  box-shadow: 0 2px 6px rgba(45, 138, 110, 0.15);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.tag-bubble:hover {
+  transform: scale(1.08);
 }
 
 .rating-inline {
@@ -635,14 +743,15 @@ const selectFloor = (floor: number) => {
 }
 
 .floor-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  height: 32px;
+  border-radius: 16px;
   border: none;
   background: #e8f5e9;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
+  padding: 0 12px;
+  white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;

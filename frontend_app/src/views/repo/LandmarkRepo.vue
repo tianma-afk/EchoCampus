@@ -1,21 +1,53 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import axios from 'axios'
 
-interface Landmark {
+// API 配置
+const API_BASE_URL = 'http://localhost:8080/api/v1' // 本地后端地址
+const LANDMARK_API = `${API_BASE_URL}/landmarks` // 地标列表接口
+
+interface LandmarkSummary {
+  id: string
   name: string
   rating: number
   checkins: number
   openTime: string
   category: string
   tags: string[]
-  color: string
+  coverImg: string
+}
+
+interface Landmark {
+  id: string
+  name: string
+  rating: number
+  checkins: number
+  openTime: string
+  category: string
+  tags: string[]
+  imgs: string[]
+  campusName: string
+  universityName: string
   buildYear: string
   openTimeDetail: string
   floors: string
   location: string
   description: string
   totalFloors: number
+  floorList: FloorInfo[]
   recommendRate: number
+}
+
+interface FloorInfo {
+  floorNumber: number
+  floorName: string
+  tags: string[]
+}
+
+interface LandmarkQueryParams {
+  category?: number | null
+  searchQuery?: string
+  sortBy?: string
 }
 
 const emit = defineEmits<{
@@ -25,99 +57,221 @@ const emit = defineEmits<{
 const searchQuery = ref('')
 const activeCategory = ref('全部')
 const sortBy = ref('默认排序')
+const landmarks = ref<LandmarkSummary[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
 
-const categories = ['全部', '教学楼', '活动场馆', '运动场馆', '景观']
+const currentPage = ref(1)
+const pageSize = ref(6)
+const total = ref(0)
+const loadingMore = ref(false)
+const initialLoadDone = ref(false)
 
-const landmarks: Landmark[] = [
-  {
-    name: '图书馆',
-    rating: 4.8,
-    checkins: 4821,
-    openTime: '周一至周日',
-    category: '教学楼',
-    tags: ['阅读', '自习', '文化地标'],
-    color: '#4a8c7a',
-    buildYear: '1985年',
-    openTimeDetail: '周一至周日 08:00 - 22:00',
-    floors: '共6层（含地下1层）',
-    location: '主校区·中轴线区域',
-    description: '建于1985年，馆藏图书200余万册，是师生学习研究的重要场所。馆内设有自习室、研讨间、数字阅览室等多种功能区域，全年大部分时间对外开放。',
-    totalFloors: 6,
-    recommendRate: 96,
-  },
-  {
-    name: '综合大礼堂',
-    rating: 4.6,
-    checkins: 2356,
-    openTime: '活动期间开放',
-    category: '活动场馆',
-    tags: ['活动', '典礼'],
-    color: '#d4a056',
-    buildYear: '1992年',
-    openTimeDetail: '活动期间开放',
-    floors: '共3层',
-    location: '主校区·南区',
-    description: '建于1992年，可容纳2000余人，是学校举办开学典礼、毕业典礼、大型文艺演出的重要场所。',
-    totalFloors: 3,
-    recommendRate: 92,
-  },
-  {
-    name: '理工实验楼',
-    rating: 4.5,
-    checkins: 1893,
-    openTime: '周一至周五',
-    category: '教学楼',
-    tags: ['实验', '研究'],
-    color: '#5b9bd5',
-    buildYear: '2005年',
-    openTimeDetail: '周一至周五 08:00 - 21:00',
-    floors: '共8层',
-    location: '主校区·东区',
-    description: '建于2005年，配备先进实验设备，涵盖物理、化学、生物等多个学科实验室，是理工科学生实践教学的核心基地。',
-    totalFloors: 8,
-    recommendRate: 88,
-  },
-  {
-    name: '体育馆',
-    rating: 4.7,
-    checkins: 3102,
-    openTime: '周一至周日',
-    category: '运动场馆',
-    tags: ['运动', '健身'],
-    color: '#7b5ea7',
-    buildYear: '2010年',
-    openTimeDetail: '周一至周日 06:00 - 22:00',
-    floors: '共4层',
-    location: '主校区·西区',
-    description: '建于2010年，内设篮球场、羽毛球场、游泳馆、健身房等设施，是师生日常锻炼和举办体育赛事的重要场所。',
-    totalFloors: 4,
-    recommendRate: 94,
-  },
-  {
-    name: '枫林广场',
-    rating: 4.9,
-    checkins: 6520,
-    openTime: '全天开放',
-    category: '景观',
-    tags: ['景观', '打卡'],
-    color: '#d47a4a',
-    buildYear: '1980年',
-    openTimeDetail: '全天开放',
-    floors: '开放式广场',
-    location: '主校区·中心区域',
-    description: '建于1980年，种植枫树百余棵，秋季红叶满园，是校园最具代表性的景观之一，也是师生休闲散步、拍照打卡的热门地点。',
-    totalFloors: 1,
-    recommendRate: 98,
-  },
-]
+let sentinelEl: HTMLElement | null = null
+let observer: IntersectionObserver | null = null
 
-const filteredLandmarks = landmarks
+const setSentinelRef = (el: any) => {
+  if (el && el !== sentinelEl) {
+    sentinelEl = el
+    observer?.disconnect()
+    observer?.observe(el)
+  }
+}
+
+const noMore = computed(() => total.value > 0 && landmarks.value.length >= total.value)
+
+const sortByKey = computed(() => {
+  const map: Record<string, string> = {
+    '评分最高': 'rate',
+    '打卡最多': 'hot',
+    '名称A-Z': 'nameAsc',
+  }
+  return map[sortBy.value] || undefined
+})
+
+const categories = ['全部', '教学楼', '图书馆', '体育场馆', '生活区', '活动场馆', '景观景点']
+
+const categoryToId = (name: string): number | null => {
+  const map: Record<string, number> = {
+    '教学楼': 1,
+    '图书馆': 2,
+    '体育场馆': 3,
+    '生活区': 4,
+    '活动场馆': 5,
+    '景观景点': 6,
+  }
+  return map[name] ?? null
+}
+
+/**
+ * 获取地标列表
+ * @param params - 查询参数
+ *   - category: 分类筛选（可选）
+ *   - searchQuery: 搜索关键词（可选）
+ *   - sortBy: 排序方式（可选）
+ * @returns Promise<Landmark[]>
+ */
+const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
+  loading.value = true
+  error.value = null
+  
+  try {
+    const response = await axios.get(LANDMARK_API, {
+      params: {
+        page: currentPage.value,
+        pageSize: pageSize.value,
+        category: params?.category ?? null,
+        searchQuery: params?.searchQuery || undefined,
+        sortBy: sortByKey.value
+      }
+    })
+    
+    if (response.data.code === 200) {
+      const data = response.data.data
+      landmarks.value = data.records || []
+      currentPage.value = data.current || 1
+      total.value = data.total || 0
+      initialLoadDone.value = true
+    } else {
+      error.value = response.data.message || '获取地标数据失败'
+    }
+  } catch (err: any) {
+    console.error('获取地标列表失败:', err)
+    error.value = err.response?.data?.message || '网络请求失败，请检查后端服务是否启动'
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadMore = async () => {
+  if (!initialLoadDone.value || loadingMore.value || noMore.value) return
+  loadingMore.value = true
+  const nextPage = currentPage.value + 1
+  try {
+    const response = await axios.get(LANDMARK_API, {
+      params: {
+        page: nextPage,
+        pageSize: pageSize.value,
+        category: categoryToId(activeCategory.value),
+        searchQuery: searchQuery.value || undefined,
+        sortBy: sortByKey.value
+      }
+    })
+    if (response.data.code === 200) {
+      const data = response.data.data
+      landmarks.value.push(...(data.records || []))
+      currentPage.value = data.current || nextPage
+      total.value = data.total || 0
+    }
+  } catch (err: any) {
+    console.error('加载更多失败:', err)
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+/**
+ * 根据 ID 获取地标详情（路径参数）
+ */
+const fetchLandmarkDetail = async (id: string): Promise<Landmark | null> => {
+  loading.value = true
+  try {
+    const response = await axios.get(`${LANDMARK_API}/${id}`)
+    if (response.data.code === 200) {
+      return response.data.data
+    }
+    return null
+  } catch (err: any) {
+    console.error('获取地标详情失败:', err)
+    return null
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * 处理卡片点击：先请求详情接口，成功后跳转
+ */
+const handleCardClick = async (landmark: LandmarkSummary) => {
+  const detail = await fetchLandmarkDetail(landmark.id)
+  if (detail) {
+    emit('select', detail)
+  }
+}
+
+/**
+ * 地标列表（由后端返回已筛选排序的数据，前端直接展示）
+ */
+const filteredLandmarks = computed(() => landmarks.value)
+
+/**
+ * 监听筛选条件变化，重新请求数据
+ */
+const handleFilterChange = () => {
+  currentPage.value = 1
+  total.value = 0
+  initialLoadDone.value = false
+  fetchLandmarks({
+    category: categoryToId(activeCategory.value),
+    searchQuery: searchQuery.value,
+    sortBy: sortBy.value
+  })
+}
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchLandmarks()
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting) {
+        loadMore()
+      }
+    },
+    { rootMargin: '100px' }
+  )
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+})
 
 const renderStars = (rating: number) => {
   const full = Math.floor(rating)
   const half = rating - full >= 0.5
   const empty = 5 - full - (half ? 1 : 0)
   return { full, half, empty }
+}
+
+/**
+ * 处理关键词搜索（点击搜索按钮或按回车，重置分类和排序）
+ */
+const handleKeywordSearch = () => {
+  activeCategory.value = '全部'
+  sortBy.value = '默认排序'
+  handleFilterChange()
+}
+
+/**
+ * 处理分类切换（重置排序）
+ */
+const handleCategoryChange = (category: string) => {
+  activeCategory.value = category
+  sortBy.value = '默认排序'
+  handleFilterChange()
+}
+
+/**
+ * 处理排序切换（示例：循环切换排序方式）
+ */
+const sortOptions = ['默认排序', '评分最高', '打卡最多', '名称A-Z']
+const handleSortChange = () => {
+  const currentIndex = sortOptions.indexOf(sortBy.value)
+  const nextIndex = (currentIndex + 1) % sortOptions.length
+  sortBy.value = sortOptions[nextIndex]
+  handleFilterChange()
 }
 </script>
 
@@ -146,15 +300,18 @@ const renderStars = (rating: number) => {
       </header>
 
       <div class="search-bar">
-        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+        <button class="search-btn" @click="handleKeywordSearch">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
         <input
           v-model="searchQuery"
           type="text"
           placeholder="搜索地标、类别..."
           class="search-input"
+          @keyup.enter="handleKeywordSearch"
         />
       </div>
 
@@ -164,27 +321,44 @@ const renderStars = (rating: number) => {
           :key="cat"
           class="category-tab"
           :class="{ active: activeCategory === cat }"
-          @click="activeCategory = cat"
+          @click="handleCategoryChange(cat)"
         >
           {{ cat }}
         </button>
       </div>
 
       <div class="landmark-stats">
-        <span class="stats-text">共 <strong>{{ landmarks.length }}</strong> 个地标</span>
-        <button class="sort-btn">{{ sortBy }}</button>
+        <span class="stats-text">共 <strong>{{ total }}</strong> 个地标</span>
+        <button class="sort-btn" @click="handleSortChange">{{ sortBy }}</button>
       </div>
     </div>
 
     <div class="landmark-list-scroll">
-      <div class="landmark-list">
-        <div
-          v-for="(landmark, index) in filteredLandmarks"
-          :key="index"
-          class="landmark-card"
-          @click="emit('select', landmark)"
-        >
-          <div class="landmark-image" :style="{ background: landmark.color }">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+      </div>
+      
+      <!-- 错误提示 -->
+      <div v-else-if="error" class="error-container">
+        <p class="error-message">{{ error }}</p>
+        <button class="retry-btn" @click="fetchLandmarks()">重试</button>
+      </div>
+      
+      <!-- 空数据提示 -->
+      <div v-else-if="filteredLandmarks.length === 0" class="empty-container">
+        <p>暂无地标数据</p>
+      </div>
+      
+      <!-- 地标列表 -->
+      <div v-else class="landmark-list">
+        <template v-for="(landmark, index) in filteredLandmarks" :key="index">
+          <div
+            class="landmark-card"
+            @click="handleCardClick(landmark)"
+          >
+          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.coverImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
             <div class="image-decoration"></div>
           </div>
           <div class="landmark-info">
@@ -263,7 +437,14 @@ const renderStars = (rating: number) => {
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </div>
-      </div>
+        <div v-if="index === landmarks.length - 3" :ref="setSentinelRef" class="scroll-sentinel"></div>
+      </template>
+    </div>
+        <div v-if="loadingMore" class="loading-more">
+          <div class="loading-spinner-small"></div>
+          <span>加载中...</span>
+        </div>
+        <div v-else-if="noMore && landmarks.length > 0" class="no-more">没有更多了</div>
     </div>
   </div>
 </template>
@@ -331,11 +512,27 @@ const renderStars = (rating: number) => {
   margin-bottom: 12px;
 }
 
-.search-icon {
+.search-btn {
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1;
+}
+
+.search-btn:hover .search-icon {
+  color: #2d8a6e;
+}
+
+.search-icon {
   width: 18px;
   height: 18px;
   color: #9ca3af;
@@ -582,5 +779,102 @@ const renderStars = (rating: number) => {
   height: 16px;
   color: #d1d5db;
   flex-shrink: 0;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e8f5e9;
+  border-top-color: #2d8a6e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 错误提示 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 14px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.retry-btn {
+  padding: 10px 24px;
+  background: #2d8a6e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.retry-btn:hover {
+  background: #237a5e;
+}
+
+/* 空数据提示 */
+.empty-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.scroll-sentinel {
+  height: 1px;
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.loading-spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #e8f5e9;
+  border-top-color: #2d8a6e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.no-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: #9ca3af;
+  font-size: 13px;
 }
 </style>
