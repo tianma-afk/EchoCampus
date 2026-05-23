@@ -102,22 +102,22 @@ public class MinioUtil {
     /**
      * 检查对象是否存在
      */
-    public boolean isObjectExists(String bucketName, String objectName) throws Exception {
-        try {
-            minioClient.statObject(
-                    StatObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .build()
-            );
-            return true;
-        } catch (ErrorResponseException e) {
-            if (e.code().equals("NoSuchKey")) {
-                return false;
-            }
-            throw e;
-        }
-    }
+//    public boolean isObjectExists(String bucketName, String objectName) throws Exception {
+//        try {
+//            minioClient.statObject(
+//                    StatObjectArgs.builder()
+//                            .bucket(bucketName)
+//                            .object(objectName)
+//                            .build()
+//            );
+//            return true;
+//        } catch (ErrorResponseException e) {
+//            if (e.code().equals("NoSuchKey")) {
+//                return false;
+//            }
+//            throw e;
+//        }
+//    }
 
     /**
      * 删除对象
@@ -134,24 +134,24 @@ public class MinioUtil {
     /**
      * 获取预签名URL
      */
-    public String getPresignedObjectUrl(
-            String bucketName,
-            String objectName,
-            int expiry,
-            TimeUnit timeUnit,
-            Method method,
-            String contentType) throws Exception {
-
-        GetPresignedObjectUrlArgs.Builder builder = GetPresignedObjectUrlArgs.builder()
-                .bucket(bucketName)
-                .object(objectName)
-                .expiry(expiry, timeUnit)
-                .method(method);
-
-        if (contentType != null) {
-            builder.extraQueryParam("content-type", contentType);
-        }
-
-        return minioClient.getPresignedObjectUrl(builder.build());
-    }
+//    public String getPresignedObjectUrl(
+//            String bucketName,
+//            String objectName,
+//            int expiry,
+//            TimeUnit timeUnit,
+//            Method method,
+//            String contentType) throws Exception {
+//
+//        GetPresignedObjectUrlArgs.Builder builder = GetPresignedObjectUrlArgs.builder()
+//                .bucket(bucketName)
+//                .object(objectName)
+//                .expiry(expiry, timeUnit)
+//                .method(method);
+//
+//        if (contentType != null) {
+//            builder.extraQueryParam("content-type", contentType);
+//        }
+//
+//        return minioClient.getPresignedObjectUrl(builder.build());
+//    }
 }
