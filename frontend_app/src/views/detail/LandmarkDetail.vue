@@ -743,14 +743,15 @@ const bubblePositions = computed(() => {
 }
 
 .floor-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  height: 32px;
+  border-radius: 16px;
   border: none;
   background: #e8f5e9;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
+  padding: 0 12px;
+  white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
