@@ -19,13 +19,13 @@ try:
         from xformers.ops import memory_efficient_attention, unbind
 
         XFORMERS_AVAILABLE = True
-        warnings.warn("xFormers is available (Attention)")
+        #warnings.warn("xFormers is available (Attention)")
     else:
-        warnings.warn("xFormers is disabled (Attention)")
+        #warnings.warn("xFormers is disabled (Attention)")
         raise ImportError
 except ImportError:
     XFORMERS_AVAILABLE = False
-    warnings.warn("xFormers is not available (Attention)")
+    #warnings.warn("xFormers is not available (Attention)")
 
 
 class DropPath(nn.Module):
@@ -152,7 +152,8 @@ class MemEffCrossAttention(CrossAttention):
         if not XFORMERS_AVAILABLE:
             if attn_bias is not None:
                 raise AssertionError("xFormers is required for using nested tensors")
-            return super().forward(query, key, value, qpos, kpos)
+            # xformers not available: call parent without positional qpos/kpos extras
+            return super().forward(query, key, value)
 
         B, Nq, C = query.shape
         Nk = key.shape[1]

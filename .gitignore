@@ -48,4 +48,4 @@ logs/
 *.bak
 
 #数据库文件
-/data/*
+data/

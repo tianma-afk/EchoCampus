@@ -32,7 +32,8 @@ print(f"特征提取完成，开始搜索相似图片...")
 print("选择你要搜索的图片:")
 
 goal_path = select_pic.select_single_file()
-goal_vector = extractor.extract_vector(goal_path)
+# 提取查询图片的完整特征（包括 tokens）
+goal_vector, goal_token = extractor.extract_complete_features(goal_path)
 
 result = core.milvus_lite.search_similar(goal_vector)
 print("搜索结果:")
@@ -41,7 +42,7 @@ for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
     img_id = hit['id']
     filename = os.path.basename(all_image_paths[img_id])
     print(f"  - {filename} (ID: {img_id} , score: {hit['distance']})")
-    score = extractor.pair_similarity_from_cached_tokens(core.token_manager.load_image_tokens(img_id), token)
+    score = extractor.pair_similarity_from_cached_tokens(goal_token, core.token_manager.load_image_tokens(img_id))
     results_with_scores.append((hit, score))
 
 # 按 score 降序排序

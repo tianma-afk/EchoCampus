@@ -10,10 +10,11 @@ import sys
 from omegaconf import OmegaConf
 import re
 
+sys.path.append(str(Path(__file__).resolve().parent))
+from core.device import get_available_device, get_device, get_device_type, to_device, print_device_info
+
 print(f"PyTorch版本: {torch.__version__}")
-print(f"CUDA是否可用: {torch.cuda.is_available()}")
-if torch.cuda.is_available():
-    print(f"当前CUDA设备: {torch.cuda.get_device_name(0)}")
+print_device_info()
 
 BACKEND_PY_PATH = Path(__file__).resolve().parents[2]
 
@@ -70,7 +71,7 @@ class PairVPRExtractor:
                  weight_dir=str(BACKEND_PY_PATH / "weights/vpr_weights")):
         self.model_type = model_type
         self.processing_size = processing_size
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device, self.device_type = get_available_device()
         self.weights_dir = weight_dir
         os.makedirs(weight_dir, exist_ok=True)
         
@@ -84,21 +85,6 @@ class PairVPRExtractor:
         
         self.model = PairVPRNet(cfg)
         self._load_weights()
-
-        print(f"self.model 类型: {type(self.model)}")
-        print(f"self.model 是否有 forward 方法: {hasattr(self.model, 'forward')}")
-    # 🔥 添加完整诊断
-        print("\n" + "="*50)
-        print("🔍 模型诊断信息:")
-        print(f"  cfg.encoder.model_name: {cfg.encoder.model_name}")
-        print(f"  cfg.masking.patch_size: {cfg.masking.patch_size}")
-        print(f"  cfg.augmentation.img_res: {cfg.augmentation.img_res}")
-        print(f"  model.img_res: {self.model.img_res}")
-        print(f"  model.num_patches: {self.model.num_patches}")
-        print(f"  model.enc_embed_dim: {self.model.enc_embed_dim}")
-        print(f"  model.dec_embed_dim: {self.model.dec_embed_dim}")
-        print(f"  model.decoder_embed.weight.shape: {self.model.decoder_embed.weight.shape}")
-        print("="*50 + "\n")
 
         self.model.to(self.device)
         self.model.eval()
@@ -198,37 +184,49 @@ class PairVPRExtractor:
         """
         q_tokens, c_tokens: 已经是 torch.Tensor 或 numpy.ndarray，形状为 [1, L, D] 或 [L, D]
         返回: float，相似度分数（raw score，越大越相似，行为上与官方 eval 保持一致）
+        实现细节：对称得分 = model(q,c,'pairvpr') + model(c,q,'pairvpr')，始终返回 float（batch=1 的常见情况）。
         """
-        self.model.eval()
+        # 转换为 torch.Tensor
+        def ensure_tensor(x):
+            if isinstance(x, np.ndarray):
+                t = torch.from_numpy(x)
+            elif isinstance(x, torch.Tensor):
+                t = x
+            else:
+                t = torch.tensor(x)
+            return t.float()
+
+        q = ensure_tensor(q_tokens)
+        c = ensure_tensor(c_tokens)
+
+        # 形状规范化：如果是 [L, D] -> [1, L, D]
+        if q.dim() == 2:
+            q = q.unsqueeze(0)
+        if c.dim() == 2:
+            c = c.unsqueeze(0)
+
+        # 广播 batch 大小（若一侧为1）
+        if q.shape[0] == 1 and c.shape[0] > 1:
+            q = q.expand(c.shape[0], -1, -1)
+        if c.shape[0] == 1 and q.shape[0] > 1:
+            c = c.expand(q.shape[0], -1, -1)
+
+        # 移动到模型设备
+        q = q.to(self.device)
+        c = c.to(self.device)
+
         with torch.no_grad():
-            def ensure_tensor(data):
-                if isinstance(data, np.ndarray):
-                    return torch.from_numpy(data)
-                return data
+            # 使用官方 forward 的 pairvpr 分支以保持一致性
+            s1 = self.model(q, c, mode="pairvpr")  # (B,1)
+            s2 = self.model(c, q, mode="pairvpr")  # (B,1)
+            scores = (s1 + s2).squeeze(-1)
+            scores = scores.cpu()
 
-            q = ensure_tensor(q_tokens)
-            c = ensure_tensor(c_tokens)
-
-            # 规范为 3D [1, L, D]
-            if q.dim() == 2: q = q.unsqueeze(0)
-            if c.dim() == 2: c = c.unsqueeze(0)
-
-            q = q.to(self.device)
-            c = c.to(self.device)
-
-            # 采用官方 eval 的做法：双向打分并融合（scoresa + scoresb），这里使用均值
-            decfeat_ab = self.model._decoder(q, c)
-            cls_ab = decfeat_ab[:, 0]
-            score_ab = self.model.classvprmodule(cls_ab)
-
-            decfeat_ba = self.model._decoder(c, q)
-            cls_ba = decfeat_ba[:, 0]
-            score_ba = self.model.classvprmodule(cls_ba)
-
-            # 使用原始分数相加，与官方 eval 保持一致（越大越相似）
-            similarity = (score_ab + score_ba).item()
-
-        return similarity
+        # 对常见的 batch=1 情况，始终返回 float
+        if scores.numel() == 1:
+            return float(scores.item())
+        # 否则返回 list
+        return scores.numpy().tolist()
     
 
 if __name__ == "__main__":
