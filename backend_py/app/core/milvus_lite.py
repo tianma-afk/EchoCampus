@@ -46,10 +46,18 @@ else:
 
 indexes = client.list_indexes(collection_name=COLLECTION_NAME)
 if "vector" not in indexes:
+    # 使用 MilvusClient.prepare_index_params() 方法创建索引参数
+    index_params = client.prepare_index_params()
+    index_params.add_index(
+        field_name="vector",
+        index_type=INDEX_PARAMS["index_type"],
+        metric_type=INDEX_PARAMS["metric_type"],
+        params=INDEX_PARAMS["params"]
+    )
+    
     client.create_index(
         collection_name=COLLECTION_NAME,
-        field_name="vector",
-        index_params=INDEX_PARAMS
+        index_params=index_params
     )
     print("✅ 索引创建成功")
 else:
