@@ -5,6 +5,8 @@ import com.echocampus.mapper.LandmarkMapper;
 import com.echocampus.service.admin.LandmarkAdminService;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     private final LandmarkMapper landmarkMapper;
@@ -14,9 +16,9 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     }
 
     @Override
-    public Long createLandmark(LandmarkCreateRequest request) {
+    public UUID createLandmark(LandmarkCreateRequest request) {
 //        return landmarkMapper.insertLandmark(request);
-        return 100L;
+        return UUID.randomUUID();
     }
 
 }
