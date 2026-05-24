@@ -31,9 +31,9 @@ public class LandmarkEntity {
     private List<String> tags;
 
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<String> imgs;
+    private List<UUID> imgs;
 
-    private String coverImg;
+    private UUID coverImageId;
 
     private String buildYear;
 

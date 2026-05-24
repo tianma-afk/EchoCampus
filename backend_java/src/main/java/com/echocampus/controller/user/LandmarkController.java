@@ -26,7 +26,7 @@ public class LandmarkController {
 
     @GetMapping("/")
     @Operation(summary = "获取地标列表", description = "支持按分类筛选、关键词搜索、排序和分页")
-    public Result<Page<LandmarkVO>> getLandmarkList(@Valid LandmarkListRequest request) {
+    public Result<Page<LandmarkVO>> getLandmarkList(@Valid @RequestBody LandmarkListRequest request) {
         return Result.success(landmarkService.getLandmarkList(request));
     }
 

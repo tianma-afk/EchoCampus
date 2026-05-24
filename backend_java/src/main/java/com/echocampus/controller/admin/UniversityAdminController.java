@@ -5,6 +5,7 @@ import com.echocampus.vo.Result;
 import com.echocampus.service.admin.UniversityAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -21,7 +22,7 @@ public class UniversityAdminController {
 
     @PostMapping("/")
     @Operation(summary = "创建大学", description = "创建一个新的大学")
-    public Result<UUID> createUniversity(@RequestBody UniversityCreateRequest request) {
+    public Result<UUID> createUniversity(@Valid @RequestBody UniversityCreateRequest request) {
         UUID id = universityAdminService.createUniversity(request);
         return Result.success(id);
     }
