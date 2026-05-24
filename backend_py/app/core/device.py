@@ -36,6 +36,14 @@ def get_available_device():
         logger.info(f"✅ 使用 NVIDIA CUDA: {torch.cuda.get_device_name(0)}")
         logger.info(f"   CUDA 版本: {torch.version.cuda}")
         return _device, _device_type
+
+    if hasattr(torch,'xpu') and torch.xpu.is_available():
+        _device = torch.device('xpu')
+        _device_type = 'xpu'
+        logger.info(f"✅ 使用 Intel XPU: {torch.xpu.get_device_name(0) if hasattr(torch.xpu, 'get_device_name') else 'Intel GPU'}")
+        if hasattr(torch, 'version') and hasattr(torch.version, 'xpu'):
+            logger.info(f"   XPU 版本: {torch.version.xpu}")
+        return _device, _device_type
     
     # 2. 检查 DirectML (Windows GPU 通用加速)
     try:
@@ -98,6 +106,9 @@ def is_cuda_available():
     """检查 CUDA 是否可用"""
     return torch.cuda.is_available()
 
+def is_xpu_available():
+    """检查 XPU 是否可用"""
+    return hasattr(torch,'xpu') and torch.xpu.is_available()
 
 def is_directml_available():
     """检查 DirectML 是否可用"""
@@ -121,6 +132,14 @@ def get_device_info():
         info['cuda_version'] = torch.version.cuda
         info['device_name'] = torch.cuda.get_device_name(0)
         info['device_count'] = torch.cuda.device_count()
+    elif device_type == 'xpu':
+        if hasattr(torch, 'xpu'):
+            info['xpu_version'] = torch.version.xpu if hasattr(torch.version, 'xpu') else 'unknown'
+            try:
+                info['device_name'] = torch.xpu.get_device_name(0)
+            except:
+                info['device_name'] = 'Intel GPU'
+            info['device_count'] = torch.xpu.device_count() if hasattr(torch.xpu, 'device_count') else 1
     elif device_type == 'directml':
         try:
             import torch_directml

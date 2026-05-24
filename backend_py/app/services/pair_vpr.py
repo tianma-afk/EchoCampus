@@ -10,6 +10,7 @@ import sys
 from omegaconf import OmegaConf
 import re
 
+
 sys.path.append(str(Path(__file__).resolve().parent))
 from core.device import get_available_device, get_device, get_device_type, to_device, print_device_info
 
@@ -67,7 +68,7 @@ class PairVPRExtractor:
         "vitG": {"path": "pairvpr-vitH.pth", "download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitG.pth"},
     }
     
-    def __init__(self, model_type="vitB", processing_size=322, out_dim=512, 
+    def __init__(self, model_type="vitB", processing_size=322, out_dim=512,use_fp16=False,
                  weight_dir=str(BACKEND_PY_PATH / "weights/vpr_weights")):
         self.model_type = model_type
         self.processing_size = processing_size
@@ -86,9 +87,23 @@ class PairVPRExtractor:
         self.model = PairVPRNet(cfg)
         self._load_weights()
 
+        
+        if use_fp16 and self.device_type == 'xpu':
+            self.use_fp16 = use_fp16
+            self.model = self.model.half()
+            print("✨ 已启用 FP16 半精度推理")
+        else:
+            self.use_fp16 = False
+            if use_fp16 and self.device_type != 'xpu':
+                print(f"⚠️ FP16 仅在 xpu 上测试过，当前设备为 {self.device_type}，跳过")
+
         self.model.to(self.device)
         self.model.eval()
-        
+
+        # if self.device_type == 'directml' and hasattr(torch, 'compile'):
+        #     self.model = torch.compile(self.model, backend="inductor")
+        #     print("✨ 已启用 torch.compile 优化")
+                
         # 🔥 关键：提取解码器组件（用于直接处理 tokens）
         self.decoder_embed = self.model.decoder_embed
         self.decoder_clstoken = self.model.decoder_clstoken
@@ -173,11 +188,16 @@ class PairVPRExtractor:
         transform = self._get_transform()
         img = Image.open(image_path).convert("RGB")
         img_tensor = transform(img).unsqueeze(0).to(self.device)
+
+        if self.use_fp16:
+            img_tensor = img_tensor.half()
+        
+        img_tensor = img_tensor.to(self.device)
         
         with torch.no_grad():
             dense_features, global_desc = self.model(img_tensor, None, mode="global")
-            vector = global_desc.cpu().numpy().flatten().tolist()
-            tokens = dense_features.squeeze(0).cpu()
+            vector = global_desc.float().cpu().numpy().flatten().tolist()
+            tokens = dense_features.float().squeeze(0).cpu()
         return vector, tokens
     
     def pair_similarity_from_cached_tokens(self, q_tokens, c_tokens):
@@ -194,7 +214,11 @@ class PairVPRExtractor:
                 t = x
             else:
                 t = torch.tensor(x)
-            return t.float()
+
+            if self.use_fp16:
+                return t.half()
+            else:
+                return t.float()
 
         q = ensure_tensor(q_tokens)
         c = ensure_tensor(c_tokens)
@@ -220,7 +244,7 @@ class PairVPRExtractor:
             s1 = self.model(q, c, mode="pairvpr")  # (B,1)
             s2 = self.model(c, q, mode="pairvpr")  # (B,1)
             scores = (s1 + s2).squeeze(-1)
-            scores = scores.cpu()
+            scores = scores.float().cpu()
 
         # 对常见的 batch=1 情况，始终返回 float
         if scores.numel() == 1:
