@@ -35,7 +35,7 @@ goal_path = select_pic.select_single_file()
 # 提取查询图片的完整特征（包括 tokens）
 goal_vector, goal_token = extractor.extract_complete_features(goal_path)
 
-result = core.milvus_lite.search_similar(goal_vector)
+result = core.milvus_lite.search_similar(goal_vector,top_k = 10)
 print("搜索结果:")
 results_with_scores = []
 for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
