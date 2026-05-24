@@ -9,9 +9,9 @@ TOKENS_DIR = PROJECT_ROOT / "data" / "tokens"
 TOKENS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def save_image_tokens(image_id, tokens):
+def save_image_tokens(image_uuid, tokens):
     # 1. 拼接完整的文件存储路径，例如：data/tokens/0.npy
-    file_path = TOKENS_DIR / f"{image_id}.npy"
+    file_path = TOKENS_DIR / f"{image_uuid}.npy"
     
     # 2. 如果输入是 PyTorch Tensor，需要安全地将其转换成 NumPy 数组
     if isinstance(tokens, torch.Tensor):
@@ -28,8 +28,8 @@ def save_image_tokens(image_id, tokens):
     np.save(str(file_path), tokens_ndarray)
 
 
-def load_image_tokens(image_id, device=None):
-    file_path = TOKENS_DIR / f"{image_id}.npy"
+def load_image_tokens(image_uuid, device=None):
+    file_path = TOKENS_DIR / f"{image_uuid}.npy"
     
     # 健壮性检查：防止文件丢失或未提取直接读取
     if not file_path.exists():
