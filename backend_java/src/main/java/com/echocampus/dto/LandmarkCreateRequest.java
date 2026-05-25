@@ -56,4 +56,7 @@ public class LandmarkCreateRequest {
 
     @Schema(description = "推荐率", example = "0.95")
     private BigDecimal recommendRate;
+
+    @Schema(description = "楼层列表")
+    private List<FloorCreateDTO> floorList;
 }

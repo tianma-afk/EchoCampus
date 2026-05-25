@@ -1,19 +1,25 @@
 package com.echocampus.service.admin.impl;
 
+import com.echocampus.dto.FloorCreateDTO;
 import com.echocampus.dto.LandmarkCreateRequest;
+import com.echocampus.entity.FloorEntity;
 import com.echocampus.entity.LandmarkEntity;
+import com.echocampus.mapper.FloorMapper;
 import com.echocampus.mapper.LandmarkMapper;
 import com.echocampus.service.admin.LandmarkAdminService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     private final LandmarkMapper landmarkMapper;
+    private final FloorMapper floorMapper;
 
-    public LandmarkAdminServiceImpl(LandmarkMapper landmarkMapper) {
+    public LandmarkAdminServiceImpl(LandmarkMapper landmarkMapper, FloorMapper floorMapper) {
         this.landmarkMapper = landmarkMapper;
+        this.floorMapper = floorMapper;
     }
 
     @Override
@@ -34,6 +40,19 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
         entity.setTotalFloors(request.getTotalFloors());
         entity.setRecommendRate(request.getRecommendRate());
         landmarkMapper.insert(entity);
+
+        List<FloorCreateDTO> floorList = request.getFloorList();
+        if (floorList != null && !floorList.isEmpty()) {
+            for (FloorCreateDTO dto : floorList) {
+                FloorEntity floor = new FloorEntity();
+                floor.setLandmarkId(entity.getId());
+                floor.setFloorNumber(dto.getFloorNumber());
+                floor.setFloorName(dto.getFloorName());
+                floor.setTags(dto.getTags());
+                floorMapper.insert(floor);
+            }
+        }
+
         return entity.getId();
     }
 }
