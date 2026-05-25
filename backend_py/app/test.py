@@ -6,7 +6,7 @@ from pathlib import Path
 import core.select_pic as select_pic
 import time
 
-extractor = PairVPRExtractor(model_type="vitB",use_fp16=False)
+extractor = PairVPRExtractor(model_type="vitB",use_fp16=True)
 id = 0;
 
 # 3. 获取文件夹下所有的图片路径（模拟 10000 张的场景）
@@ -41,12 +41,20 @@ goal_vector, goal_token = extractor.extract_complete_features(goal_path)
 
 result = core.milvus_lite.search_similar(goal_vector)
 print("搜索结果:")
+
+# 批量加载候选 tokens
+candidate_ids = [hit['id'] for hit in result]
+candidate_tokens = [core.token_manager.load_image_tokens(img_id) for img_id in candidate_ids]
+
+# 批量计算相似度（优化版）
+scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), candidate_tokens)
+
+# 构建结果
 results_with_scores = []
-for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
+for hit, score in zip(result, scores):
     img_id = hit['id']
     filename = os.path.basename(all_image_paths[img_id])
     print(f"  - {filename} (ID: {img_id} , score: {hit['distance']})")
-    score = extractor.pair_similarity_from_cached_tokens(goal_token, core.token_manager.load_image_tokens(img_id))
     results_with_scores.append((hit, score))
 
 # 按 score 降序排序
