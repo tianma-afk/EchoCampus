@@ -4,8 +4,9 @@ from services.pair_vpr import PairVPRExtractor
 import os
 from pathlib import Path
 import core.select_pic as select_pic
+import time
 
-extractor = PairVPRExtractor(model_type="vitB")
+extractor = PairVPRExtractor(model_type="vitB",use_fp16=False)
 id = 0;
 
 # 3. 获取文件夹下所有的图片路径（模拟 10000 张的场景）
@@ -33,6 +34,9 @@ print("选择你要搜索的图片:")
 
 goal_path = select_pic.select_single_file()
 # 提取查询图片的完整特征（包括 tokens）
+
+start_time = time.time()
+
 goal_vector, goal_token = extractor.extract_complete_features(goal_path)
 
 result = core.milvus_lite.search_similar(goal_vector)
@@ -54,3 +58,6 @@ for hit, score in results_with_scores:
     img_id = hit['id']
     filename = os.path.basename(all_image_paths[img_id])
     print(f"  - {filename} (ID: {img_id}, score: {score})")
+
+end_time = time.time()
+print(f"搜索完成，耗时 {end_time - start_time} 秒")
