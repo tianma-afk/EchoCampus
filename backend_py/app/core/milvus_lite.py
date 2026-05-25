@@ -30,9 +30,9 @@ client = MilvusClient(str(MILVUS_DB_PATH))
 print("✅MilvusLite连接成功")
 
 if not client.has_collection(COLLECTION_NAME):
-    # 定义 schema，明确 uuid 字段类型为 VARCHAR (字符串)
+    # 定义 schema，明确 id 字段类型为 VARCHAR (字符串)
     schema = CollectionSchema([
-        FieldSchema(name="uuid", dtype=DataType.VARCHAR, max_length=36, is_primary=True),
+        FieldSchema(name="id", dtype=DataType.VARCHAR, max_length=36, is_primary=True),
         FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=VECTOR_DIM)
     ])
     
@@ -63,16 +63,16 @@ if "vector" not in indexes:
 else:
     print("✅ 索引已存在，跳过创建")
 
-def insert_vector(vector, uuid: str = None):  # 改为 str 类型
-    if uuid is None:
+def insert_vector(vector, id: str = None):  # 改为 str 类型
+    if id is None:
         print("错误: id不能为None")
         return None
     
-    # 可选：验证 UUID 格式
-    if len(uuid) != 36:
-        print(f"警告: uuid '{uuid}' 长度不是36位")
+    # 可选：验证 id 格式
+    if len(id) != 36:
+        print(f"警告: id '{id}' 长度不是36位")
     
-    data = [{"uuid": uuid, "vector": vector}]
+    data = [{"id": id, "vector": vector}]
 
     result = client.insert(
         collection_name=COLLECTION_NAME,
@@ -80,23 +80,23 @@ def insert_vector(vector, uuid: str = None):  # 改为 str 类型
     )
     client.load_collection(collection_name=COLLECTION_NAME)
     return result
-def insert_vectors(vectors, uuids: list = None):  # ids 改为字符串列表
+def insert_vectors(vectors, ids: list = None):  # ids 改为字符串列表
     data_to_insert = []
     if vectors is None or len(vectors) == 0:
         print("错误: vectors不能为None或空")
         return None
     
-    if uuids is None or len(uuids) != len(vectors):
-        print("错误: uuids不能为None或长度与vectors不一致")
+    if ids is None or len(ids) != len(vectors):
+        print("错误: ids不能为None或长度与vectors不一致")
         return None
     
-    # 可选：验证每个 UUID 长度
-    for uuid_val in uuids:
-        if len(uuid_val) != 36:
-            print(f"警告: uuid '{uuid_val}' 长度不是36位")
+    # 可选：验证每个 id 长度
+    for id_val in ids:
+        if len(id_val) != 36:
+            print(f"警告: id '{id_val}' 长度不是36位")
     
     for i, vector in enumerate(vectors):
-        data_to_insert.append({"uuid": uuids[i], "vector": vector})
+        data_to_insert.append({"id": ids[i], "vector": vector})
     result = client.insert(
         collection_name=COLLECTION_NAME,
         data=data_to_insert
@@ -113,10 +113,10 @@ def search_similar(query_vector, top_k=10):
         data=[query_vector],              # 查询的向量（支持批量，这里用单条）
         limit=top_k,                      # 返回数量
         search_params=SEARCH_PARAMS,      # 搜索参数（你已定义好）
-        output_fields=["uuid"]              # 需要返回的字段（这里只要id）
+        output_fields=["id"]              # 需要返回的字段（这里只要id）
     )
     
-    return [{'uuid': r['id'], 'score': r['distance']} for r in results[0]]
+    return [{'id': r['id'], 'score': r['distance']} for r in results[0]]
 
 
 

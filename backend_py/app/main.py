@@ -72,6 +72,17 @@ def search(params: SearchParams):
         "results_1":json_results_1,      # 初始比较的结果
         "results_2": json_results_2      # 筛选后的结果
     }
+    
+    
+class InsertParams(BaseModel):
+    pic_url: str
+    
+@app.post("/insert")    
+def add(params: InsertParams):
+    
+    return {"message": f"你提交的图片url是: {params.pic_url}"}
+
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=False)#设置运行参数：网络地址 端口号 是否开启热更新
