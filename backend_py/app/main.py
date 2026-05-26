@@ -11,7 +11,7 @@ import hashlib
 
 
 app = FastAPI()
-extractor = PairVPRExtractor(model_type="vitB")
+extractor = PairVPRExtractor(model_type="vitB",use_fp16=True)
 
 @app.get("/")
 def root():

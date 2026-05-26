@@ -8,8 +8,7 @@ import uuid
 import hashlib
 import time
 
-extractor = PairVPRExtractor(model_type="vitB",use_fp16=False)
-
+extractor = PairVPRExtractor(model_type="vitB",use_fp16=True)
 
 # 3. 获取文件夹下所有的图片路径（模拟 10000 张的场景）
 image_folder = str(Path(__file__).resolve().parent / "temp_resources")
@@ -19,7 +18,8 @@ for f in os.listdir(image_folder):
     if f.lower().endswith((".png", ".jpg", ".jpeg")):
         file_path = os.path.join(image_folder, f)
         # 使用文件名的 MD5 值作为稳定的 uuid (保证是36位以内或适配你的长度限制)
-        stable_uuid = hashlib.md5(f.encode('utf-8')).hexdigest()
+        stable_uuid_without_desh = hashlib.md5(f.encode('utf-8')).hexdigest()
+        stable_uuid = stable_uuid_without_desh[0:8]+'-'+stable_uuid_without_desh[8:12]+'-'+stable_uuid_without_desh[12:16]+'-'+stable_uuid_without_desh[16:20]+'-'+stable_uuid_without_desh[20:32]
         all_image_paths[stable_uuid] = file_path
 
 print(f"共找到 {len(all_image_paths)} 张图片，开始提取特征...")
@@ -31,9 +31,6 @@ for image_uuid, image_path in all_image_paths.items():
     vectors.append(vector)
     uuids.append(image_uuid)
     core.token_manager.save_image_tokens(image_uuid, token)
-print("检查uuids列表：")    
-print(uuids)
-# breakpoint()# 在这里检查 uuids 列表的内容，确保它们是字符串类型的 uuid
     
 core.milvus_lite.insert_vectors(vectors, uuids)
 
@@ -51,14 +48,20 @@ goal_vector, goal_token = extractor.extract_complete_features(goal_path)
 
 result = core.milvus_lite.search_similar(goal_vector, top_k=10)
 print("搜索结果:")
+
+# 批量加载候选 tokens
+candidate_ids = [hit['uuid'] for hit in result]
+candidate_tokens = [core.token_manager.load_image_tokens(img_id) for img_id in candidate_ids]
+
+# 批量计算相似度（优化版）
+scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), candidate_tokens)
+
+# 构建结果
 results_with_scores = []
-for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
-    img_uuid = hit["uuid"]
-    filename = os.path.basename(all_image_paths.get(img_uuid))
-    print(f"  - {filename} (uuid: {img_uuid} , score: {hit['score']})")
-    score = extractor.pair_similarity_from_cached_tokens(
-        goal_token, core.token_manager.load_image_tokens(img_uuid)
-    )
+for hit, score in zip(result, scores):
+    img_uuid = hit['uuid']
+    filename = os.path.basename(all_image_paths[img_uuid])
+    print(f"  - {filename} (ID: {img_uuid} , score: {hit['score']})")
     results_with_scores.append((hit, score))
 
 # 按 score 降序排序

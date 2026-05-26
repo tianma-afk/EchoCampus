@@ -2,11 +2,7 @@ version = 1
 revision = 3
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
-    "sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml' and extra != 'extra-10-backend-py-xpu'",
-    "sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml' and extra != 'extra-10-backend-py-xpu'",
-    "sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml' and extra != 'extra-10-backend-py-xpu'",
-    "python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml'",
-    "python_full_version < '3.12' and sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml'",
+    "sys_platform == 'win32'",
 ]
 supported-markers = [
     "sys_platform == 'win32'",
@@ -83,7 +79,6 @@ dependencies = [
     { name = "python-dotenv", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "requests", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "timm", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "triton-windows", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "uvicorn", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 
@@ -95,14 +90,16 @@ cpu = [
 cu126 = [
     { name = "torch", version = "2.12.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "sys_platform == 'win32'" },
     { name = "torchvision", version = "0.27.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "sys_platform == 'win32'" },
+    { name = "triton-windows", marker = "sys_platform == 'win32'" },
     { name = "xformers", marker = "sys_platform == 'win32'" },
 ]
 directml = [
     { name = "torch-directml", marker = "sys_platform == 'win32'" },
 ]
 xpu = [
-    { name = "torch", version = "2.6.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "sys_platform == 'win32'" },
-    { name = "torchvision", version = "0.21.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "sys_platform == 'win32'" },
+    { name = "torch", version = "2.12.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "sys_platform == 'win32'" },
+    { name = "torchvision", version = "0.27.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "sys_platform == 'win32'" },
+    { name = "triton-xpu", marker = "sys_platform == 'win32'" },
 ]
 
 [package.metadata]
@@ -119,12 +116,13 @@ requires-dist = [
     { name = "timm", specifier = ">=1.0.27" },
     { name = "torch", marker = "extra == 'cpu'", specifier = ">=2.12.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "backend-py", extra = "cpu" } },
     { name = "torch", marker = "extra == 'cu126'", specifier = ">=2.12.0", index = "https://download.pytorch.org/whl/cu126", conflict = { package = "backend-py", extra = "cu126" } },
-    { name = "torch", marker = "extra == 'xpu'", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/xpu", conflict = { package = "backend-py", extra = "xpu" } },
+    { name = "torch", marker = "extra == 'xpu'", specifier = ">=2.12.0", index = "https://download.pytorch.org/whl/xpu", conflict = { package = "backend-py", extra = "xpu" } },
     { name = "torch-directml", marker = "extra == 'directml'" },
     { name = "torchvision", marker = "extra == 'cpu'", specifier = ">=0.27.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "backend-py", extra = "cpu" } },
     { name = "torchvision", marker = "extra == 'cu126'", specifier = ">=0.27.0", index = "https://download.pytorch.org/whl/cu126", conflict = { package = "backend-py", extra = "cu126" } },
-    { name = "torchvision", marker = "extra == 'xpu'", specifier = ">=0.21.0", index = "https://download.pytorch.org/whl/xpu", conflict = { package = "backend-py", extra = "xpu" } },
-    { name = "triton-windows", specifier = ">=3.7.0.post26" },
+    { name = "torchvision", marker = "extra == 'xpu'", specifier = ">=0.27.0", index = "https://download.pytorch.org/whl/xpu", conflict = { package = "backend-py", extra = "xpu" } },
+    { name = "triton-windows", marker = "extra == 'cu126'", specifier = ">=3.7.0" },
+    { name = "triton-xpu", marker = "extra == 'xpu'", specifier = ">=3.7.0", index = "https://download.pytorch.org/whl/xpu", conflict = { package = "backend-py", extra = "xpu" } },
     { name = "uvicorn", specifier = ">=0.47.0" },
     { name = "xformers", marker = "extra == 'cu126'", specifier = ">=0.0.28" },
 ]
@@ -132,20 +130,20 @@ provides-extras = ["cpu", "cu126", "xpu", "directml"]
 
 [[package]]
 name = "cachetools"
-version = "7.1.3"
+version = "7.1.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8f/c1/67cfb86aa21144796ff51068326d467fbef8ee42f8d08a3a8a926106cf0c/cachetools-7.1.3.tar.gz", hash = "sha256:135cfe944bc3c1e805505f65dae0bef375a2f96261171ab66c79ef77d0bda39d", size = 45780, upload-time = "2026-05-18T18:21:03.819Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/8b/0d3945a13955303b81272f759a0331e54c5c793da455e6f5706b89d2639c/cachetools-7.1.4.tar.gz", hash = "sha256:437f55a4e0c1b01a4f3077cc470e6991d47430970e36fbcb77e2be0df4fc1cd6", size = 40085, upload-time = "2026-05-21T22:40:43.376Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/52/8ff5c1a3b2e821ced9b2998fba3ee29aa4525c0bf51e5ee55dd6f61a4ed5/cachetools-7.1.3-py3-none-any.whl", hash = "sha256:9876787e2346e20584d5cca236cb5d49d04e7193de91646f230725b2e1e8b804", size = 16763, upload-time = "2026-05-18T18:21:02.386Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/7b/1fc1c09cc0756cf25861a3be10565915953876da48bb228fb9a672b20a42/cachetools-7.1.4-py3-none-any.whl", hash = "sha256:323dc4127934744db5b54eb4924482d7edafbf9554e820d1531c2e08c0e4ef54", size = 16761, upload-time = "2026-05-21T22:40:41.845Z" },
 ]
 
 [[package]]
 name = "certifi"
-version = "2026.4.22"
+version = "2026.5.20"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/25/ee/6caf7a40c36a1220410afe15a1cc64993a1f864871f698c0f93acb72842a/certifi-2026.4.22.tar.gz", hash = "sha256:8d455352a37b71bf76a79caa83a3d6c25afee4a385d632127b6afb3963f1c580", size = 137077, upload-time = "2026-04-22T11:26:11.191Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/ce/ee2ecad540810a79593028e88299baeae54d346cc7a0d94b6199988b89b1/certifi-2026.5.20.tar.gz", hash = "sha256:69dea482ab64caa7b9f6aba1c6bf48bb6a5448d1c0f1b17ab42ad8c763a5344d", size = 135422, upload-time = "2026-05-20T11:46:50.073Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/30/7cd8fdcdfbc5b869528b079bfb76dcdf6056b1a2097a662e5e8c04f42965/certifi-2026.4.22-py3-none-any.whl", hash = "sha256:3cb2210c8f88ba2318d29b0388d1023c8492ff72ecdde4ebdaddbb13a31b1c4a", size = 135707, upload-time = "2026-04-22T11:26:09.372Z" },
+    { url = "https://files.pythonhosted.org/packages/59/8c/57e832b7af6d7c5abe66eb3fbe3a3a32f4d11ea23a1aa7131371035be991/certifi-2026.5.20-py3-none-any.whl", hash = "sha256:3c52e209ba0a4ad7aebe60436a4ab349c39e1e602e8c134221e546902ad25897", size = 134134, upload-time = "2026-05-20T11:46:48.578Z" },
 ]
 
 [[package]]
@@ -165,14 +163,14 @@ wheels = [
 
 [[package]]
 name = "click"
-version = "8.4.0"
+version = "8.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/23/e4/796662cd90cf80e3a363c99db2b88e0e394b988a575f60a17e16440cd011/click-8.4.0.tar.gz", hash = "sha256:638f1338fe1235c8f4e008e4a8a254fb5c5fbdcbb40ece3c9142ebb78e792973", size = 350843, upload-time = "2026-05-17T00:47:58.425Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/98/518d8e5081007684232226f475082b30087d0f585e8457db087298259f49/click-8.4.1.tar.gz", hash = "sha256:918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96", size = 353007, upload-time = "2026-05-22T04:08:37.769Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/ae/8e92f8058baf87f6c7d86ee7e457668690195cc77efedb8d3797a06e3940/click-8.4.0-py3-none-any.whl", hash = "sha256:40c50b7c6c6adac2823d411041ec84f3f103f1b280d5e9ce0d7f998995832f81", size = 116147, upload-time = "2026-05-17T00:47:56.842Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/0d/67e5b4109ea4a837e80daa87c2c696711955e40449a97e8926672534def2/click-8.4.1-py3-none-any.whl", hash = "sha256:482be17c6991b8c19c5429a1e995d9b0efdbb63172824c41f99965dc0ade8ec2", size = 116639, upload-time = "2026-05-22T04:08:35.26Z" },
 ]
 
 [[package]]
@@ -185,23 +183,34 @@ wheels = [
 ]
 
 [[package]]
+name = "dpcpp-cpp-rt"
+version = "2025.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "intel-opencl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-openmp", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-sycl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6e/8b/9c9bf12d09033de5721070701b859917c0d3a2da214467caf1378a38df98/dpcpp_cpp_rt-2025.3.2-py2.py3-none-win_amd64.whl", hash = "sha256:3a8645e0ae570f54e2514c92fbfb57c0759158afe576b8c966ba06dc90729ca5", size = 58378, upload-time = "2026-01-22T05:34:29.252Z" },
+]
+
+[[package]]
 name = "faiss-cpu"
-version = "1.13.2"
+version = "1.14.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "packaging", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/6d/40439a05e4e60a0e889aa68b08ec70f5c8e32901f75f2be25c593a2e050e/faiss_cpu-1.13.2-cp311-cp311-win_amd64.whl", hash = "sha256:7c5944d7807d58fe7244b6aba06be710ee7ed99343365ed92699349efe979f51", size = 18879906, upload-time = "2025-12-24T10:27:19.041Z" },
-    { url = "https://files.pythonhosted.org/packages/9f/f9/b97eadbdd9e00f945d1566c7101382344f504596bfb19219465b0fc61e6e/faiss_cpu-1.13.2-cp311-cp311-win_arm64.whl", hash = "sha256:19508a1badfb36e456c1c8664eeb948349f604db5c7545f277a0126b4a84b080", size = 8548280, upload-time = "2025-12-24T10:27:22.114Z" },
-    { url = "https://files.pythonhosted.org/packages/87/ff/35ed875423200c17bdd594ce921abfc1812ddd21e09355290b9a94e170ab/faiss_cpu-1.13.2-cp312-cp312-win_amd64.whl", hash = "sha256:b82c01d30430dd7b1fa442001b9099735d1a82f6bb72033acdc9206d5ac66a64", size = 18890300, upload-time = "2025-12-24T10:27:24.194Z" },
-    { url = "https://files.pythonhosted.org/packages/c5/3a/bbdf5deaf6feb34b46b469c0a0acd40216c3d3c6ecf5aeb71d56b8a650e3/faiss_cpu-1.13.2-cp312-cp312-win_arm64.whl", hash = "sha256:2c4f696ae76e7c97cbc12311db83aaf1e7f4f7be06a3ffea7e5b0e8ec1fd805b", size = 8553157, upload-time = "2025-12-24T10:27:26.38Z" },
+    { url = "https://files.pythonhosted.org/packages/56/b9/a4d076acd9eeaf6fb6f5a29de1a7a0a34de411d0fbe3d8f8c91abb9f97e0/faiss_cpu-1.14.2-cp311-cp311-win_amd64.whl", hash = "sha256:a9d81699ff3ae6e25244efda48c52e406963bbce16d5754073725c14620885c6", size = 16111239, upload-time = "2026-05-22T19:58:38.889Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/42/af4df8012e0ed817df2c4094a816b538d99bfbbcbf567cd9f5f36d5fb9b4/faiss_cpu-1.14.2-cp312-cp312-win_amd64.whl", hash = "sha256:292124ba3d2bbeed920ef8519451cfba0f139b77db1607170cffbe68dc72e604", size = 16115701, upload-time = "2026-05-22T19:58:41.85Z" },
 ]
 
 [[package]]
 name = "fastapi"
-version = "0.136.1"
+version = "0.136.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-doc", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
@@ -210,9 +219,9 @@ dependencies = [
     { name = "typing-extensions", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "typing-inspection", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5d/45/c130091c2dfa061bbfe3150f2a5091ef1adf149f2a8d2ae769ecaf6e99a2/fastapi-0.136.1.tar.gz", hash = "sha256:7af665ad7acfa0a3baf8983d393b6b471b9da10ede59c60045f49fbc89a0fa7f", size = 397448, upload-time = "2026-04-23T16:49:44.046Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/2d/ff8d91d7b564d464629a0fd50a4489c97fcb836ac230bf3a7269232a9b1f/fastapi-0.136.3.tar.gz", hash = "sha256:e487fae93ad408e6f47641ee4dfe389864fd7bec92e547ea8498fc13f43e83ab", size = 396410, upload-time = "2026-05-23T18:53:15.192Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/ff/2e4eca3ade2c22fe1dea7043b8ee9dabe47753349eb1b56a202de8af6349/fastapi-0.136.1-py3-none-any.whl", hash = "sha256:a6e9d7eeada96c93a4d69cb03836b44fa34e2854accb7244a1ece36cd4781c3f", size = 117683, upload-time = "2026-04-23T16:49:42.437Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/82/45359b62a067409bd929ae8a56b8ed13e5a8c8a61194b3c236920999ab83/fastapi-0.136.3-py3-none-any.whl", hash = "sha256:3d2a69bdf04b7e9f3afa292c3bc7a98816bbfafa10bc9b45f3f3700d2f761620", size = 117481, upload-time = "2026-05-23T18:53:16.924Z" },
 ]
 
 [[package]]
@@ -297,7 +306,7 @@ wheels = [
 
 [[package]]
 name = "huggingface-hub"
-version = "1.15.0"
+version = "1.16.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
@@ -310,50 +319,81 @@ dependencies = [
     { name = "typer", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "typing-extensions", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bb/b6/e22bd20a25299c34b8c5922c1545a6320825b13906eb0f7298edfd034a0b/huggingface_hub-1.15.0.tar.gz", hash = "sha256:28abfdddda3927fd4de6a63cf26ab012498a2c24dae52baf150c5c6edf98a1d5", size = 784100, upload-time = "2026-05-15T11:42:52.149Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/48/0f/ed994dbade67a54407c28cab96ef845e0e6d25500be56aca6394f8bfc9dd/huggingface_hub-1.16.1.tar.gz", hash = "sha256:7f1dc4c5ec21aed69be630ad0c3378616be16f3de1a47b141c0e812965d9c832", size = 792534, upload-time = "2026-05-21T18:40:00.908Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/11/0b64cc9024329b76d7547c19a67604a61d21d3ba678a69d1b220c29d5112/huggingface_hub-1.15.0-py3-none-any.whl", hash = "sha256:a4a59af04cbc41a3fe3fec429b171ef994ef8c971eda10136746f408dd4e3744", size = 663602, upload-time = "2026-05-15T11:42:50.487Z" },
+    { url = "https://files.pythonhosted.org/packages/49/79/621a7dbb80c70974f73a597275351ebe03ce5bc65cb5f8f4acb5859252bc/huggingface_hub-1.16.1-py3-none-any.whl", hash = "sha256:64340de934b9ce37857ef85a82de72f5629e8a270f9119eabb12bf495eb53c22", size = 668176, upload-time = "2026-05-21T18:39:58.596Z" },
 ]
 
 [[package]]
 name = "idna"
-version = "3.15"
+version = "3.16"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/82/77/7b3966d0b9d1d31a36ddf1746926a11dface89a83409bf1483f0237aa758/idna-3.15.tar.gz", hash = "sha256:ca962446ea538f7092a95e057da437618e886f4d349216d2b1e294abfdb65fdc", size = 199245, upload-time = "2026-05-12T22:45:57.011Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/88/bcf9709822fe69d02c2a6a77956c98ce6ea8ca8767a9aadcedc7eb6a2390/idna-3.16.tar.gz", hash = "sha256:d7a6da03db833450fca25d2358ac9ff06cd624577a4aea3a596d5c0f77b8e03d", size = 203770, upload-time = "2026-05-22T00:16:18.781Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/23/408243171aa9aaba178d3e2559159c24c1171a641aa83b67bdd3394ead8e/idna-3.15-py3-none-any.whl", hash = "sha256:048adeaf8c2d788c40fee287673ccaa74c24ffd8dcf09ffa555a2fbb59f10ac8", size = 72340, upload-time = "2026-05-12T22:45:55.733Z" },
+    { url = "https://files.pythonhosted.org/packages/94/16/70255075a9859a0e3adb789b68ceb0e210dec03934245fd98d248226572f/idna-3.16-py3-none-any.whl", hash = "sha256:cc246e3a3f89580c3a951b5ad298ca4638078b2cdd4f115654332b5c26daded5", size = 74165, upload-time = "2026-05-22T00:16:16.698Z" },
 ]
 
 [[package]]
 name = "intel-cmplr-lib-rt"
-version = "2025.0.2"
+version = "2025.3.2"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/c9/5360cd208c77633f81a6c6cd9babc6c3cd66a48717d9903355f395c3195e/intel_cmplr_lib_rt-2025.0.2-py2.py3-none-win_amd64.whl", hash = "sha256:3a9c3019780464fe282b7d1542126e5d0e4d73e7a04e89f1708ca02aa6658435", size = 17271111, upload-time = "2024-11-21T16:34:06.158Z" },
+    { url = "https://files.pythonhosted.org/packages/de/02/46ec0e8aad41a7d95ba62dc65238c88fc302120c9a143c211990eef9c0b2/intel_cmplr_lib_rt-2025.3.2-py2.py3-none-win_amd64.whl", hash = "sha256:89bba5899d0e057f0ecbc55768558e55bd7a3740950d0e4d0b01d25d8b62b020", size = 17741766, upload-time = "2026-01-22T05:34:31.994Z" },
 ]
 
 [[package]]
 name = "intel-cmplr-lib-ur"
-version = "2025.0.2"
+version = "2025.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "umf", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/2d/c85e822a0cdcc002142848ccdde83e5ca79c5f1829867002c6fe387f1dba/intel_cmplr_lib_ur-2025.0.2-py2.py3-none-win_amd64.whl", hash = "sha256:c2f0f1809acb37b680ef04dfb0553bc14eb17fa0da6878676cd7eff0a8486ec3", size = 1158793, upload-time = "2024-11-21T16:34:30.898Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/ef/a6de04eb38a359004e9b6d8fd8bbbaedbc5fce1379e16bd26374aade67db/intel_cmplr_lib_ur-2025.3.2-py2.py3-none-win_amd64.whl", hash = "sha256:28dcf7e7401e54f16c4ece55c07029d9ef2b8fe8602b6530f0bcfec906c63823", size = 1253478, upload-time = "2026-01-22T05:34:36.257Z" },
 ]
 
 [[package]]
 name = "intel-cmplr-lic-rt"
-version = "2025.0.2"
+version = "2025.3.2"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/2c/2b34016ab29fb171f319635288b4649d3a7952c958dadfce529ed7efa4fb/intel_cmplr_lic_rt-2025.0.2-py2.py3-none-win_amd64.whl", hash = "sha256:4327e246dccbf2f6cf70bc4a4fed87cbfdeca73b9e30cb65b26519c027397767", size = 49548, upload-time = "2024-11-21T16:34:19.773Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/9f/4d9b6e8d93cc0685323b617023716132c6b65796f4103e167a296973db1f/intel_cmplr_lic_rt-2025.3.2-py2.py3-none-win_amd64.whl", hash = "sha256:b4d79398df82325dbd121ad7239735117e541b768c45ae4ad29fb40b07531d7e", size = 49549, upload-time = "2026-01-22T05:34:34.487Z" },
+]
+
+[[package]]
+name = "intel-opencl-rt"
+version = "2025.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "intel-cmplr-lic-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "tbb", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fd/f4/3c859afc3965fd4ccd5d32e979fae446b1f9c7388f95f23eef6bd8d57dc5/intel_opencl_rt-2025.3.2-py2.py3-none-win_amd64.whl", hash = "sha256:fa0df93b218eb1b690729ac2b842aba491648b52556d9d520ac88e0c73a9f8e6", size = 109882206, upload-time = "2026-01-28T19:04:00.53Z" },
+]
+
+[[package]]
+name = "intel-openmp"
+version = "2025.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "intel-cmplr-lib-ur", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/52/e7/31d84b2c547a9319c2ad5dc744ca0b45e23ddf5a6959e96718d3c93d963a/intel_openmp-2025.3.2-py2.py3-none-win_amd64.whl", hash = "sha256:8950bb59ffd146232aaf5c0d4272acdfcbe251f5982b83b329dab2e67069dc11", size = 32087876, upload-time = "2026-01-22T05:34:42.671Z" },
+]
+
+[[package]]
+name = "intel-pti"
+version = "0.16.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dd/16/a100ed54b8d2f91a62bfac325b09276bf38602ae9676c07cc657e05a0328/intel_pti-0.16.0-py2.py3-none-win_amd64.whl", hash = "sha256:5f50056cea4ef1dbfb0a52c96feab2137e9fc2fbd742e8d4081adfb467d221be", size = 662771, upload-time = "2026-01-22T05:30:02.761Z" },
 ]
 
 [[package]]
 name = "intel-sycl-rt"
-version = "2025.0.2"
+version = "2025.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "intel-cmplr-lib-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
@@ -361,7 +401,7 @@ dependencies = [
     { name = "intel-cmplr-lic-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/40/6d/7dffe3753af1c63f935d2808a6e452ac5d59e0757146caa72e5ee9191ab7/intel_sycl_rt-2025.0.2-py2.py3-none-win_amd64.whl", hash = "sha256:636b13a181542bbbe024fb43c29b4fe3fe2b01d371f85b94eaf719c945d7e23c", size = 9528473, upload-time = "2024-11-21T16:34:10.894Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/ac/82eccd64c17cfac23e265af44400897f1cb30bd5c0830099a39c8425a293/intel_sycl_rt-2025.3.2-py2.py3-none-win_amd64.whl", hash = "sha256:c3a38e2ec1f15417c77f67ece1e8ebb0aef81ffab946e0bf8b1aaa2052e700bb", size = 49654161, upload-time = "2026-01-22T05:34:46.724Z" },
 ]
 
 [[package]]
@@ -427,6 +467,19 @@ wheels = [
 ]
 
 [[package]]
+name = "mkl"
+version = "2025.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "intel-openmp", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-license", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "tbb", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/c2/97c8df6e8c0663903ab7b0fe4d9529e6a75ffeeeef7b1727bc14996d389b/mkl-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:74084f58784c4cde1dc3284bdf3a19df30fbfe11416567e4ba6419d3bd9ce33e", size = 155530417, upload-time = "2026-01-22T05:31:57.796Z" },
+]
+
+[[package]]
 name = "mpmath"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -470,6 +523,81 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/09/48/6388f1bb9da707110532cb70ec4d2822858ddfb44f1cdf1233c20a80ea4b/omegaconf-2.3.0.tar.gz", hash = "sha256:d5d4b6d29955cc50ad50c46dc269bcd92c6e00f5f90d23ab5fee7bfca4ba4cc7", size = 3298120, upload-time = "2022-12-08T20:59:22.753Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e3/94/1843518e420fa3ed6919835845df698c7e27e183cb997394e4a670973a65/omegaconf-2.3.0-py3-none-any.whl", hash = "sha256:7b4df175cdb08ba400f45cae3bdcae7ba8365db4d165fc65fd04b050ab63b46b", size = 79500, upload-time = "2022-12-08T20:59:19.686Z" },
+]
+
+[[package]]
+name = "onemkl-license"
+version = "2025.3.1"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/7f/732bd62f4ce4ddcbf97003efa856fcafc99c29e6b05deb0c1bb9cb85bdc4/onemkl_license-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:9fa45b274f05a61797f9ec3166b136124250ec7c9c91dedb87f3a926bfed9a54", size = 58959, upload-time = "2026-01-22T05:32:16.865Z" },
+]
+
+[[package]]
+name = "onemkl-sycl-blas"
+version = "2025.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dpcpp-cpp-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-opencl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "mkl", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e1/4b/1c60d831fb54c13fead3bb8e98d44721059b9bbad44184a507c42589234f/onemkl_sycl_blas-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:8a094fb2d6f393e6beb030e507475cdb704178ac7afec80b634a5d1eb848b557", size = 17500055, upload-time = "2026-01-22T05:32:05.032Z" },
+]
+
+[[package]]
+name = "onemkl-sycl-dft"
+version = "2025.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dpcpp-cpp-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-opencl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "mkl", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/e9/2a20a5130f4ec203ee62fdd7adbaacd413f22729522988d112a48a1f7f11/onemkl_sycl_dft-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:720d31ef23d5fe15355e6b95434244b27e254f817c45c89057f576a8a3e087a1", size = 6075958, upload-time = "2026-01-22T05:32:02.161Z" },
+]
+
+[[package]]
+name = "onemkl-sycl-lapack"
+version = "2025.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dpcpp-cpp-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-opencl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "mkl", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-sycl-blas", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/33/3aef7852a99a08ec6a6535268f63e600e998b011bffafa5cd6205050b46f/onemkl_sycl_lapack-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:b4df2a705422a7c27d5ad35ea853a26103a39dbfc1fe4c5180c4d7b39ba34e7e", size = 7588219, upload-time = "2026-01-22T05:32:42.17Z" },
+]
+
+[[package]]
+name = "onemkl-sycl-rng"
+version = "2025.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dpcpp-cpp-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-opencl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "mkl", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/81/57/d9e2941e40cdcbfc6a6dbd6c1184d4be5138965e63f978c8a595dcb2ce65/onemkl_sycl_rng-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:fe9bf5b9db1bb72578df997beb7e8ff7e4c0345b692fe947ee4a0af284709006", size = 16292810, upload-time = "2026-01-22T05:31:39.535Z" },
+]
+
+[[package]]
+name = "onemkl-sycl-sparse"
+version = "2025.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dpcpp-cpp-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-opencl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "mkl", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-sycl-blas", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/88/970baf908e8be5d5d7d0ed7e86863b350f1419cf9b6a9bd015a020e03bf2/onemkl_sycl_sparse-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:994969efc1a4ee0483466ce0b75c510df4c5ffc89a6a12a0e878d5536ce29c69", size = 17905264, upload-time = "2026-01-22T05:31:45.081Z" },
 ]
 
 [[package]]
@@ -593,6 +721,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/07/60/1d1e59c9c90d54591469ada7d268251f71c24bdb765f1a8a832cee8c6653/pydantic_settings-2.14.1.tar.gz", hash = "sha256:e874d3bec7e787b0c9958277956ed9b4dd5de6a80e162188fdaff7c5e26fd5fa", size = 235551, upload-time = "2026-05-08T13:40:06.542Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ae/8d/f1af3832f5e6eb13ba94ee809e72b8ecb5eef226d27ee0bef7d963d943c7/pydantic_settings-2.14.1-py3-none-any.whl", hash = "sha256:6e3c7edfd8277687cdc598f56e5cff0e9bfff0910a3749deaa8d4401c3a2b9de", size = 60964, upload-time = "2026-05-08T13:40:04.958Z" },
+]
+
+[[package]]
+name = "pyelftools"
+version = "0.32"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b9/ab/33968940b2deb3d92f5b146bc6d4009a5f95d1d06c148ea2f9ee965071af/pyelftools-0.32.tar.gz", hash = "sha256:6de90ee7b8263e740c8715a925382d4099b354f29ac48ea40d840cf7aa14ace5", size = 15047199, upload-time = "2025-02-19T14:20:05.549Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/43/700932c4f0638c3421177144a2e86448c0d75dbaee2c7936bda3f9fd0878/pyelftools-0.32-py3-none-any.whl", hash = "sha256:013df952a006db5e138b1edf6d8a68ecc50630adbd0d83a2d41e7f846163d738", size = 188525, upload-time = "2025-02-19T14:19:59.919Z" },
 ]
 
 [[package]]
@@ -723,42 +860,23 @@ wheels = [
 
 [[package]]
 name = "starlette"
-version = "1.0.0"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "typing-extensions", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/69/17425771797c36cded50b7fe44e850315d039f28b15901ab44839e70b593/starlette-1.0.0.tar.gz", hash = "sha256:6a4beaf1f81bb472fd19ea9b918b50dc3a77a6f2e190a12954b25e6ed5eea149", size = 2655289, upload-time = "2026-03-22T18:29:46.779Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/66/4d20cdf39a8d6a51e663b7038e3b828ff211d3891a43a713fe7e4643f3a8/starlette-1.1.0.tar.gz", hash = "sha256:e83c7fe0ddecd8719c5b840080325aec0260acec86e9832899e377b91d65e90f", size = 2660060, upload-time = "2026-05-23T16:55:41.376Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/c9/584bc9651441b4ba60cc4d557d8a547b5aff901af35bda3a4ee30c819b82/starlette-1.0.0-py3-none-any.whl", hash = "sha256:d3ec55e0bb321692d275455ddfd3df75fff145d009685eb40dc91fc66b03d38b", size = 72651, upload-time = "2026-03-22T18:29:45.111Z" },
-]
-
-[[package]]
-name = "sympy"
-version = "1.13.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version < '3.12' and sys_platform == 'win32'",
-]
-dependencies = [
-    { name = "mpmath", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ca/99/5a5b6f19ff9f083671ddf7b9632028436167cd3d33e11015754e41b249a4/sympy-1.13.1.tar.gz", hash = "sha256:9cebf7e04ff162015ce31c9c6c9144daa34a93bd082f54fd8f12deca4f47515f", size = 7533040, upload-time = "2024-07-19T09:26:51.238Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/fe/81695a1aa331a842b582453b605175f419fe8540355886031328089d840a/sympy-1.13.1-py3-none-any.whl", hash = "sha256:db36cdc64bf61b9b24578b6f7bab1ecdd2452cf008f34faa33776680c26d66f8", size = 6189177, upload-time = "2024-07-19T09:26:48.863Z" },
+    { url = "https://files.pythonhosted.org/packages/93/79/920b8e0a8b20f793e8d64855095cb8febabf6175b8550b6f7a547d813891/starlette-1.1.0-py3-none-any.whl", hash = "sha256:7f0dfd38e428aad5cb6f9f667f0ca1d2d8ca3f3385dccac8305f79ec98458382", size = 72899, upload-time = "2026-05-23T16:55:39.201Z" },
 ]
 
 [[package]]
 name = "sympy"
 version = "1.14.0"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "sys_platform == 'win32'",
-]
 dependencies = [
-    { name = "mpmath", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "mpmath", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
@@ -766,11 +884,22 @@ wheels = [
 ]
 
 [[package]]
+name = "tbb"
+version = "2022.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tcmlib", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/68/ef/d01ec56a854949efc727c8cac8941325a2020f345a786e64ca6ad3a05611/tbb-2022.3.1-py3-none-win_amd64.whl", hash = "sha256:8187e4c50a77c75c51ca9395febddd3a67d88dcb4cc537947d68d244925710f7", size = 422729, upload-time = "2026-01-22T05:30:51.916Z" },
+]
+
+[[package]]
 name = "tcmlib"
-version = "1.2.0"
+version = "1.4.1"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/c8/c2a7bb169e21521a5bc82d955b30a064e266ab72485ac2dc33cd6ad153ea/tcmlib-1.2.0-py2.py3-none-win_amd64.whl", hash = "sha256:f751e005fd815ed0efeb87d4523f6a0938c5671e59ac935614f42d8ebb6489c9", size = 338379, upload-time = "2024-10-25T10:59:32.959Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/4d/2b1d55dba475f602197e284b9a5e5460139a9c5ef2bfb63c8d2a1fafc163/tcmlib-1.4.1-py2.py3-none-win_amd64.whl", hash = "sha256:5202a1fd8541182fbd4ef72848784e4bf94340152d7ddff33d401d30930fa53c", size = 370347, upload-time = "2025-10-22T18:00:36.37Z" },
 ]
 
 [[package]]
@@ -782,13 +911,13 @@ dependencies = [
     { name = "pyyaml", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "safetensors", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "torch", version = "2.4.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "torch", version = "2.6.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "torch", version = "2.12.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "torch", version = "2.12.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "torch", version = "2.12.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "torchvision", version = "0.19.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "torchvision", version = "0.21.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "torchvision", version = "0.27.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "torchvision", version = "0.27.0+cu126", source = { registry = "https://download.pytorch.org/whl/cu126" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "torchvision", version = "0.27.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/08/54/ece85b0eef3700c90db8271a43669b05a0ebbe2edb1962329c34374a297e/timm-1.0.27.tar.gz", hash = "sha256:315dfe63186ca9fb7ff941268941231fd5be259f2b4bb4afa28560ae1015cb9a", size = 2439861, upload-time = "2026-05-08T19:38:36.844Z" }
 wheels = [
@@ -807,40 +936,12 @@ dependencies = [
     { name = "fsspec", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu')" },
     { name = "jinja2", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu')" },
     { name = "networkx", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "sympy", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu')" },
     { name = "typing-extensions", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5a/6a/775b93d6888c31f1f1fc457e4f5cc89f0984412d5dcdef792b8f2aa6e812/torch-2.4.1-cp311-cp311-win_amd64.whl", hash = "sha256:092e7c2280c860eff762ac08c4bdcd53d701677851670695e0c22d6d345b269c", size = 199436128, upload-time = "2024-09-04T19:12:01.97Z" },
     { url = "https://files.pythonhosted.org/packages/a8/e0/ca8354dfb8d834a76da51b06e8248b70fc182bc163540507919124974bdf/torch-2.4.1-cp312-cp312-win_amd64.whl", hash = "sha256:ebea70ff30544fc021d441ce6b219a88b67524f01170b1c538d7d3ebb5e7f56c", size = 199387694, upload-time = "2024-09-04T19:13:06.167Z" },
-]
-
-[[package]]
-name = "torch"
-version = "2.6.0+xpu"
-source = { registry = "https://download.pytorch.org/whl/xpu" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version < '3.12' and sys_platform == 'win32'",
-]
-dependencies = [
-    { name = "filelock", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "fsspec", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "intel-cmplr-lib-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "intel-cmplr-lib-ur", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "intel-cmplr-lic-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "intel-sycl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "jinja2", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "networkx", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "setuptools", marker = "(python_full_version >= '3.12' and sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "sympy", version = "1.13.1", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "tcmlib", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "typing-extensions", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "umf", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-]
-wheels = [
-    { url = "https://download-r2.pytorch.org/whl/xpu/torch-2.6.0%2Bxpu-cp311-cp311-win_amd64.whl", hash = "sha256:d8d006b7c24feb1af8069986c2967d0da04966a890c38480131360641590cc6a", upload-time = "2025-01-30T19:47:36Z" },
-    { url = "https://download-r2.pytorch.org/whl/xpu/torch-2.6.0%2Bxpu-cp312-cp312-win_amd64.whl", hash = "sha256:16e31709ce8c9038ffa1f1c0cd4d7a45c93db2d3ff7881a2aedc6dcffb9046fc", upload-time = "2025-01-30T19:48:57Z" },
 ]
 
 [[package]]
@@ -856,7 +957,7 @@ dependencies = [
     { name = "jinja2", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "networkx", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "setuptools", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "sympy", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "typing-extensions", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 wheels = [
@@ -879,12 +980,52 @@ dependencies = [
     { name = "jinja2", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "networkx", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "setuptools", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "sympy", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "typing-extensions", marker = "(sys_platform == 'win32' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cu126/torch-2.12.0%2Bcu126-cp311-cp311-win_amd64.whl", hash = "sha256:dbbdaf04ca82e568228ffbff7a269d5a86cc00ed5a606a2b6d13c205a269fb69", upload-time = "2026-05-12T23:25:13Z" },
     { url = "https://download-r2.pytorch.org/whl/cu126/torch-2.12.0%2Bcu126-cp312-cp312-win_amd64.whl", hash = "sha256:194f5bd0721b968e769777b8ab4dbe51dd7ffdfdf295db045093b94a1b9765bb", upload-time = "2026-05-12T23:28:57Z" },
+]
+
+[[package]]
+name = "torch"
+version = "2.12.0+xpu"
+source = { registry = "https://download.pytorch.org/whl/xpu" }
+resolution-markers = [
+    "sys_platform == 'win32'",
+]
+dependencies = [
+    { name = "dpcpp-cpp-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "filelock", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "fsspec", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-cmplr-lib-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-cmplr-lib-ur", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-cmplr-lic-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-opencl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-openmp", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-pti", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "intel-sycl-rt", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "jinja2", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "mkl", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "networkx", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-license", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-sycl-blas", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-sycl-dft", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-sycl-lapack", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-sycl-rng", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "onemkl-sycl-sparse", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "setuptools", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "sympy", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "tbb", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "tcmlib", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "triton-xpu", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "typing-extensions", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "umf", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://download-r2.pytorch.org/whl/xpu/torch-2.12.0%2Bxpu-cp311-cp311-win_amd64.whl", hash = "sha256:7ef8e776c992e4e3ae007ebc108eb4f36b1d1dd9da97ecb308ab7fded89a2659", upload-time = "2026-05-13T01:19:23Z" },
+    { url = "https://download-r2.pytorch.org/whl/xpu/torch-2.12.0%2Bxpu-cp312-cp312-win_amd64.whl", hash = "sha256:7f1d40febf2b8724adf4ff23866897d87478cc43de2a20f7776dc00be334c464", upload-time = "2026-05-13T01:21:15Z" },
 ]
 
 [[package]]
@@ -915,24 +1056,6 @@ dependencies = [
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/69/dc769cf54df8e828c0b8957b4521f35178f5bd4cc5b8fbe8a37ffd89a27c/torchvision-0.19.1-cp311-cp311-win_amd64.whl", hash = "sha256:70dea324174f5e9981b68e4b7cd524512c106ba64aedef560a86a0bbf2fbf62c", size = 1288330, upload-time = "2024-09-04T19:15:13.694Z" },
     { url = "https://files.pythonhosted.org/packages/6b/b2/fd577e1622b43cdeb74782a60cea4909f88f471813c215ea7b4e7ea84a74/torchvision-0.19.1-cp312-cp312-win_amd64.whl", hash = "sha256:b4283d283675556bb0eae31d29996f53861b17cbdcdf3509e6bc050414ac9289", size = 1288328, upload-time = "2024-09-04T19:15:04.278Z" },
-]
-
-[[package]]
-name = "torchvision"
-version = "0.21.0+xpu"
-source = { registry = "https://download.pytorch.org/whl/xpu" }
-resolution-markers = [
-    "python_full_version >= '3.12' and sys_platform == 'win32'",
-    "python_full_version < '3.12' and sys_platform == 'win32'",
-]
-dependencies = [
-    { name = "numpy", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "pillow", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "torch", version = "2.6.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-]
-wheels = [
-    { url = "https://download-r2.pytorch.org/whl/xpu/torchvision-0.21.0%2Bxpu-cp311-cp311-win_amd64.whl", hash = "sha256:bc21b43e77ac69887a68577912f50c402e2d9778377ef35a94143acb0ce5d16e", upload-time = "2025-01-30T19:51:24Z" },
-    { url = "https://download-r2.pytorch.org/whl/xpu/torchvision-0.21.0%2Bxpu-cp312-cp312-win_amd64.whl", hash = "sha256:2811cc38920fca14632fc023d6b46e532e9bca7a7ccefa657fba977e1c2ec506", upload-time = "2025-01-30T19:51:24Z" },
 ]
 
 [[package]]
@@ -970,6 +1093,23 @@ wheels = [
 ]
 
 [[package]]
+name = "torchvision"
+version = "0.27.0+xpu"
+source = { registry = "https://download.pytorch.org/whl/xpu" }
+resolution-markers = [
+    "sys_platform == 'win32'",
+]
+dependencies = [
+    { name = "numpy", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "pillow", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "torch", version = "2.12.0+xpu", source = { registry = "https://download.pytorch.org/whl/xpu" }, marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://download-r2.pytorch.org/whl/xpu/torchvision-0.27.0%2Bxpu-cp311-cp311-win_amd64.whl", hash = "sha256:df647445365924d69fe3bb2a15a7edfe5b63ef91e4ae69af11d93582985237a4", upload-time = "2026-05-12T16:20:52Z" },
+    { url = "https://download-r2.pytorch.org/whl/xpu/torchvision-0.27.0%2Bxpu-cp312-cp312-win_amd64.whl", hash = "sha256:b0db3df0d0d154d18ba988ab420f1da2549f9372113ff54ff66e4ae3c7fe3bd0", upload-time = "2026-05-12T16:20:52Z" },
+]
+
+[[package]]
 name = "tqdm"
 version = "4.67.3"
 source = { registry = "https://pypi.org/simple" }
@@ -988,6 +1128,18 @@ source = { registry = "https://pypi.org/simple" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/0b/bbf56c1996289260472f09e965ecf775ca7146ea2a69cfb5fd9513faab86/triton_windows-3.7.0.post26-cp311-cp311-win_amd64.whl", hash = "sha256:38820923a9a1e3eca6f6046e733e6a0a7e771ec3132c2186f334c0edefec650e", size = 49641914, upload-time = "2026-05-14T14:11:46.08Z" },
     { url = "https://files.pythonhosted.org/packages/ec/d1/e6e2eb0d23916788d6b3436b519c351d1eb281b5d3dcbd9c3b4fc67e9f46/triton_windows-3.7.0.post26-cp312-cp312-win_amd64.whl", hash = "sha256:7fde7436c1147b9446627747ec291bde6fec9a5063cad38c43bd3fa57d954eca", size = 49645796, upload-time = "2026-05-14T14:13:25.496Z" },
+]
+
+[[package]]
+name = "triton-xpu"
+version = "3.7.1"
+source = { registry = "https://download.pytorch.org/whl/xpu" }
+dependencies = [
+    { name = "pyelftools", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+]
+wheels = [
+    { url = "https://download-r2.pytorch.org/whl/triton_xpu-3.7.1-cp311-cp311-win_amd64.whl", hash = "sha256:ad5b147d04ee0d40f3d4d32f85f5aa3a3beb6cd5799ca026d3d7f4afa3d9e24f", upload-time = "2026-05-12T19:08:27Z" },
+    { url = "https://download-r2.pytorch.org/whl/triton_xpu-3.7.1-cp312-cp312-win_amd64.whl", hash = "sha256:d9482063af2a308543f23333e32edd738ea87cbb33ade68afda9ae0fd704ccd9", upload-time = "2026-05-12T19:09:38Z" },
 ]
 
 [[package]]
@@ -1037,13 +1189,13 @@ wheels = [
 
 [[package]]
 name = "umf"
-version = "0.9.1"
+version = "1.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "tcmlib", marker = "(sys_platform == 'win32' and extra != 'extra-10-backend-py-cpu' and extra != 'extra-10-backend-py-cu126' and extra != 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/2a/3ccea66d7390f3b6407b396ec289d5acad7f8f92a1bd8b66b58d376fc019/umf-0.9.1-py2.py3-none-win_amd64.whl", hash = "sha256:9d1336d63c7a6b36af1f76dab942a760168da519a1bfe6941fc6418198b10820", size = 72212, upload-time = "2024-11-19T15:36:28.366Z" },
+    { url = "https://files.pythonhosted.org/packages/97/49/23b714e4ca9655f04d5b958ca8b4ef8361e10743581a637f141755b9f4fb/umf-1.0.3-py2.py3-none-win_amd64.whl", hash = "sha256:2182a623433329bd53863ac3b15a4af253d0eda62c603dc7c4e2bdce78658270", size = 249098, upload-time = "2026-01-22T05:33:19.278Z" },
 ]
 
 [[package]]
@@ -1057,15 +1209,15 @@ wheels = [
 
 [[package]]
 name = "uvicorn"
-version = "0.47.0"
+version = "0.48.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "h11", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f6/b1/8e7077a8641086aea449e1b5752a570f1b5906c64e0a33cd6d93b63a066b/uvicorn-0.47.0.tar.gz", hash = "sha256:7c9a0ea1a9414106bbab7324609c162d8fa0cdcdcb703060987269d77c7bb533", size = 90582, upload-time = "2026-05-14T18:16:54.455Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/bf/f6544ba992ddb9a6077343a576f9844f7f8f06ab819aefd00206e9255f18/uvicorn-0.48.0.tar.gz", hash = "sha256:a5504207195d08c2511bf9125ede5ac4a4b71725d519e758d01dcf0bc2d31c37", size = 91074, upload-time = "2026-05-24T12:08:41.925Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/41/ac2dfdbc1f60c7af4f994c7a335cfa7040c01642b605d65f611cecc2a1e4/uvicorn-0.47.0-py3-none-any.whl", hash = "sha256:2c5715bc12d1892d84752049f400cd1c3cb018514967fdfeb97640443a6a9432", size = 71301, upload-time = "2026-05-14T18:16:51.762Z" },
+    { url = "https://files.pythonhosted.org/packages/01/be/72532be3da7acc5fdfbccdb95215cd04f995a0886532a5b423f929cda4cc/uvicorn-0.48.0-py3-none-any.whl", hash = "sha256:48097851328b87ec36117d3d575234519eb58c2b22d79666e9bbc6c49a761dad", size = 71410, upload-time = "2026-05-24T12:08:40.258Z" },
 ]
 
 [[package]]
