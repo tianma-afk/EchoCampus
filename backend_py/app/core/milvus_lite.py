@@ -1,4 +1,4 @@
-from pymilvus import MilvusClient
+from pymilvus import MilvusClient,CollectionSchema, FieldSchema, DataType
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]  # 往上3级
@@ -30,11 +30,15 @@ client = MilvusClient(str(MILVUS_DB_PATH))
 print("✅MilvusLite连接成功")
 
 if not client.has_collection(COLLECTION_NAME):
+    # 定义 schema，明确 id 字段类型为 VARCHAR (字符串)
+    schema = CollectionSchema([
+        FieldSchema(name="id", dtype=DataType.VARCHAR, max_length=36, is_primary=True),
+        FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=VECTOR_DIM)
+    ])
+    
     client.create_collection(
         collection_name=COLLECTION_NAME,
-        dimension=VECTOR_DIM,
-        auto_id=False,
-        metric_type=METRIC_TYPE
+        schema=schema  # 使用自定义 schema 而不是简化版创建
     )
     print(f"库 {COLLECTION_NAME} 创建成功")
 else:
@@ -42,19 +46,31 @@ else:
 
 indexes = client.list_indexes(collection_name=COLLECTION_NAME)
 if "vector" not in indexes:
+    # 使用 MilvusClient.prepare_index_params() 方法创建索引参数
+    index_params = client.prepare_index_params()
+    index_params.add_index(
+        field_name="vector",
+        index_type=INDEX_PARAMS["index_type"],
+        metric_type=INDEX_PARAMS["metric_type"],
+        params=INDEX_PARAMS["params"]
+    )
+    
     client.create_index(
         collection_name=COLLECTION_NAME,
-        field_name="vector",
-        index_params=INDEX_PARAMS
+        index_params=index_params
     )
     print("✅ 索引创建成功")
 else:
     print("✅ 索引已存在，跳过创建")
 
-def insert_vector(vector, id=None):
+def insert_vector(vector, id: str = None):  # 改为 str 类型
     if id is None:
         print("错误: id不能为None")
         return None
+    
+    # 可选：验证 id 格式
+    if len(id) != 36:
+        print(f"警告: id '{id}' 长度不是36位")
     
     data = [{"id": id, "vector": vector}]
 
@@ -64,7 +80,7 @@ def insert_vector(vector, id=None):
     )
     client.load_collection(collection_name=COLLECTION_NAME)
     return result
-def insert_vectors(vectors, ids=None):
+def insert_vectors(vectors, ids: list = None):  # ids 改为字符串列表
     data_to_insert = []
     if vectors is None or len(vectors) == 0:
         print("错误: vectors不能为None或空")
@@ -73,6 +89,11 @@ def insert_vectors(vectors, ids=None):
     if ids is None or len(ids) != len(vectors):
         print("错误: ids不能为None或长度与vectors不一致")
         return None
+    
+    # 可选：验证每个 id 长度
+    for id_val in ids:
+        if len(id_val) != 36:
+            print(f"警告: id '{id_val}' 长度不是36位")
     
     for i, vector in enumerate(vectors):
         data_to_insert.append({"id": ids[i], "vector": vector})
@@ -95,7 +116,7 @@ def search_similar(query_vector, top_k=10):
         output_fields=["id"]              # 需要返回的字段（这里只要id）
     )
     
-    return results[0]
+    return [{'id': r['id'], 'score': r['distance']} for r in results[0]]
 
 
 

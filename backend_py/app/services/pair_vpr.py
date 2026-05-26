@@ -88,21 +88,14 @@ class PairVPRExtractor:
         self._load_weights()
 
         
-<<<<<<< HEAD
         if use_fp16 and self.device_type == 'xpu':
-=======
-        if use_fp16:
->>>>>>> ecf1b26975caa5db484dbecad6ea61e1e38e0730
             self.use_fp16 = use_fp16
             self.model = self.model.half()
             print("✨ 已启用 FP16 半精度推理")
         else:
             self.use_fp16 = False
-<<<<<<< HEAD
             if use_fp16 and self.device_type != 'xpu':
                 print(f"⚠️ FP16 仅在 xpu 上测试过，当前设备为 {self.device_type}，跳过")
-=======
->>>>>>> ecf1b26975caa5db484dbecad6ea61e1e38e0730
 
         self.model.to(self.device)
         self.model.eval()
