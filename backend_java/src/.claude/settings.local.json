@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mvn -DskipTests compile)"
+      "Bash(mvn -DskipTests compile)",
+      "Bash(npx vue-tsc *)",
+      "Bash(npx vite *)",
+      "Bash(mvn compile *)"
     ]
   }
 }

@@ -4,6 +4,14 @@ export interface Result<T> {
   message: string
 }
 
+export interface Page<T> {
+  records: T[]
+  total: number
+  size: number
+  current: number
+  pages: number
+}
+
 const BASE_URL = '/api/v1'
 
 interface RequestOptions {
@@ -36,4 +44,12 @@ export function get<T>(url: string): Promise<T> {
 
 export function post<T>(url: string, body: unknown): Promise<T> {
   return request<T>(url, { method: 'POST', body })
+}
+
+export function put<T>(url: string, body: unknown): Promise<T> {
+  return request<T>(url, { method: 'PUT', body })
+}
+
+export function del<T>(url: string): Promise<T> {
+  return request<T>(url, { method: 'DELETE' })
 }

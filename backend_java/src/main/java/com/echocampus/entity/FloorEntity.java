@@ -4,7 +4,7 @@ import lombok.Data;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.echocampus.handler.JsonbTypeHandler;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +22,6 @@ public class FloorEntity {
 
     private String floorName;
 
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(typeHandler = JsonbTypeHandler.class)
     private List<String> tags;
 }

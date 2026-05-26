@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FloorVO {
+    private java.util.UUID id;
     private Integer floorNumber;
     private String floorName;
     private List<String> tags;

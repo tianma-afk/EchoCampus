@@ -4,7 +4,7 @@ import lombok.Data;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.echocampus.handler.JsonbTypeHandler;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,10 +27,10 @@ public class LandmarkEntity {
 
     private UUID categoryId;
 
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(typeHandler = JsonbTypeHandler.class)
     private List<String> tags;
 
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @TableField(typeHandler = JsonbTypeHandler.class)
     private List<UUID> imgs;
 
     private UUID coverImageId;

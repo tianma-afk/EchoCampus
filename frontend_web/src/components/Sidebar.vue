@@ -12,6 +12,12 @@ const menuItems = [
     path: '/home'
   },
   {
+    id: 'university',
+    label: '大学管理',
+    icon: 'school',
+    path: '/universities'
+  },
+  {
     id: 'landmark',
     label: '地标管理',
     icon: 'location',
@@ -33,7 +39,7 @@ const menuItems = [
 ]
 
 const isActive = (path: string) => {
-  return route.path === path
+  return route.path.startsWith(path)
 }
 </script>
 
@@ -66,6 +72,10 @@ const isActive = (path: string) => {
           <svg v-if="item.icon === 'home'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <svg v-else-if="item.icon === 'school'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+            <path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5" />
           </svg>
           <svg v-else-if="item.icon === 'location'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />

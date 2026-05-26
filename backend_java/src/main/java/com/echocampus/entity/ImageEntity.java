@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Data
@@ -20,5 +20,5 @@ public class ImageEntity {
 
     private String fileExt;
 
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 }

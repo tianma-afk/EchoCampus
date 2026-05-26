@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 
 export interface SelectOption {
   id: string
@@ -31,6 +31,13 @@ const isOpen = ref(false)
 const highlightIndex = ref(-1)
 const wrapperRef = ref<HTMLElement | null>(null)
 
+const displayOptions = computed<SelectOption[]>(() => {
+  if (!props.modelValue) return props.options
+  const exists = props.options.some((o) => o.id === props.modelValue!.id)
+  if (exists) return props.options
+  return [props.modelValue, ...props.options]
+})
+
 watch(
   () => props.modelValue,
   (val) => {
@@ -38,6 +45,7 @@ watch(
       inputText.value = val.name
     }
   },
+  { immediate: true },
 )
 
 function onInput(e: Event) {
@@ -49,7 +57,7 @@ function onInput(e: Event) {
 }
 
 function onFocus() {
-  if (!props.disabled && props.options.length > 0) {
+  if (!props.disabled && displayOptions.value.length > 0) {
     isOpen.value = true
   }
 }
@@ -71,14 +79,14 @@ function clearSelection() {
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'ArrowDown') {
     e.preventDefault()
-    highlightIndex.value = Math.min(highlightIndex.value + 1, props.options.length - 1)
+    highlightIndex.value = Math.min(highlightIndex.value + 1, displayOptions.value.length - 1)
   } else if (e.key === 'ArrowUp') {
     e.preventDefault()
     highlightIndex.value = Math.max(highlightIndex.value - 1, 0)
   } else if (e.key === 'Enter') {
     e.preventDefault()
-    if (highlightIndex.value >= 0 && highlightIndex.value < props.options.length) {
-      const opt = props.options[highlightIndex.value]
+    if (highlightIndex.value >= 0 && highlightIndex.value < displayOptions.value.length) {
+      const opt = displayOptions.value[highlightIndex.value]
       if (opt) selectOption(opt)
     }
   } else if (e.key === 'Escape') {
@@ -131,9 +139,9 @@ onBeforeUnmount(() => {
         </svg>
       </button>
     </div>
-    <ul v-if="isOpen && options.length > 0" class="dropdown">
+    <ul v-if="isOpen && displayOptions.length > 0" class="dropdown">
       <li
-        v-for="(option, index) in options"
+        v-for="(option, index) in displayOptions"
         :key="option.id"
         class="dropdown-item"
         :class="{ highlighted: index === highlightIndex }"
@@ -237,7 +245,7 @@ onBeforeUnmount(() => {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  max-height: 200px;
+  max-height: 296px; /* 8 items */
   overflow-y: auto;
   z-index: 50;
   list-style: none;

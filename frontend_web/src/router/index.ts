@@ -20,6 +20,28 @@ const router = createRouter({
         {
           path: 'create',
           component: () => import('../views/CreateLandmark.vue')
+        },
+        {
+          path: ':id',
+          component: () => import('../views/LandmarkDetail.vue')
+        },
+        {
+          path: ':id/edit',
+          component: () => import('../views/EditLandmark.vue')
+        }
+      ]
+    },
+    {
+      path: '/universities',
+      component: Layout,
+      children: [
+        {
+          path: '',
+          component: () => import('../views/university/UniversityManagement.vue')
+        },
+        {
+          path: ':id',
+          component: () => import('../views/university/UniversityDetail.vue')
         }
       ]
     },

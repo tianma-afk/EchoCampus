@@ -6,12 +6,14 @@ import com.echocampus.dto.ImagePresignRequest;
 import com.echocampus.dto.ImagePresignResponse;
 import com.echocampus.dto.SetCoverRequest;
 import com.echocampus.service.admin.LandmarkImageAdminService;
+import com.echocampus.vo.LandmarkImageVO;
 import com.echocampus.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,6 +24,16 @@ public class LandmarkImageAdminController {
 
     public LandmarkImageAdminController(LandmarkImageAdminService landmarkImageAdminService) {
         this.landmarkImageAdminService = landmarkImageAdminService;
+    }
+
+    @GetMapping("/images")
+    @Operation(summary = "获取图片列表", description = "获取地标下所有图片，含封面/精选标记和预签名URL")
+    public Result<List<LandmarkImageVO>> listImages(@PathVariable UUID landmarkId) {
+        try {
+            return Result.success(landmarkImageAdminService.listImages(landmarkId));
+        } catch (RuntimeException e) {
+            return Result.failure(404, e.getMessage());
+        }
     }
 
     @PostMapping("/images/presign")
@@ -58,5 +70,22 @@ public class LandmarkImageAdminController {
             @Valid @RequestBody CuratedImagesRequest request) {
         landmarkImageAdminService.setCuratedImages(landmarkId, request.getImageIds());
         return Result.success(null);
+    }
+
+    @DeleteMapping("/images/{imageId}")
+    @Operation(summary = "删除图片", description = "删除单张图片（MinIO 文件和数据库记录），自动清理封面/精选引用")
+    public Result<Void> deleteImage(
+            @PathVariable UUID landmarkId,
+            @PathVariable UUID imageId) {
+        try {
+            landmarkImageAdminService.deleteImage(landmarkId, imageId);
+            return Result.success(null);
+        } catch (RuntimeException e) {
+            String msg = e.getMessage();
+            if (msg.contains("不存在") || msg.contains("不属于")) {
+                return Result.failure(404, msg);
+            }
+            return Result.failure(400, msg);
+        }
     }
 }

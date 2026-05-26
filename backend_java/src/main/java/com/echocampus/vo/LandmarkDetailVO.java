@@ -20,6 +20,7 @@ public class LandmarkDetailVO {
     private Integer checkins;
     private String openTime;
     private String category;
+    private UUID categoryId;
     private List<String> tags;
     private List<String> imgs;
     private String buildYear;
@@ -28,7 +29,9 @@ public class LandmarkDetailVO {
     private String location;
     private String description;
     private String campusName;
+    private UUID campusId;
     private String universityName;
+    private UUID universityId;
     private Integer totalFloors;
     private BigDecimal recommendRate;
     private List<FloorVO> floorList;
