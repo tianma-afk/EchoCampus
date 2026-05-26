@@ -18,24 +18,24 @@ all_image_paths = {}
 for f in os.listdir(image_folder):
     if f.lower().endswith((".png", ".jpg", ".jpeg")):
         file_path = os.path.join(image_folder, f)
-        # 使用文件名的 MD5 值作为稳定的 UUID (保证是36位以内或适配你的长度限制)
-        stable_id = hashlib.md5(f.encode('utf-8')).hexdigest()
-        all_image_paths[stable_id] = file_path
+        # 使用文件名的 MD5 值作为稳定的 uuid (保证是36位以内或适配你的长度限制)
+        stable_uuid = hashlib.md5(f.encode('utf-8')).hexdigest()
+        all_image_paths[stable_uuid] = file_path
 
 print(f"共找到 {len(all_image_paths)} 张图片，开始提取特征...")
 
 vectors = []
-ids = []
+uuids = []
 for image_uuid, image_path in all_image_paths.items():
     vector, token = extractor.extract_complete_features(image_path)
     vectors.append(vector)
-    ids.append(image_uuid)
+    uuids.append(image_uuid)
     core.token_manager.save_image_tokens(image_uuid, token)
-print("检查ids列表：")    
-print(ids)
-# breakpoint()# 在这里检查 ids 列表的内容，确保它们是字符串类型的 UUID
+print("检查uuids列表：")    
+print(uuids)
+# breakpoint()# 在这里检查 uuids 列表的内容，确保它们是字符串类型的 uuid
     
-core.milvus_lite.insert_vectors(vectors, ids)
+core.milvus_lite.insert_vectors(vectors, uuids)
 
 core.milvus_lite.load_collection()
 print(f"特征提取完成，开始搜索相似图片...")
@@ -53,9 +53,9 @@ result = core.milvus_lite.search_similar(goal_vector, top_k=10)
 print("搜索结果:")
 results_with_scores = []
 for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
-    img_uuid = hit["id"]
+    img_uuid = hit["uuid"]
     filename = os.path.basename(all_image_paths.get(img_uuid))
-    print(f"  - {filename} (ID: {img_uuid} , score: {hit['score']})")
+    print(f"  - {filename} (uuid: {img_uuid} , score: {hit['score']})")
     score = extractor.pair_similarity_from_cached_tokens(
         goal_token, core.token_manager.load_image_tokens(img_uuid)
     )
@@ -67,9 +67,9 @@ results_with_scores.sort(key=lambda x: x[1], reverse=True)
 # 打印排序后的结果
 print("搜索结果（按相似度排序）:")
 for hit, score in results_with_scores:
-    img_id = hit['id']
-    filename = os.path.basename(all_image_paths[img_id])
-    print(f"  - {filename} (ID: {img_id}, score: {score})")
+    img_uuid = hit['uuid']
+    filename = os.path.basename(all_image_paths[img_uuid])
+    print(f"  - {filename} (uuid: {img_uuid}, score: {score})")
 
 end_time = time.time()
 print(f"搜索完成，耗时 {end_time - start_time} 秒")

@@ -88,21 +88,15 @@ class PairVPRExtractor:
         self._load_weights()
 
         
-        if use_fp16 and self.device_type == 'xpu':
+        if use_fp16:
             self.use_fp16 = use_fp16
             self.model = self.model.half()
             print("✨ 已启用 FP16 半精度推理")
         else:
             self.use_fp16 = False
-            if use_fp16 and self.device_type != 'xpu':
-                print(f"⚠️ FP16 仅在 xpu 上测试过，当前设备为 {self.device_type}，跳过")
 
         self.model.to(self.device)
         self.model.eval()
-
-        # if self.device_type == 'directml' and hasattr(torch, 'compile'):
-        #     self.model = torch.compile(self.model, backend="inductor")
-        #     print("✨ 已启用 torch.compile 优化")
                 
         # 🔥 关键：提取解码器组件（用于直接处理 tokens）
         self.decoder_embed = self.model.decoder_embed
