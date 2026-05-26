@@ -53,7 +53,7 @@ result = core.milvus_lite.search_similar(goal_vector, top_k=10)
 print("搜索结果:")
 results_with_scores = []
 for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
-    img_uuid = hit["id"]
+    img_uuid = hit["uuid"]
     filename = os.path.basename(all_image_paths.get(img_uuid))
     print(f"  - {filename} (ID: {img_uuid} , score: {hit['score']})")
     score = extractor.pair_similarity_from_cached_tokens(
@@ -67,9 +67,9 @@ results_with_scores.sort(key=lambda x: x[1], reverse=True)
 # 打印排序后的结果
 print("搜索结果（按相似度排序）:")
 for hit, score in results_with_scores:
-    img_id = hit['id']
-    filename = os.path.basename(all_image_paths[img_id])
-    print(f"  - {filename} (ID: {img_id}, score: {score})")
+    img_uuid = hit['uuid']
+    filename = os.path.basename(all_image_paths[img_uuid])
+    print(f"  - {filename} (ID: {img_uuid}, score: {score})")
 
 end_time = time.time()
 print(f"搜索完成，耗时 {end_time - start_time} 秒")
