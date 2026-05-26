@@ -83,7 +83,6 @@ dependencies = [
     { name = "python-dotenv", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "requests", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "timm", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
-    { name = "triton-windows", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "uvicorn", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
 ]
 
@@ -124,7 +123,6 @@ requires-dist = [
     { name = "torchvision", marker = "extra == 'cpu'", specifier = ">=0.27.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "backend-py", extra = "cpu" } },
     { name = "torchvision", marker = "extra == 'cu126'", specifier = ">=0.27.0", index = "https://download.pytorch.org/whl/cu126", conflict = { package = "backend-py", extra = "cu126" } },
     { name = "torchvision", marker = "extra == 'xpu'", specifier = ">=0.21.0", index = "https://download.pytorch.org/whl/xpu", conflict = { package = "backend-py", extra = "xpu" } },
-    { name = "triton-windows", specifier = ">=3.7.0.post26" },
     { name = "uvicorn", specifier = ">=0.47.0" },
     { name = "xformers", marker = "extra == 'cu126'", specifier = ">=0.0.28" },
 ]
@@ -979,15 +977,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/09/a9/6ba95a270c6f1fbcd8dac228323f2777d886cb206987444e4bce66338dd4/tqdm-4.67.3.tar.gz", hash = "sha256:7d825f03f89244ef73f1d4ce193cb1774a8179fd96f31d7e1dcde62092b960bb", size = 169598, upload-time = "2026-02-03T17:35:53.048Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl", hash = "sha256:ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf", size = 78374, upload-time = "2026-02-03T17:35:50.982Z" },
-]
-
-[[package]]
-name = "triton-windows"
-version = "3.7.0.post26"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/77/0b/bbf56c1996289260472f09e965ecf775ca7146ea2a69cfb5fd9513faab86/triton_windows-3.7.0.post26-cp311-cp311-win_amd64.whl", hash = "sha256:38820923a9a1e3eca6f6046e733e6a0a7e771ec3132c2186f334c0edefec650e", size = 49641914, upload-time = "2026-05-14T14:11:46.08Z" },
-    { url = "https://files.pythonhosted.org/packages/ec/d1/e6e2eb0d23916788d6b3436b519c351d1eb281b5d3dcbd9c3b4fc67e9f46/triton_windows-3.7.0.post26-cp312-cp312-win_amd64.whl", hash = "sha256:7fde7436c1147b9446627747ec291bde6fec9a5063cad38c43bd3fa57d954eca", size = 49645796, upload-time = "2026-05-14T14:13:25.496Z" },
 ]
 
 [[package]]

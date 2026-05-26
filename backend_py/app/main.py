@@ -11,7 +11,7 @@ import hashlib
 
 
 app = FastAPI()
-extractor = PairVPRExtractor(model_type="vitB")
+extractor = PairVPRExtractor(model_type="vitB",use_fp16=True)
 
 @app.get("/")
 def root():
@@ -35,7 +35,7 @@ def search(params: SearchParams):
         if f.lower().endswith((".png", ".jpg", ".jpeg")):
             file_path = os.path.join(image_folder, f)
             # 使用文件名的 MD5 值作为稳定的 UUID (保证是36位以内或适配你的长度限制)
-            stable_id = hashlib.md5(f.encode('utf-8')).hexdigest()
+            stable_id = hashlib.md5(f.encode('utf-8')).hexdigest()+"----"
             all_image_paths[stable_id] = file_path
     
     core.milvus_lite.load_collection()
@@ -47,15 +47,15 @@ def search(params: SearchParams):
     results_with_scores = []
     json_results_1 = []
     for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
-        img_id = hit['id']
-        filename = os.path.basename(all_image_paths[img_id])
+        img_uuid = hit['id']
+        filename = os.path.basename(all_image_paths[img_uuid])
         item = {
             "filename": filename,
-            "id": img_id,
+            "uuid": img_uuid,
             "score": hit['score']  
         }
         json_results_1.append(item)
-        score = extractor.pair_similarity_from_cached_tokens(goal_token, core.token_manager.load_image_tokens(img_id))
+        score = extractor.pair_similarity_from_cached_tokens(goal_token, core.token_manager.load_image_tokens(img_uuid))
         results_with_scores.append((hit, score))
 
     # 按 score 降序排序
@@ -65,11 +65,11 @@ def search(params: SearchParams):
     json_results_2 = []
     # print("搜索结果（按相似度排序）:")
     for hit, score in results_with_scores:
-        img_id = hit['id']
-        filename = os.path.basename(all_image_paths[img_id])
+        img_uuid = hit['id']
+        filename = os.path.basename(all_image_paths[img_uuid])
         item = {
             "filename": filename,
-            "id": img_id,
+            "uuid": img_uuid,
             "score": score  
         }
         json_results_2.append(item)
@@ -82,6 +82,7 @@ def search(params: SearchParams):
     
 class InsertParams(BaseModel):
     pic_url: str
+    uuid : str #36位
     
 @app.post("/insert")    
 def add(params: InsertParams):

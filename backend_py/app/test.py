@@ -8,7 +8,7 @@ import uuid
 import hashlib
 import time
 
-extractor = PairVPRExtractor(model_type="vitB",use_fp16=False)
+extractor = PairVPRExtractor(model_type="vitB",use_fp16=True)
 
 
 # 3. 获取文件夹下所有的图片路径（模拟 10000 张的场景）
@@ -19,7 +19,7 @@ for f in os.listdir(image_folder):
     if f.lower().endswith((".png", ".jpg", ".jpeg")):
         file_path = os.path.join(image_folder, f)
         # 使用文件名的 MD5 值作为稳定的 UUID (保证是36位以内或适配你的长度限制)
-        stable_id = hashlib.md5(f.encode('utf-8')).hexdigest()
+        stable_id = hashlib.md5(f.encode('utf-8')).hexdigest()+"----"
         all_image_paths[stable_id] = file_path
 
 print(f"共找到 {len(all_image_paths)} 张图片，开始提取特征...")
