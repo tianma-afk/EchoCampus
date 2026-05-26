@@ -7,6 +7,7 @@ import core.token_manager
 from services.pair_vpr import PairVPRExtractor
 import os
 from pathlib import Path
+import hashlib
 
 
 app = FastAPI()
@@ -29,8 +30,13 @@ def search(params: SearchParams):
     # 3. 获取文件夹下所有的图片路径（模拟 10000 张的场景）
     image_folder = str(Path(__file__).resolve().parent/"temp_resources")
     # 筛选出常见的图片格式
-    all_image_paths = [os.path.join(image_folder, f) for f in os.listdir(image_folder) 
-                    if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    all_image_paths = {}
+    for f in os.listdir(image_folder):
+        if f.lower().endswith((".png", ".jpg", ".jpeg")):
+            file_path = os.path.join(image_folder, f)
+            # 使用文件名的 MD5 值作为稳定的 UUID (保证是36位以内或适配你的长度限制)
+            stable_id = hashlib.md5(f.encode('utf-8')).hexdigest()
+            all_image_paths[stable_id] = file_path
     
     core.milvus_lite.load_collection()
     # 提取查询图片的完整特征（包括 tokens）
@@ -46,7 +52,7 @@ def search(params: SearchParams):
         item = {
             "filename": filename,
             "id": img_id,
-            "score": hit['distance']  
+            "score": hit['score']  
         }
         json_results_1.append(item)
         score = extractor.pair_similarity_from_cached_tokens(goal_token, core.token_manager.load_image_tokens(img_id))
