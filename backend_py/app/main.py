@@ -36,7 +36,7 @@ def search(params: SearchParams):
     results_with_scores = []
     json_results_1 = []
     for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
-        img_uuid = hit["id"]
+        img_uuid = hit["uuid"]
         filename = hit["filename"] 
         item = {"filename": filename, "uuid": img_uuid, "score": hit["score"]}
         json_results_1.append(item)
@@ -52,7 +52,7 @@ def search(params: SearchParams):
     json_results_2 = []
     # print("搜索结果（按相似度排序）:")
     for hit, score in results_with_scores:
-        img_uuid = hit["id"]
+        img_uuid = hit["uuid"]
         filename = hit["filename"]
         item = {"filename": filename, "uuid": img_uuid, "score": score}
         json_results_2.append(item)
@@ -74,9 +74,9 @@ class InsertParams(BaseModel):
 def add(params: InsertParam):
     f = os.path.basename(params.pic_url)# 获取文件名
     if f.lower().endswith((".png", ".jpg", ".jpeg")):
-        stable_id = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
+        stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
         if not params.uuid:  # 默认使用文件名MD5值
-            params.uuid = stable_id
+            params.uuid = stable_uuid
         vector, token = extractor.extract_complete_features(params.pic_url)
         core.token_manager.save_image_tokens(params.uuid, token)
         core.milvus_lite.insert_vectors(vector, params.uuid,os.path.basename(params.pic_url))
@@ -90,9 +90,9 @@ def add(params: InsertParams):
     for item in params.items:
         f = os.path.basename(item.pic_url)# 获取文件名
         if f.lower().endswith((".png", ".jpg", ".jpeg")):
-            stable_id = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
+            stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
             if not item.uuid:  # 默认使用文件名MD5值
-                item.uuid = stable_id
+                item.uuid = stable_uuid
             vector, token = extractor.extract_complete_features(item.pic_url)
             core.token_manager.save_image_tokens(item.uuid, token)
             uuids.append(item.uuid)  
