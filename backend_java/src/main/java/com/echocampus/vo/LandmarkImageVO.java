@@ -16,6 +16,7 @@ public class LandmarkImageVO {
     private UUID id;
     private String url;
     private boolean isCover;
+
     private boolean isCurated;
     private String fileExt;
     private OffsetDateTime createdAt;

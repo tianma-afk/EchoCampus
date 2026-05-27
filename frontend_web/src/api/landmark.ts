@@ -74,6 +74,7 @@ export interface LandmarkDetailVO {
   categoryId: string
   tags: string[] | null
   imgs: string[] | null
+  coverImageUrl: string | null
   buildYear: string | null
   openTimeDetail: string | null
   floors: string | null

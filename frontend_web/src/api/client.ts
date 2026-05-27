@@ -21,8 +21,9 @@ interface RequestOptions {
 
 async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body } = options
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+  const headers: Record<string, string> = {}
+  if (body) {
+    headers['Content-Type'] = 'application/json'
   }
 
   const response = await fetch(`${BASE_URL}${url}`, {

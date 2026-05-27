@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.echocampus.handler.JsonbTypeHandler;
+import com.echocampus.handler.UuidListJsonbTypeHandler;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Data
 @TableName(value = "landmark", autoResultMap = true)
@@ -30,7 +32,7 @@ public class LandmarkEntity {
     @TableField(typeHandler = JsonbTypeHandler.class)
     private List<String> tags;
 
-    @TableField(typeHandler = JsonbTypeHandler.class)
+    @TableField(typeHandler = UuidListJsonbTypeHandler.class)
     private List<UUID> imgs;
 
     private UUID coverImageId;
@@ -50,4 +52,12 @@ public class LandmarkEntity {
     private Integer totalFloors;
 
     private BigDecimal recommendRate;
+
+    // Convert JSONB-deserialized String elements to UUID, avoiding ClassCastException in enhanced for-loops.
+    public List<UUID> getImgs() {
+        if (this.imgs == null) return null;
+        return this.imgs.stream()
+                .map(o -> o instanceof UUID ? (UUID) o : UUID.fromString(o.toString()))
+                .collect(Collectors.toList());
+    }
 }

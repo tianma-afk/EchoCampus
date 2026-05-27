@@ -10,7 +10,10 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/api/v1/admin/landmarks)",
       "Bash(docker exec postgres *)",
       "Bash(curl *)",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(npm run *)",
+      "Bash(mvn -DskipTests compile)",
+      "Bash(npx vite *)"
     ]
   }
 }

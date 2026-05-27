@@ -1,16 +1,20 @@
 package com.echocampus.controller.admin;
 
+import com.echocampus.dto.BatchDeleteImagesRequest;
 import com.echocampus.dto.CuratedImagesRequest;
 import com.echocampus.dto.ImageConfirmRequest;
 import com.echocampus.dto.ImagePresignRequest;
 import com.echocampus.dto.ImagePresignResponse;
 import com.echocampus.dto.SetCoverRequest;
 import com.echocampus.service.admin.LandmarkImageAdminService;
-import com.echocampus.vo.LandmarkImageVO;
+import com.echocampus.vo.BatchDeleteImagesResponse;
+import com.echocampus.vo.ImagePageVO;
 import com.echocampus.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +24,7 @@ import java.util.UUID;
 @RequestMapping("/api/v1/admin/landmarks/{landmarkId}")
 @Tag(name = "管理员地标图片", description = "提供地标图片的上传和管理功能")
 public class LandmarkImageAdminController {
+    private static final Logger log = LoggerFactory.getLogger(LandmarkImageAdminController.class);
     private final LandmarkImageAdminService landmarkImageAdminService;
 
     public LandmarkImageAdminController(LandmarkImageAdminService landmarkImageAdminService) {
@@ -27,11 +32,15 @@ public class LandmarkImageAdminController {
     }
 
     @GetMapping("/images")
-    @Operation(summary = "获取图片列表", description = "获取地标下所有图片，含封面/精选标记和预签名URL")
-    public Result<List<LandmarkImageVO>> listImages(@PathVariable UUID landmarkId) {
+    @Operation(summary = "获取图片分页列表", description = "分页获取地标下图片，置顶封面和精选，含预签名URL")
+    public Result<ImagePageVO> listImages(
+            @PathVariable UUID landmarkId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
         try {
-            return Result.success(landmarkImageAdminService.listImages(landmarkId));
+            return Result.success(landmarkImageAdminService.listImages(landmarkId, page, pageSize));
         } catch (RuntimeException e) {
+            log.error("listImages failed for landmark {}: {}", landmarkId, e.getMessage(), e);
             return Result.failure(404, e.getMessage());
         }
     }
@@ -64,7 +73,7 @@ public class LandmarkImageAdminController {
     }
 
     @PutMapping("/images/curated")
-    @Operation(summary = "设置精选展示图片", description = "从已有图片中选择 3-4 张作为详情页精选展示")
+    @Operation(summary = "设置精选展示图片", description = "从已有图片中选择 1 到 5 张作为详情页精选展示")
     public Result<Void> setCuratedImages(
             @PathVariable UUID landmarkId,
             @Valid @RequestBody CuratedImagesRequest request) {
@@ -86,6 +95,20 @@ public class LandmarkImageAdminController {
                 return Result.failure(404, msg);
             }
             return Result.failure(400, msg);
+        }
+    }
+
+    @DeleteMapping("/images/batch")
+    @Operation(summary = "批量删除图片", description = "批量删除图片，返回影响的封面/精选数量")
+    public Result<BatchDeleteImagesResponse> deleteImagesBatch(
+            @PathVariable UUID landmarkId,
+            @Valid @RequestBody BatchDeleteImagesRequest request) {
+        try {
+            BatchDeleteImagesResponse response = landmarkImageAdminService.batchDeleteImages(
+                    landmarkId, request.getImageIds());
+            return Result.success(response);
+        } catch (RuntimeException e) {
+            return Result.failure(400, e.getMessage());
         }
     }
 }

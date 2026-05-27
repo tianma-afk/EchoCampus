@@ -114,19 +114,22 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
 
         // batch resolve category names
         List<UUID> categoryIds = entities.stream().map(LandmarkEntity::getCategoryId).distinct().toList();
-        Map<UUID, String> categoryNameMap = categoryMapper.selectBatchIds(categoryIds).stream()
-                .collect(Collectors.toMap(CategoryEntity::getId, CategoryEntity::getName));
+        Map<UUID, String> categoryNameMap = categoryIds.isEmpty() ? Map.of()
+                : categoryMapper.selectBatchIds(categoryIds).stream()
+                        .collect(Collectors.toMap(CategoryEntity::getId, CategoryEntity::getName));
 
         // batch resolve campus names
         List<UUID> campusIds = entities.stream().map(LandmarkEntity::getCampusId).distinct().toList();
-        Map<UUID, CampusEntity> campusMap = campusMapper.selectBatchIds(campusIds).stream()
-                .collect(Collectors.toMap(CampusEntity::getId, c -> c));
+        Map<UUID, CampusEntity> campusMap = campusIds.isEmpty() ? Map.of()
+                : campusMapper.selectBatchIds(campusIds).stream()
+                        .collect(Collectors.toMap(CampusEntity::getId, c -> c));
 
         // batch resolve university names via campus
         List<UUID> universityIds = campusMap.values().stream()
                 .map(CampusEntity::getUniversityId).distinct().toList();
-        Map<UUID, String> universityNameMap = universityMapper.selectBatchIds(universityIds).stream()
-                .collect(Collectors.toMap(UniversityEntity::getId, UniversityEntity::getName));
+        Map<UUID, String> universityNameMap = universityIds.isEmpty() ? Map.of()
+                : universityMapper.selectBatchIds(universityIds).stream()
+                        .collect(Collectors.toMap(UniversityEntity::getId, UniversityEntity::getName));
 
         List<LandmarkAdminVO> voList = entities.stream().map(e -> {
             String coverUrl = null;
@@ -199,6 +202,12 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
                     .toList();
         }
 
+        // build cover image URL
+        String coverImageUrl = null;
+        if (entity.getCoverImageId() != null) {
+            coverImageUrl = buildImageUrl(entity, entity.getCoverImageId());
+        }
+
         return LandmarkDetailVO.builder()
                 .id(entity.getId())
                 .name(entity.getName())
@@ -209,6 +218,7 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
                 .categoryId(entity.getCategoryId())
                 .tags(entity.getTags())
                 .imgs(imgUrls)
+                .coverImageUrl(coverImageUrl)
                 .buildYear(entity.getBuildYear())
                 .openTimeDetail(entity.getOpenTimeDetail())
                 .floors(entity.getFloors())

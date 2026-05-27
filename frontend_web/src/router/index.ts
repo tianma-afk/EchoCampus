@@ -28,6 +28,10 @@ const router = createRouter({
         {
           path: ':id/edit',
           component: () => import('../views/EditLandmark.vue')
+        },
+        {
+          path: ':id/images',
+          component: () => import('../views/ManageImages.vue')
         }
       ]
     },

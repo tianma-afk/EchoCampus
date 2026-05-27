@@ -23,6 +23,7 @@ public class LandmarkDetailVO {
     private UUID categoryId;
     private List<String> tags;
     private List<String> imgs;
+    private String coverImageUrl;
     private String buildYear;
     private String openTimeDetail;
     private String floors;

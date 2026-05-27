@@ -14,12 +14,15 @@ import com.echocampus.mapper.LandmarkMapper;
 import com.echocampus.mapper.UniversityMapper;
 import com.echocampus.service.admin.LandmarkImageAdminService;
 import com.echocampus.utils.MinioUtil;
+import com.echocampus.vo.BatchDeleteImagesResponse;
+import com.echocampus.vo.ImagePageVO;
 import com.echocampus.vo.LandmarkImageVO;
 import io.minio.StatObjectResponse;
 import io.minio.http.Method;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -157,6 +160,10 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
 
     @Override
     public void setCuratedImages(UUID landmarkId, List<UUID> imageIds) {
+        if (imageIds != null && imageIds.size() > 5) {
+            throw new RuntimeException("精选图片最多 5 张");
+        }
+
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
             throw new RuntimeException("地标不存在");
@@ -177,7 +184,7 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     }
 
     @Override
-    public List<LandmarkImageVO> listImages(UUID landmarkId) {
+    public ImagePageVO listImages(UUID landmarkId, int page, int pageSize) {
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
             throw new RuntimeException("地标不存在");
@@ -189,7 +196,7 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
             university = universityMapper.selectById(campus.getUniversityId());
         }
 
-        List<ImageEntity> images = imageMapper.selectList(
+        List<ImageEntity> allImages = imageMapper.selectList(
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<ImageEntity>()
                         .eq(ImageEntity::getLandmarkId, landmarkId)
                         .orderByDesc(ImageEntity::getCreatedAt));
@@ -197,8 +204,9 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
         UUID coverImageId = landmark.getCoverImageId();
         List<UUID> curatedIds = landmark.getImgs() != null ? landmark.getImgs() : List.of();
 
-        List<LandmarkImageVO> result = new ArrayList<>();
-        for (ImageEntity image : images) {
+        // Build VOs and split into pinned / normal sets
+        java.util.Map<UUID, LandmarkImageVO> voMap = new java.util.HashMap<>();
+        for (ImageEntity image : allImages) {
             String url = null;
             if (university != null && campus != null) {
                 String key = String.format("imgs/%s/%s/%s/%s.%s",
@@ -208,7 +216,7 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
                 } catch (Exception ignored) {
                 }
             }
-            result.add(LandmarkImageVO.builder()
+            voMap.put(image.getId(), LandmarkImageVO.builder()
                     .id(image.getId())
                     .url(url)
                     .isCover(coverImageId != null && coverImageId.equals(image.getId()))
@@ -217,7 +225,50 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
                     .createdAt(image.getCreatedAt())
                     .build());
         }
-        return result;
+
+        // Build ordered list: cover first → curated by imgs order → rest by createdAt desc
+        LinkedHashSet<UUID> orderedIds = new LinkedHashSet<>();
+
+        // cover first
+        if (coverImageId != null && voMap.containsKey(coverImageId)) {
+            orderedIds.add(coverImageId);
+        }
+
+        // curated by imgs order
+        for (UUID curatedId : curatedIds) {
+            if (voMap.containsKey(curatedId)) {
+                orderedIds.add(curatedId);
+            }
+        }
+
+        // rest by createdAt desc (allImages is already in that order)
+        for (ImageEntity image : allImages) {
+            orderedIds.add(image.getId());
+        }
+
+        List<LandmarkImageVO> orderedList = new ArrayList<>();
+        for (UUID id : orderedIds) {
+            LandmarkImageVO vo = voMap.get(id);
+            if (vo != null) {
+                orderedList.add(vo);
+            }
+        }
+
+        long total = orderedList.size();
+        int fromIndex = (page - 1) * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, (int) total);
+        List<LandmarkImageVO> pageRecords;
+        if (fromIndex >= total) {
+            pageRecords = List.of();
+        } else {
+            pageRecords = orderedList.subList(fromIndex, toIndex);
+        }
+
+        return ImagePageVO.builder()
+                .records(pageRecords)
+                .total(total)
+                .hasMore(toIndex < total)
+                .build();
     }
 
     @Override
@@ -259,6 +310,70 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
 
         // delete from DB
         imageMapper.deleteById(imageId);
+    }
+
+    @Override
+    public BatchDeleteImagesResponse batchDeleteImages(UUID landmarkId, List<UUID> imageIds) {
+        LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
+        if (landmark == null) {
+            throw new RuntimeException("地标不存在");
+        }
+
+        boolean affectedCover = false;
+        int affectedCuratedCount = 0;
+
+        if (landmark.getCoverImageId() != null && imageIds.contains(landmark.getCoverImageId())) {
+            affectedCover = true;
+        }
+        if (landmark.getImgs() != null) {
+            for (UUID imgId : imageIds) {
+                if (landmark.getImgs().contains(imgId)) {
+                    affectedCuratedCount++;
+                }
+            }
+        }
+
+        CampusEntity campus = campusMapper.selectById(landmark.getCampusId());
+        UniversityEntity university = null;
+        if (campus != null) {
+            university = universityMapper.selectById(campus.getUniversityId());
+        }
+
+        for (UUID imageId : imageIds) {
+            ImageEntity image = imageMapper.selectById(imageId);
+            if (image == null || !image.getLandmarkId().equals(landmarkId)) {
+                continue;
+            }
+
+            // delete from MinIO
+            if (university != null && campus != null) {
+                String key = String.format("imgs/%s/%s/%s/%s.%s",
+                        university.getId(), campus.getId(), landmarkId, image.getId(), image.getFileExt());
+                try {
+                    minioUtil.removeObject(bucket, key);
+                } catch (Exception ignored) {
+                }
+            }
+
+            imageMapper.deleteById(imageId);
+        }
+
+        // clean up landmark references
+        if (affectedCover) {
+            landmark.setCoverImageId(null);
+        }
+        if (affectedCuratedCount > 0 && landmark.getImgs() != null) {
+            List<UUID> updatedImgs = new ArrayList<>(landmark.getImgs());
+            updatedImgs.removeAll(imageIds);
+            landmark.setImgs(updatedImgs);
+        }
+        landmarkMapper.updateById(landmark);
+
+        return BatchDeleteImagesResponse.builder()
+                .deletedCount(imageIds.size())
+                .affectedCover(affectedCover)
+                .affectedCuratedCount(affectedCuratedCount)
+                .build();
     }
 
     private String extractExtension(String filename) {

@@ -89,6 +89,9 @@ function onUniversitySelect(uni: SelectOption | null) {
   selectedCampus.value = null
   campusOptions.value = []
   form.value.campusId = ''
+  if (uni) {
+    handleCampusSearch('')
+  }
 }
 
 function onCampusSelect(cam: SelectOption | null) {

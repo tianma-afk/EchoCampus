@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ArrowLeft, Delete } from '@element-plus/icons-vue'
 import { getLandmarkDetail, updateLandmark, deleteLandmark } from '../api/landmark'
 import type { LandmarkCreateRequest } from '../api/landmark'
 import { listCategories, type CategoryVO } from '../api/category'
@@ -9,7 +10,7 @@ import { searchCampuses, type CampusVO } from '../api/campus'
 import SearchableSelect, { type SelectOption } from '../components/SearchableSelect.vue'
 import TagListInput from '../components/TagListInput.vue'
 import FloorManager, { type FloorEntry } from '../components/FloorManager.vue'
-import ImageManager from '../components/ImageManager.vue'
+import CoverCuratedPreview from '../components/CoverCuratedPreview.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -131,6 +132,9 @@ function onUniversitySelect(uni: SelectOption | null) {
   selectedCampus.value = null
   campusOptions.value = []
   form.value.campusId = ''
+  if (uni) {
+    handleCampusSearch('')
+  }
 }
 
 function onCampusSelect(cam: SelectOption | null) {
@@ -209,17 +213,12 @@ onBeforeUnmount(() => {
     <div class="page-header">
       <div class="page-title">
         <button class="back-btn" @click="handleCancel">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+          <el-icon :size="18"><ArrowLeft /></el-icon>
         </button>
         <h1>编辑地标</h1>
       </div>
       <button class="danger-btn" :disabled="deleting" @click="handleDelete">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="3 6 5 6 21 6" />
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-        </svg>
+        <el-icon :size="16"><Delete /></el-icon>
         {{ deleting ? '删除中...' : '删除地标' }}
       </button>
     </div>
@@ -229,7 +228,7 @@ onBeforeUnmount(() => {
 
     <template v-else>
       <div class="image-section">
-        <ImageManager :landmark-id="id" />
+        <CoverCuratedPreview :landmark-id="id" />
       </div>
 
       <form class="edit-form" @submit.prevent="handleSubmit">
@@ -406,11 +405,6 @@ onBeforeUnmount(() => {
   color: #10b981;
 }
 
-.back-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
 .danger-btn {
   display: flex;
   align-items: center;
@@ -433,11 +427,6 @@ onBeforeUnmount(() => {
 .danger-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.danger-btn svg {
-  width: 16px;
-  height: 16px;
 }
 
 .state-msg {
