@@ -8,10 +8,10 @@ from services.pair_vpr import PairVPRExtractor
 import os
 from pathlib import Path
 import hashlib
-
+from typing import List, Optional
 
 app = FastAPI()
-extractor = PairVPRExtractor(model_type="vitB",use_fp16=True)
+extractor = PairVPRExtractor(model_type="vitB", use_fp16=True)
 
 @app.get("/")
 def root():
@@ -22,40 +22,27 @@ def root():
 class SearchParams(BaseModel):
     pic_path: str  # 必须的字符串参数，表示图片路径
     top_k: int = 10  # 可选的整数参数，默认值为10
-    
-    
+
+
 @app.post("/search")
 def search(params: SearchParams):
 
-    # 3. 获取文件夹下所有的图片路径（模拟 10000 张的场景）
-    image_folder = str(Path(__file__).resolve().parent/"temp_resources")
-    # 筛选出常见的图片格式
-    all_image_paths = {}
-    for f in os.listdir(image_folder):
-        if f.lower().endswith((".png", ".jpg", ".jpeg")):
-            file_path = os.path.join(image_folder, f)
-            # 使用文件名的 MD5 值作为稳定的 UUID (保证是36位以内或适配你的长度限制)
-            stable_id = hashlib.md5(f.encode('utf-8')).hexdigest()+"----"
-            all_image_paths[stable_id] = file_path
-    
     core.milvus_lite.load_collection()
     # 提取查询图片的完整特征（包括 tokens）
     goal_vector, goal_token = extractor.extract_complete_features(params.pic_path)
 
-    result = core.milvus_lite.search_similar(goal_vector,params.top_k)
+    result = core.milvus_lite.search_similar(goal_vector, params.top_k)
     # print("搜索结果:")
     results_with_scores = []
     json_results_1 = []
     for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
-        img_uuid = hit['id']
-        filename = os.path.basename(all_image_paths[img_uuid])
-        item = {
-            "filename": filename,
-            "uuid": img_uuid,
-            "score": hit['score']  
-        }
+        img_uuid = hit["id"]
+        filename = hit["filename"] 
+        item = {"filename": filename, "uuid": img_uuid, "score": hit["score"]}
         json_results_1.append(item)
-        score = extractor.pair_similarity_from_cached_tokens(goal_token, core.token_manager.load_image_tokens(img_uuid))
+        score = extractor.pair_similarity_from_cached_tokens(
+            goal_token, core.token_manager.load_image_tokens(img_uuid)
+        )
         results_with_scores.append((hit, score))
 
     # 按 score 降序排序
@@ -65,34 +52,61 @@ def search(params: SearchParams):
     json_results_2 = []
     # print("搜索结果（按相似度排序）:")
     for hit, score in results_with_scores:
-        img_uuid = hit['id']
-        filename = os.path.basename(all_image_paths[img_uuid])
-        item = {
-            "filename": filename,
-            "uuid": img_uuid,
-            "score": score  
-        }
+        img_uuid = hit["id"]
+        filename = hit["filename"]
+        item = {"filename": filename, "uuid": img_uuid, "score": score}
         json_results_2.append(item)
     return {
         "message": "图搜图成功",
-        "results_1":json_results_1,      # 初始比较的结果
-        "results_2": json_results_2      # 筛选后的结果
+        "results_1": json_results_1,  # 初始比较的结果
+        "results_2": json_results_2,  # 筛选后的结果
     }
-    
+
+
+class InsertParam(BaseModel):
+    uuid: str = None  # 36位
+    pic_url: str  # 现在为路径
     
 class InsertParams(BaseModel):
-    pic_url: str
-    uuid : str #36位
-    
-@app.post("/insert")    
+    items: List[InsertParam]
+  
+@app.post("/insert_one")
+def add(params: InsertParam):
+    f = os.path.basename(params.pic_url)# 获取文件名
+    if f.lower().endswith((".png", ".jpg", ".jpeg")):
+        stable_id = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
+        if not params.uuid:  # 默认使用文件名MD5值
+            params.uuid = stable_id
+        vector, token = extractor.extract_complete_features(params.pic_url)
+        core.token_manager.save_image_tokens(params.uuid, token)
+        core.milvus_lite.insert_vectors(vector, params.uuid,os.path.basename(params.pic_url))
+    return {"message": f"你提交的图片url是: {params.pic_url}, uuid是: {params.uuid}"}
+
+@app.post("/insert")
 def add(params: InsertParams):
-    
-    return {"message": f"你提交的图片url是: {params.pic_url}"}
-
-
-
+    vectors = []
+    filenames = []
+    uuids = []
+    for item in params.items:
+        f = os.path.basename(item.pic_url)# 获取文件名
+        if f.lower().endswith((".png", ".jpg", ".jpeg")):
+            stable_id = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
+            if not item.uuid:  # 默认使用文件名MD5值
+                item.uuid = stable_id
+            vector, token = extractor.extract_complete_features(item.pic_url)
+            core.token_manager.save_image_tokens(item.uuid, token)
+            uuids.append(item.uuid)  
+            vectors.append(vector)
+            filenames.append(os.path.basename(item.pic_url))
+    core.milvus_lite.insert_vectors(vectors,uuids,filenames)
+    return {"message": f"添加成功，共添加了 {len(params.items)} 张图片"}
+  
+  
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=False)#设置运行参数：网络地址 端口号 是否开启热更新
+    uvicorn.run(
+        "main:app", host="127.0.0.1", port=8000, reload=False
+    )  # 设置运行参数：网络地址 端口号 是否开启热更新
+    
 # uvicorn main:app --reload  开启热更新
 
 # http://127.0.0.1:8000/docs

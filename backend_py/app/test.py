@@ -26,8 +26,11 @@ print(f"共找到 {len(all_image_paths)} 张图片，开始提取特征...")
 
 vectors = []
 ids = []
+filenames = []
 for image_uuid, image_path in all_image_paths.items():
     vector, token = extractor.extract_complete_features(image_path)
+    filename = os.path.basename(image_path)# 获取文件名
+    filenames.append(filename)
     vectors.append(vector)
     ids.append(image_uuid)
     core.token_manager.save_image_tokens(image_uuid, token)
@@ -35,7 +38,7 @@ print("检查ids列表：")
 print(ids)
 # breakpoint()# 在这里检查 ids 列表的内容，确保它们是字符串类型的 UUID
     
-core.milvus_lite.insert_vectors(vectors, ids)
+core.milvus_lite.insert_vectors(vectors, ids,filenames)  # 批量插入向量、ID 和文件名
 
 core.milvus_lite.load_collection()
 print(f"特征提取完成，开始搜索相似图片...")
@@ -54,7 +57,7 @@ print("搜索结果:")
 results_with_scores = []
 for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
     img_uuid = hit["id"]
-    filename = os.path.basename(all_image_paths.get(img_uuid))
+    filename = hit["filename"]  # 直接从 result 中获取文件名
     print(f"  - {filename} (ID: {img_uuid} , score: {hit['score']})")
     score = extractor.pair_similarity_from_cached_tokens(
         goal_token, core.token_manager.load_image_tokens(img_uuid)
@@ -68,7 +71,7 @@ results_with_scores.sort(key=lambda x: x[1], reverse=True)
 print("搜索结果（按相似度排序）:")
 for hit, score in results_with_scores:
     img_id = hit['id']
-    filename = os.path.basename(all_image_paths[img_id])
+    filename = hit['filename']
     print(f"  - {filename} (ID: {img_id}, score: {score})")
 
 end_time = time.time()
