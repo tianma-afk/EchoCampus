@@ -3,3 +3,7 @@
 .vscode/
 __pycache__/
 .trae/
+*.pth
+weights/
+
+user_config.json
