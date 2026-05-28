@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
+import axios from 'axios'
 
 const showCamera = ref(false)
 const videoElement = ref<HTMLVideoElement | null>(null)
 const stream = ref<MediaStream | null>(null)
 const facingMode = ref<'user' | 'environment'>('environment')
 const fileInput = ref<HTMLInputElement | null>(null)
+
+const API_BASE_URL = 'http://localhost:8080/api/v1'
+const UPLOAD_API = `${API_BASE_URL}/upload`
+const MINIO_BASE_URL = 'http://localhost:9000'
+
+const uploading = ref(false)
+const showPreview = ref(false)
+const previewImageUrl = ref('')
 
 const handleCameraClick = () => {
   showCamera.value = true
@@ -87,10 +96,30 @@ const handleFileChange = (e: Event) => {
   }
 }
 
-const handleImageSelected = (file: File | Blob) => {
-  console.log('处理图片:', file)
-  // TODO: 这里可以添加上传到后端进行识别的逻辑
-  alert('图片已选择，可以进行识别')
+const handleImageSelected = async (file: File | Blob) => {
+  uploading.value = true
+  showCamera.value = false
+  try {
+    const res = await axios.post(`${UPLOAD_API}/presigned-url`)
+    const { uploadUrl, bucket, objectName } = res.data.data
+
+    await axios.put(uploadUrl, file, {
+      headers: { 'Content-Type': 'image/jpeg' }
+    })
+
+    previewImageUrl.value = `${MINIO_BASE_URL}/${bucket}/${objectName}`
+    showPreview.value = true
+  } catch (error) {
+    console.error('上传图片失败:', error)
+    alert('上传失败，请重试')
+  } finally {
+    uploading.value = false
+  }
+}
+
+const handleConfirm = () => {
+  showPreview.value = false
+  previewImageUrl.value = ''
 }
 
 onUnmounted(() => {
@@ -104,7 +133,7 @@ onUnmounted(() => {
     <div class="bg-container"></div>
 
     <!-- 主页面 -->
-    <div v-if="!showCamera" class="main-page">
+    <div v-if="!showCamera && !showPreview && !uploading" class="main-page">
       <!-- 顶部标题区 -->
       <header class="page-header">
         <h1 class="title">映像校园</h1>
@@ -136,8 +165,26 @@ onUnmounted(() => {
       </footer>
     </div>
 
+    <!-- 上传中 -->
+    <div v-if="uploading" class="uploading-overlay">
+      <div class="uploading-spinner">
+        <div class="spinner-icon"></div>
+        <p class="uploading-text">正在上传图片...</p>
+      </div>
+    </div>
+
+    <!-- 图片预览 -->
+    <div v-if="showPreview" class="preview-view">
+      <div class="preview-image-wrapper">
+        <img :src="previewImageUrl" class="preview-image" />
+      </div>
+      <footer class="preview-footer">
+        <button class="confirm-btn" @click="handleConfirm">确认</button>
+      </footer>
+    </div>
+
     <!-- 拍摄界面 -->
-    <div v-else class="camera-interface">
+    <div v-else-if="showCamera" class="camera-interface">
       <!-- 3/4 摄像头预览区域 -->
       <div class="camera-preview">
         <video
@@ -533,5 +580,103 @@ onUnmounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ========== 上传中样式 ========== */
+.uploading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploading-spinner {
+  text-align: center;
+}
+
+.spinner-icon {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 20px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #169669;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.uploading-text {
+  font-size: 17px;
+  color: #fff;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========== 图片预览样式 ========== */
+.preview-view {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #000;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.preview-image-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 600px);
+  margin: 0 auto;
+  padding: 20px;
+  background: #000;
+  min-height: 0;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.preview-footer {
+  flex-shrink: 0;
+  z-index: 2;
+  width: 100%;
+  background: linear-gradient(to bottom, #1a1a1a, #000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 20px calc(80px + env(safe-area-inset-bottom)) 20px;
+  min-height: 120px;
+}
+
+.confirm-btn {
+  width: 200px;
+  height: 50px;
+  border-radius: 50px;
+  background: #169669;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(22, 150, 105, 0.3);
+  transition: all 0.2s ease;
+}
+
+.confirm-btn:active {
+  transform: scale(0.95);
 }
 </style>
