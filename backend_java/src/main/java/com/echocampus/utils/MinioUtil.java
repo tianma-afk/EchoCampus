@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -132,26 +133,38 @@ public class MinioUtil {
     }
 
     /**
+     * 设置桶策略
+     */
+    public void setBucketPolicy(String bucketName, String policyJson) throws Exception {
+        minioClient.setBucketPolicy(
+                SetBucketPolicyArgs.builder()
+                        .bucket(bucketName)
+                        .config(policyJson)
+                        .build()
+        );
+    }
+
+    /**
      * 获取预签名URL
      */
-//    public String getPresignedObjectUrl(
-//            String bucketName,
-//            String objectName,
-//            int expiry,
-//            TimeUnit timeUnit,
-//            Method method,
-//            String contentType) throws Exception {
-//
-//        GetPresignedObjectUrlArgs.Builder builder = GetPresignedObjectUrlArgs.builder()
-//                .bucket(bucketName)
-//                .object(objectName)
-//                .expiry(expiry, timeUnit)
-//                .method(method);
-//
-//        if (contentType != null) {
-//            builder.extraQueryParam("content-type", contentType);
-//        }
-//
-//        return minioClient.getPresignedObjectUrl(builder.build());
-//    }
+    public String getPresignedObjectUrl(
+            String bucketName,
+            String objectName,
+            int expiry,
+            TimeUnit timeUnit,
+            Method method,
+            String contentType) throws Exception {
+
+        GetPresignedObjectUrlArgs.Builder builder = GetPresignedObjectUrlArgs.builder()
+                .bucket(bucketName)
+                .object(objectName)
+                .expiry(expiry, timeUnit)
+                .method(method);
+
+        if (contentType != null) {
+            builder.extraQueryParams(Map.of("content-type", contentType));
+        }
+
+        return minioClient.getPresignedObjectUrl(builder.build());
+    }
 }
