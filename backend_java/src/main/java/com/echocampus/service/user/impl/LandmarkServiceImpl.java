@@ -63,14 +63,17 @@ public class LandmarkServiceImpl implements LandmarkService {
             wrapper.like(LandmarkEntity::getName, request.getSearchQuery());
         }
 
-        String sortBy = request.getSortBy();
-        if ("rate".equals(sortBy)) {
-            wrapper.orderByDesc(LandmarkEntity::getRating);
-        } else if ("hot".equals(sortBy)) {
-            wrapper.orderByDesc(LandmarkEntity::getCheckInCount);
-        } else {
-            wrapper.orderByAsc(LandmarkEntity::getId);
-        }
+		// 排序
+		String sortBy = request.getSortBy();
+		if ("rate".equals(sortBy)) {
+			wrapper.orderByDesc(LandmarkEntity::getRating);
+		} else if ("hot".equals(sortBy)) {
+			wrapper.orderByDesc(LandmarkEntity::getCheckInCount);
+		} else if ("nameAsc".equals(sortBy)) {
+			wrapper.last(" ORDER BY convert_to(name, 'GBK') ASC");
+		} else {
+			wrapper.orderByAsc(LandmarkEntity::getId);
+		}
 
         Page<LandmarkEntity> page = new Page<>(request.getPage(), request.getPageSize());
         Page<LandmarkEntity> resultPage = landmarkMapper.selectPage(page, wrapper);

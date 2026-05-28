@@ -122,7 +122,19 @@ public class MinioUtil {
     }
 
     /**
-     * 获取预签名URL，contentType 为 null 时不限制
+     * 设置桶策略
+     */
+    public void setBucketPolicy(String bucketName, String policyJson) throws Exception {
+        minioClient.setBucketPolicy(
+                SetBucketPolicyArgs.builder()
+                        .bucket(bucketName)
+                        .config(policyJson)
+                        .build()
+        );
+    }
+
+    /**
+     * 获取预签名URL
      */
     public String getPresignedObjectUrl(
             String bucketName,
