@@ -47,5 +47,8 @@ logs/
 *.tmp
 *.bak
 
-CLAUDE.local.md
+#数据库文件
+data/
+
 .claude/
+CLAUDE.local.md
