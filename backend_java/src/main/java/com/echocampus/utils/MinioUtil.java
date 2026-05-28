@@ -1,7 +1,6 @@
 package com.echocampus.utils;
 
 import io.minio.*;
-import io.minio.errors.*;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * MinIO 工具类 - 封装原生 SDK 操作
@@ -101,24 +98,16 @@ public class MinioUtil {
     }
 
     /**
-     * 检查对象是否存在
+     * 获取对象元数据，用于校验文件存在性、大小、Content-Type
      */
-//    public boolean isObjectExists(String bucketName, String objectName) throws Exception {
-//        try {
-//            minioClient.statObject(
-//                    StatObjectArgs.builder()
-//                            .bucket(bucketName)
-//                            .object(objectName)
-//                            .build()
-//            );
-//            return true;
-//        } catch (ErrorResponseException e) {
-//            if (e.code().equals("NoSuchKey")) {
-//                return false;
-//            }
-//            throw e;
-//        }
-//    }
+    public StatObjectResponse statObject(String bucketName, String objectName) throws Exception {
+        return minioClient.statObject(
+                StatObjectArgs.builder()
+                        .bucket(bucketName)
+                        .object(objectName)
+                        .build()
+        );
+    }
 
     /**
      * 删除对象
