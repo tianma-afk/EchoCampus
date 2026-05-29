@@ -33,7 +33,8 @@ if not client.has_collection(COLLECTION_NAME):
     # 定义 schema，明确 uuid 字段类型为 VARCHAR (字符串)
     schema = CollectionSchema([
         FieldSchema(name="uuid", dtype=DataType.VARCHAR, max_length=36, is_primary=True),
-        FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=VECTOR_DIM)
+        FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=VECTOR_DIM),
+        FieldSchema(name="filename", dtype=DataType.VARCHAR, max_length=256)
     ])
     
     client.create_collection(
@@ -63,7 +64,7 @@ if "vector" not in indexes:
 else:
     print("✅ 索引已存在，跳过创建")
 
-def insert_vector(vector, uuid: str = None):  # 改为 str 类型
+def insert_vector(vector, uuid: str = None, filename: str = None):  # 改为 str 类型
     if uuid is None:
         print("错误: uuid不能为None")
         return None
@@ -72,7 +73,7 @@ def insert_vector(vector, uuid: str = None):  # 改为 str 类型
     if len(uuid) != 36:
         print(f"警告: uuid '{uuid}' 长度不是36位")
     
-    data = [{"uuid": uuid, "vector": vector}]
+    data = [{"uuid": uuid, "vector": vector, "filename": filename}]
 
     result = client.insert(
         collection_name=COLLECTION_NAME,
@@ -80,7 +81,7 @@ def insert_vector(vector, uuid: str = None):  # 改为 str 类型
     )
     client.load_collection(collection_name=COLLECTION_NAME)
     return result
-def insert_vectors(vectors, uuids: list = None):  # uuids 改为字符串列表
+def insert_vectors(vectors, uuids: list = None,filenames : list = None):  # uuids 改为字符串列表
     data_to_insert = []
     if vectors is None or len(vectors) == 0:
         print("错误: vectors不能为None或空")
@@ -90,13 +91,17 @@ def insert_vectors(vectors, uuids: list = None):  # uuids 改为字符串列表
         print("错误: uuids不能为None或长度与vectors不一致")
         return None
     
+    if filenames is None or len(filenames) != len(vectors):
+        print("错误: filenames不能为None或长度与vectors不一致")
+        return None
+    
     # 可选：验证每个 uuid 长度
     for uuid_val in uuids:
         if len(uuid_val) != 36:
             print(f"警告: uuid '{uuid_val}' 长度不是36位")
     
     for i, vector in enumerate(vectors):
-        data_to_insert.append({"uuid": uuids[i], "vector": vector})
+        data_to_insert.append({"uuid": uuids[i], "vector": vector, "filename": filenames[i]})
     result = client.insert(
         collection_name=COLLECTION_NAME,
         data=data_to_insert
@@ -113,10 +118,10 @@ def search_similar(query_vector, top_k=10):
         data=[query_vector],              # 查询的向量（支持批量，这里用单条）
         limit=top_k,                      # 返回数量
         search_params=SEARCH_PARAMS,      # 搜索参数（你已定义好）
-        output_fields=["uuid"]              # 需要返回的字段（这里只要uuid）
+        output_fields=["uuid", "filename"]  # 需要返回的字段（这里只要uuid和filename）
     )
     
-    return [{'uuid': r['uuid'], 'score': r['distance']} for r in results[0]]
+    return [{'uuid': r['uuid'], 'filename': r['filename'], 'score': r['distance']} for r in results[0]]
 
 
 
