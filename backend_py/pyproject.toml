@@ -3,7 +3,7 @@ name = "backend-py"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-# 修改点：为了兼容 torch-directml，将Python版本上限设为3.12
+# 为了兼容 torch-directml，将Python版本上限设为3.12
 requires-python = ">=3.11, <3.13"
 dependencies = [
     "fastapi>=0.136.1",
@@ -20,14 +20,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-cpu = ["torch>=2.12.0", "torchvision>=0.27.0"]
-cu126 = ["torch>=2.12.0", "torchvision>=0.27.0", "xformers>=0.0.28"]
-xpu = ["torch>=2.6.0", "torchvision>=0.21.0"]
-# 新增 directml 可选依赖组
+cpu = ["torch>=2.12.0", "torchvision>=0.27.0" ]
+cu126 = ["torch>=2.12.0", "torchvision>=0.27.0", "xformers>=0.0.28" , "triton-windows>=3.7.0"]
+xpu = ["torch>=2.12.0", "torchvision>=0.27.0", "triton-xpu>=3.7.0" ]
 directml = [
     "torch-directml",  # 这个包会自动安装对应的 torch 和 torchvision 版本
 ]
-
 [tool.uv]
 environments = ["sys_platform == 'win32'"]
 conflicts = [
@@ -63,5 +61,8 @@ torch = [
 torchvision = [
     { index = "pytorch-cpu", extra = "cpu" },
     { index = "pytorch-cu126", extra = "cu126" },
+    { index = "pytorch-xpu", extra = "xpu" },
+]
+triton-xpu = [
     { index = "pytorch-xpu", extra = "xpu" },
 ]

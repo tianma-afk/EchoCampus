@@ -35,7 +35,7 @@ interface FloorInfo {
   tags: string[]
 }
 
-const currentTab = ref('repo')
+const currentTab = ref('scan')
 const showDetail = ref(false)
 const selectedLandmark = ref<LandmarkData | null>(null)
 

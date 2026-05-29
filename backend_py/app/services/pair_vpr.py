@@ -88,21 +88,15 @@ class PairVPRExtractor:
         self._load_weights()
 
         
-        if use_fp16 and self.device_type == 'xpu':
+        if use_fp16:
             self.use_fp16 = use_fp16
             self.model = self.model.half()
             print("✨ 已启用 FP16 半精度推理")
         else:
             self.use_fp16 = False
-            if use_fp16 and self.device_type != 'xpu':
-                print(f"⚠️ FP16 仅在 xpu 上测试过，当前设备为 {self.device_type}，跳过")
 
         self.model.to(self.device)
         self.model.eval()
-
-        # if self.device_type == 'directml' and hasattr(torch, 'compile'):
-        #     self.model = torch.compile(self.model, backend="inductor")
-        #     print("✨ 已启用 torch.compile 优化")
                 
         # 🔥 关键：提取解码器组件（用于直接处理 tokens）
         self.decoder_embed = self.model.decoder_embed
@@ -214,43 +208,81 @@ class PairVPRExtractor:
                 t = x
             else:
                 t = torch.tensor(x)
-
-            if self.use_fp16:
-                return t.half()
-            else:
-                return t.float()
+            return t.half() if self.use_fp16 else t.float()
 
         q = ensure_tensor(q_tokens)
         c = ensure_tensor(c_tokens)
 
-        # 形状规范化：如果是 [L, D] -> [1, L, D]
+        # 形状规范化
         if q.dim() == 2:
             q = q.unsqueeze(0)
         if c.dim() == 2:
             c = c.unsqueeze(0)
 
-        # 广播 batch 大小（若一侧为1）
-        if q.shape[0] == 1 and c.shape[0] > 1:
-            q = q.expand(c.shape[0], -1, -1)
-        if c.shape[0] == 1 and q.shape[0] > 1:
-            c = c.expand(q.shape[0], -1, -1)
-
-        # 移动到模型设备
+        # 移到设备一次
         q = q.to(self.device)
         c = c.to(self.device)
 
         with torch.no_grad():
-            # 使用官方 forward 的 pairvpr 分支以保持一致性
-            s1 = self.model(q, c, mode="pairvpr")  # (B,1)
-            s2 = self.model(c, q, mode="pairvpr")  # (B,1)
-            scores = (s1 + s2).squeeze(-1)
-            scores = scores.float().cpu()
+            # 对称计算（两个方向）
+            s1 = self.model(q, c, mode="pairvpr")
+            s2 = self.model(c, q, mode="pairvpr")
+            score = (s1 + s2).squeeze(-1)
+            score = score.float().cpu()
 
-        # 对常见的 batch=1 情况，始终返回 float
-        if scores.numel() == 1:
-            return float(scores.item())
-        # 否则返回 list
-        return scores.numpy().tolist()
+        return float(score.item()) if score.numel() == 1 else score.numpy().tolist()
+
+    def pair_similarity_batch(self, q_tokens_list, c_tokens_list):
+        """
+        批量比对优化：一次处理多对 (q, c)，减少循环与设备转移开销
+        
+        q_tokens_list: list of Tensor/ndarray，每个形状 [1, L, D] 或 [L, D]
+        c_tokens_list: list of Tensor/ndarray，每个形状 [1, L, D] 或 [L, D]
+        
+        返回: list of float，每个是相应对的相似度
+        示例用法:
+            scores = extractor.pair_similarity_batch(
+                [q1_tokens, q2_tokens], 
+                [c1_tokens, c2_tokens]
+            )
+        """
+        def ensure_tensor(x):
+            if isinstance(x, np.ndarray):
+                t = torch.from_numpy(x)
+            elif isinstance(x, torch.Tensor):
+                t = x
+            else:
+                t = torch.tensor(x)
+            if self.use_fp16:
+                return t.half()
+            else:
+                return t.float()
+
+        scores = []
+        
+        with torch.no_grad():
+            for q_tokens, c_tokens in zip(q_tokens_list, c_tokens_list):
+                q = ensure_tensor(q_tokens)
+                c = ensure_tensor(c_tokens)
+
+                # 形状规范化
+                if q.dim() == 2:
+                    q = q.unsqueeze(0)
+                if c.dim() == 2:
+                    c = c.unsqueeze(0)
+
+                # 一次转移到设备
+                q = q.to(self.device)
+                c = c.to(self.device)
+
+                # 对称计算
+                s1 = self.model(q, c, mode="pairvpr")
+                s2 = self.model(c, q, mode="pairvpr")
+                score = (s1 + s2).squeeze(-1).float().cpu()
+                
+                scores.append(float(score.item()) if score.numel() == 1 else score.numpy().tolist())
+
+        return scores
     
 
 if __name__ == "__main__":

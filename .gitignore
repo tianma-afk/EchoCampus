@@ -49,3 +49,6 @@ logs/
 
 #数据库文件
 data/
+
+.claude/
+CLAUDE.local.md
