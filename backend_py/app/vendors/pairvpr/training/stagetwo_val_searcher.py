@@ -14,7 +14,7 @@ sys.path.append(str(root_dir))
 import glob
 import argparse
 import pandas as pd
-from pairvpr.eval.eval import main
+from vendors.pairvpr.eval.eval import main
 
 
 VAL_DATASETS = ['tokyo247', 'MSLS_val', 'MSLS_test',

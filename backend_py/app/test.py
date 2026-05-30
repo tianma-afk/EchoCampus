@@ -18,8 +18,10 @@ for f in os.listdir(image_folder):
     if f.lower().endswith((".png", ".jpg", ".jpeg")):
         file_path = os.path.join(image_folder, f)
         # 使用文件名的 MD5 值作为稳定的 UUID (保证是36位以内或适配你的长度限制)
-        stable_uuid = hashlib.md5(f.encode('utf-8')).hexdigest()+"----"
+        stable_uuid_without_desh = hashlib.md5(f.encode('utf-8')).hexdigest()
+        stable_uuid = stable_uuid_without_desh[0:8]+'-'+stable_uuid_without_desh[8:12]+'-'+stable_uuid_without_desh[12:16]+'-'+stable_uuid_without_desh[16:20]+'-'+stable_uuid_without_desh[20:32]
         all_image_paths[stable_uuid] = file_path
+
 
 print(f"共找到 {len(all_image_paths)} 张图片，开始提取特征...")
 

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from pairvpr.models.tools.modeltools import to_2tuple
+from vendors.pairvpr.models.tools.modeltools import to_2tuple
 
 
 # patch embedding

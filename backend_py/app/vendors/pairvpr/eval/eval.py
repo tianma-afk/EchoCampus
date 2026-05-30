@@ -22,10 +22,10 @@ import torch
 from omegaconf import OmegaConf
 import time
 
-from pairvpr.models.pairvpr import PairVPRNet
-from pairvpr.models.tools.pos_embed import interpolate_pos_embed
-from pairvpr.configs import pairvpr_speed
-import pairvpr.eval.get_datasets as dataset_getter
+from vendors.pairvpr.models.pairvpr import PairVPRNet
+from vendors.pairvpr.models.tools.pos_embed import interpolate_pos_embed
+from vendors.pairvpr.configs import pairvpr_speed
+import vendors.pairvpr.eval.get_datasets as dataset_getter
 
 
 def get_cfg_from_args_eval(args):

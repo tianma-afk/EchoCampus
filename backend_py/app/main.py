@@ -9,13 +9,32 @@ import os
 from pathlib import Path
 import hashlib
 from typing import List, Optional
+import asyncio
+import Minio
 
 app = FastAPI()
 extractor = PairVPRExtractor(model_type="vitB", use_fp16=True)
+core.milvus_lite.load_collection()
 
 @app.get("/")
 def root():
     return {"message": "图搜图后端接口已启动！"}
+
+class Picture(BaseModel):
+    uuid: str = None  # 36位
+    pic_url: str  # 现在为路径
+    
+class InsertParams(BaseModel):
+    Pictures: List[Picture]
+    usePairVPR: bool
+    recallurl: str
+
+@app.post("/insert")
+async def insert_receive(params: InsertParams):
+    asyncio.create_task(insert_process(params))
+    return {"result": "SUCCESS"}
+
+async def insert_process(params: InsertParams):
 
 
 # 1. 专门定义一个类，规定好要传哪两个数据
@@ -35,7 +54,6 @@ def search(params: SearchParams):
     }
     
     '''
-    core.milvus_lite.load_collection()
     # 提取查询图片的完整特征（包括 tokens）
     goal_vector, goal_token = extractor.extract_complete_features(params.pic_path)
 
@@ -69,73 +87,65 @@ def search(params: SearchParams):
         "results_1": json_results_1,  # 初始比较的结果
         "results_2": json_results_2,  # 筛选后的结果
     }
+  
+# @app.post("/insert_one")
+# def add(params: InsertParam):
+#     '''
+#     添加一个图片
+#     输入json格式：
+#     {
+#         "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+#         "pic_url": "xxx
+#     }
+#     '''
+    
+#     f = os.path.basename(params.pic_url)# 获取文件名
+#     if f.lower().endswith((".png", ".jpg", ".jpeg")):
+#         stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
+#         if not params.uuid:  # 默认使用文件名MD5值
+#             params.uuid = stable_uuid
+#         vector, token = extractor.extract_complete_features(params.pic_url)
+#         core.token_manager.save_image_tokens(params.uuid, token)
+#         core.milvus_lite.insert_vectors(vector, params.uuid,os.path.basename(params.pic_url))
+#     return {"message": f"你提交的图片url是: {params.pic_url}, uuid是: {params.uuid}"}
+
+# @app.post("/insert")
+# def add(params: InsertParams):
+#     '''
+#     批量插入图片
+#     输入json格式：
+#     {
+#         items: [
+#             {
+#                 uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+#                 pic_url: "xxx"
+#             },
+#             {
+#                 uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+#                 pic_url: "xxx"
+#             }
+#         ]
+#     }
+#     '''
+    
+#     vectors = []
+#     filenames = []
+#     uuids = []
+#     for item in params.items:
+#         f = os.path.basename(item.pic_url)# 获取文件名
+#         if f.lower().endswith((".png", ".jpg", ".jpeg")):
+#             stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
+#             if not item.uuid:  # 默认使用文件名MD5值
+#                 item.uuid = stable_uuid
+#             vector, token = extractor.extract_complete_features(item.pic_url)
+#             core.token_manager.save_image_tokens(item.uuid, token)
+#             uuids.append(item.uuid)  
+#             vectors.append(vector)
+#             filenames.append(os.path.basename(item.pic_url))
+#     core.milvus_lite.insert_vectors(vectors,uuids,filenames)
+#     return {"message": f"添加成功，共添加了 {len(params.items)} 张图片"}
 
 
-class InsertParam(BaseModel):
-    uuid: str = None  # 36位
-    pic_url: str  # 现在为路径
-    
-class InsertParams(BaseModel):
-    items: List[InsertParam]
-  
-@app.post("/insert_one")
-def add(params: InsertParam):
-    '''
-    添加一个图片
-    输入json格式：
-    {
-        "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-        "pic_url": "xxx
-    }
-    '''
-    
-    f = os.path.basename(params.pic_url)# 获取文件名
-    if f.lower().endswith((".png", ".jpg", ".jpeg")):
-        stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
-        if not params.uuid:  # 默认使用文件名MD5值
-            params.uuid = stable_uuid
-        vector, token = extractor.extract_complete_features(params.pic_url)
-        core.token_manager.save_image_tokens(params.uuid, token)
-        core.milvus_lite.insert_vectors(vector, params.uuid,os.path.basename(params.pic_url))
-    return {"message": f"你提交的图片url是: {params.pic_url}, uuid是: {params.uuid}"}
-
-@app.post("/insert")
-def add(params: InsertParams):
-    '''
-    批量插入图片
-    输入json格式：
-    {
-        items: [
-            {
-                uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-                pic_url: "xxx"
-            },
-            {
-                uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-                pic_url: "xxx"
-            }
-        ]
-    }
-    '''
-    
-    vectors = []
-    filenames = []
-    uuids = []
-    for item in params.items:
-        f = os.path.basename(item.pic_url)# 获取文件名
-        if f.lower().endswith((".png", ".jpg", ".jpeg")):
-            stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
-            if not item.uuid:  # 默认使用文件名MD5值
-                item.uuid = stable_uuid
-            vector, token = extractor.extract_complete_features(item.pic_url)
-            core.token_manager.save_image_tokens(item.uuid, token)
-            uuids.append(item.uuid)  
-            vectors.append(vector)
-            filenames.append(os.path.basename(item.pic_url))
-    core.milvus_lite.insert_vectors(vectors,uuids,filenames)
-    return {"message": f"添加成功，共添加了 {len(params.items)} 张图片"}
-  
-  
 if __name__ == "__main__":
     uvicorn.run(
         "main:app", host="127.0.0.1", port=8000, reload=False

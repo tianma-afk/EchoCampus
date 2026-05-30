@@ -20,15 +20,15 @@ import wandb
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
-from pairvpr.configs import stagetwo_default_config
-from pairvpr.models.pairvpr import PairVPRNet
-from pairvpr.models.tools.pos_embed import interpolate_pos_embed
-from pairvpr.training.losses import VPRLoss
-from pairvpr.utilities.misc import fix_random_seeds
-from pairvpr.training.validation import validation
+from vendors.pairvpr.configs import stagetwo_default_config
+from vendors.pairvpr.models.pairvpr import PairVPRNet
+from vendors.pairvpr.models.tools.pos_embed import interpolate_pos_embed
+from vendors.pairvpr.training.losses import VPRLoss
+from vendors.pairvpr.utilities.misc import fix_random_seeds
+from vendors.pairvpr.training.validation import validation
 
-from pairvpr.datasets.gsvcities_dataset import load_train_dataset as gsv_loaddataset
-from pairvpr.datasets.gsvcities_dataset import load_val_dataset
+from vendors.pairvpr.datasets.gsvcities_dataset import load_train_dataset as gsv_loaddataset
+from vendors.pairvpr.datasets.gsvcities_dataset import load_val_dataset
 
 
 def get_args_parser(add_help: bool = True):

@@ -8,11 +8,11 @@ import os
 
 import torchvision.transforms as T
 
-from pairvpr.datasets.inference.test_dataset import TestDataset
-from pairvpr.datasets.inference.pittsburg_dataset import PittsburghDataset
-from pairvpr.datasets.inference.mapillary_val_dataset import MapillaryValDataset
-from pairvpr.datasets.inference.nordland_dataset import NordlandDataset
-from pairvpr.datasets.inference.mapillary_test_dataset import MapillaryTestDataset
+from vendors.pairvpr.datasets.inference.test_dataset import TestDataset
+from vendors.pairvpr.datasets.inference.pittsburg_dataset import PittsburghDataset
+from vendors.pairvpr.datasets.inference.mapillary_val_dataset import MapillaryValDataset
+from vendors.pairvpr.datasets.inference.nordland_dataset import NordlandDataset
+from vendors.pairvpr.datasets.inference.mapillary_test_dataset import MapillaryTestDataset
 
 
 IMAGENET_MEAN_STD = {'mean': [0.485, 0.456, 0.406],

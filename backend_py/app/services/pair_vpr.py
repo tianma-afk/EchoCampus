@@ -20,17 +20,12 @@ print_device_info()
 BACKEND_PY_PATH = Path(__file__).resolve().parents[2]
 
 # ==================== 添加官方仓库到路径 ====================
-PAIR_VPR_ROOT = BACKEND_PY_PATH / "Pair-VPR"
+PAIR_VPR_ROOT = BACKEND_PY_PATH / "app/vendors/pairvpr"
 if not PAIR_VPR_ROOT.exists():
-    print(f"❌ 未找到官方仓库，请执行:")
-    print(f"   cd {BACKEND_PY_PATH}")
-    print(f"   git clone https://github.com/csiro-robotics/Pair-VPR.git")
+    print(f"❌ 未找到官方仓库，程序退出:")
     exit(1)
-
-sys.path.insert(0, str(PAIR_VPR_ROOT))
+from vendors.pairvpr.models.pairvpr import PairVPRNet
 print(f"✅ 已加载官方 Pair-VPR 库: {PAIR_VPR_ROOT}")
-
-from pairvpr.models.pairvpr import PairVPRNet
 
 
 # ==================== 配置加载 ====================
@@ -41,7 +36,7 @@ def get_cfg(model_type="vitB"):
         "vitG": "stagetwo_default_config.yaml"
     }
     config_name = config_map.get(model_type, "stagetwo_default_config.yaml")
-    config_path = PAIR_VPR_ROOT / "pairvpr/configs" / config_name
+    config_path = PAIR_VPR_ROOT / "configs" / config_name
     
     if not config_path.exists():
         raise FileNotFoundError(f"配置文件不存在: {config_path}")

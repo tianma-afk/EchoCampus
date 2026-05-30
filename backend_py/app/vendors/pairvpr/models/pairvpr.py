@@ -8,10 +8,10 @@ from torch import nn
 import torch.nn.functional as F
 from functools import partial
 
-from pairvpr.models.tools.pos_embed import get_2d_sincos_pos_embed
-from pairvpr.models.dinov2 import DINOv2
-from pairvpr.models.tools.blocks import DecoderBlock
-from pairvpr.models.tools.modeltools import RandomMask
+from vendors.pairvpr.models.tools.pos_embed import get_2d_sincos_pos_embed
+from vendors.pairvpr.models.dinov2 import DINOv2
+from vendors.pairvpr.models.tools.blocks import DecoderBlock
+from vendors.pairvpr.models.tools.modeltools import RandomMask
 
 
 DINOV2_ARCHS = {

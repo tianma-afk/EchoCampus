@@ -9,7 +9,7 @@ from torch import Tensor
 import os
 import warnings
 
-from pairvpr.models.tools.modeltools import to_2tuple, drop_path
+from vendors.pairvpr.models.tools.modeltools import to_2tuple, drop_path
 
 
 # Following lines Copyright Meta, borrowed from Dinov2 under Apache 2.0 license, https://github.com/facebookresearch/dinov2:

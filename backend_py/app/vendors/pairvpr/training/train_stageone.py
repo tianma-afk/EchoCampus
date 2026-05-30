@@ -18,15 +18,15 @@ import torch
 import wandb
 from tqdm import tqdm
 
-from pairvpr.utilities.config import setup
-from pairvpr.utilities import misc
-import pairvpr.utilities.distributed as distributed
-from pairvpr.utilities.misc import NativeScalerWithGradNormCount as NativeScaler
-from pairvpr.utilities.param_groups import get_params_groups_with_decay, prepare_param_groups
-from pairvpr.training.losses import MaskedMSELoss
-from pairvpr.datasets.pairs_dataset import PairsDataset
+from vendors.pairvpr.utilities.config import setup
+from vendors.pairvpr.utilities import misc
+import vendors.pairvpr.utilities.distributed as distributed
+from vendors.pairvpr.utilities.misc import NativeScalerWithGradNormCount as NativeScaler
+from vendors.pairvpr.utilities.param_groups import get_params_groups_with_decay, prepare_param_groups
+from vendors.pairvpr.training.losses import MaskedMSELoss
+from vendors.pairvpr.datasets.pairs_dataset import PairsDataset
 
-from pairvpr.models.pairvpr import PairVPRNet
+from vendors.pairvpr.models.pairvpr import PairVPRNet
 
 torch.backends.cuda.matmul.allow_tf32 = True  # PyTorch 1.12 sets this to False by default
 

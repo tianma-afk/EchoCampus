@@ -13,9 +13,9 @@ import os
 
 from omegaconf import OmegaConf
 
-import pairvpr.utilities.distributed as distributed
-from pairvpr.configs import stageone_default_config
-from pairvpr.utilities import misc
+import vendors.pairvpr.utilities.distributed as distributed
+from vendors.pairvpr.configs import stageone_default_config
+from vendors.pairvpr.utilities import misc
 
 
 

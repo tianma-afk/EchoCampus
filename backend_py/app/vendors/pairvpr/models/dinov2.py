@@ -8,7 +8,7 @@ import torch.nn as nn
 import os
 from pathlib import Path
 
-os.environ['TORCH_HOME'] = str(Path(__file__).resolve().parents[3] / 'weights')
+os.environ['TORCH_HOME'] = str(Path(__file__).resolve().parents[4] / 'weights')
 DINOV2_ARCHS = {
     'dinov2_vits14': 384,
     'dinov2_vitb14': 768,

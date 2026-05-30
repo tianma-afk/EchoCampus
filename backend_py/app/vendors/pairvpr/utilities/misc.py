@@ -15,7 +15,7 @@ import numpy as np
 import torch
 from torch import nn
 import math
-import pairvpr.utilities.distributed as distributed
+import vendors.pairvpr.utilities.distributed as distributed
 
 
 

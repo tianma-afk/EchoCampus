@@ -17,6 +17,7 @@ dependencies = [
     "pymilvus>=3.0.0",
     "milvus-lite>=3.0",
     "omegaconf>=2.3.0",
+    "minio>=7.2.20",
 ]
 
 [project.optional-dependencies]

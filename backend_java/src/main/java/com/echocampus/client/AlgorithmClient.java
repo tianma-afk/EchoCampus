@@ -10,5 +10,6 @@ public interface AlgorithmClient {
     String submitVectoredTask(List<Map<UUID, String>> imageUrl, String callbackUrl);
 
     String submitSearchTask(String imageUrl, String callbackUrl);
+    String submitSearchTask(String imageUrl, String callbackUrl, boolean usePairVPR);
 
 }

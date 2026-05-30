@@ -16,8 +16,10 @@ public class AlgorithmClientImpl implements AlgorithmClient {
         return "task-vector-123"; // TODO: 实现向算法后台发送向量化任务的请求 并 返回任务ID
     }
 
-    @Override
     public String submitSearchTask(String imageUrl, String callbackUrl) {
+        return submitSearchTask(imageUrl, callbackUrl, true);
+    }
+    public String submitSearchTask(String imageUrl, String callbackUrl, boolean usePairVPR) {
         return "task-search-123"; // TODO: 实现向算法后台发送搜索任务的请求 并 返回任务ID
     }
 

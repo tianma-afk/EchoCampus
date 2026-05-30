@@ -13,8 +13,8 @@ import pandas as pd
 from PIL import Image, ImageFile, UnidentifiedImageError
 from collections import defaultdict
 
-import pairvpr.datasets.dataset_utils as dataset_utils
-from pairvpr.datasets.pairtransforms import get_pair_transforms
+import vendors.pairvpr.datasets.dataset_utils as dataset_utils
+from vendors.pairvpr.datasets.pairtransforms import get_pair_transforms
 
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -70,7 +70,7 @@ class PairsDataset(torch.utils.data.Dataset):
             component, and the line that connects the center of gravity of the
             images to the focal point.
         ----------
-        Parameters - PairVPR.
+        Parameters - vendors.pairvpr.
 
         root_dir: str, directory of this codebase.
         dataset_folder_gsv: str, the path of the folder with the GSV-Cities images.

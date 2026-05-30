@@ -13,7 +13,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as T
-from pairvpr.datasets.inference.mapillary_val_dataset import MapillaryValDataset
+from vendors.pairvpr.datasets.inference.mapillary_val_dataset import MapillaryValDataset
 
 default_transform = T.Compose([
     T.ToTensor(),
