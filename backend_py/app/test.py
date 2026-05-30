@@ -65,13 +65,10 @@ scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), cand
 
 # 构建结果
 results_with_scores = []
-for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
-    img_uuid = hit["uuid"]
-    filename = hit["filename"]  # 直接从 result 中获取文件名
-    print(f"  - {filename} (uuid: {img_uuid} , score: {hit['score']})")
-    score = extractor.pair_similarity_from_cached_tokens(
-        goal_token, core.token_manager.load_image_tokens(img_uuid)
-    )
+for hit, score in zip(result, scores):
+    img_uuid = hit['uuid']
+    filename = os.path.basename(all_image_paths[img_uuid])
+    print(f"  - {filename} (ID: {img_uuid} , score: {hit['score']})")
     results_with_scores.append((hit, score))
 
 # 按 score 降序排序
@@ -81,7 +78,7 @@ results_with_scores.sort(key=lambda x: x[1], reverse=True)
 print("搜索结果（按相似度排序）:")
 for hit, score in results_with_scores:
     img_uuid = hit['uuid']
-    filename = hit['filename']
+    filename = os.path.basename(all_image_paths[img_uuid])
     print(f"  - {filename} (uuid: {img_uuid}, score: {score})")
 
 end_time = time.time()
