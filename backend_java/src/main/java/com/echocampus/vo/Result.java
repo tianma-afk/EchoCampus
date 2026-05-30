@@ -14,7 +14,8 @@ public class Result<T> {
 		this.data = data;
 	}
 
-	public int getCode() {
+
+    public int getCode() {
 		return code;
 	}
 

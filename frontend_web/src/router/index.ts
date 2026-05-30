@@ -70,6 +70,16 @@ const router = createRouter({
       ]
     },
     {
+      path: '/tasks',
+      component: Layout,
+      children: [
+        {
+          path: '',
+          component: () => import('../views/TaskManagement.vue')
+        }
+      ]
+    },
+    {
       path: '/settings',
       component: Layout,
       children: [

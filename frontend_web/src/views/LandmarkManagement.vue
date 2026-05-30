@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getLandmarkList, deleteLandmark, type LandmarkAdminVO } from '../api/landmark'
 import { listCategories, type CategoryVO } from '../api/category'
+import { vectorizeAllImages } from '../api/task'
 
 const router = useRouter()
 
@@ -57,6 +58,25 @@ function goPage(page: number) {
 
 function handleEdit(id: string) {
   router.push(`/landmark/${id}/edit`)
+}
+
+const vectorizing = ref(false)
+
+async function handleVectorize() {
+  if (vectorizing.value) return
+  vectorizing.value = true
+  try {
+    const res = await vectorizeAllImages()
+    if (res.data) {
+      alert('向量化任务已提交，任务ID：' + res.data)
+    } else {
+      alert('暂无可向量化的图片')
+    }
+  } catch {
+    alert('向量化任务提交失败，请重试')
+  } finally {
+    vectorizing.value = false
+  }
 }
 
 async function handleDelete(landmark: LandmarkAdminVO) {
@@ -119,6 +139,16 @@ watch(keywordFilter, () => {
           class="search-input"
           placeholder="搜索地标名称..."
         />
+        <button
+          :disabled="vectorizing"
+          class="vectorize-btn"
+          @click="handleVectorize"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          {{ vectorizing ? '提交中...' : '向量化所有图片' }}
+        </button>
         <button class="add-btn" @click="router.push('/landmark/create')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -312,6 +342,35 @@ watch(keywordFilter, () => {
 
 .add-btn:hover {
   background: #047857;
+}
+
+.vectorize-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vectorize-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.vectorize-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vectorize-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .add-btn svg {

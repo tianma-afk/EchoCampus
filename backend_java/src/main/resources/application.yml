@@ -36,3 +36,10 @@ minio:
   secret-key: ${MINIO_SECRET_KEY:echo_campus}
   bucket: ${MINIO_BUCKET:image}
 
+callback:
+  protocol: ${CALLBACK_PROTOCOL:http}
+  host: ${CALLBACK_HOST:localhost}
+  port: ${CALLBACK_PORT:8080}
+  base-path: /api/v1/internal/callback
+  # 回调超时时间（毫秒）
+  timeout: ${CALLBACK_TIMEOUT:5000}
