@@ -26,7 +26,15 @@ class SearchParams(BaseModel):
 
 @app.post("/search")
 def search(params: SearchParams):
-
+    '''
+    搜索接口
+    输入json参数格式：
+    {
+        "pic_path": "图片路径", #后将改为url
+        "top_k": 10 #返回最相近的图片数量
+    }
+    
+    '''
     core.milvus_lite.load_collection()
     # 提取查询图片的完整特征（包括 tokens）
     goal_vector, goal_token = extractor.extract_complete_features(params.pic_path)
@@ -72,6 +80,15 @@ class InsertParams(BaseModel):
   
 @app.post("/insert_one")
 def add(params: InsertParam):
+    '''
+    添加一个图片
+    输入json格式：
+    {
+        "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        "pic_url": "xxx
+    }
+    '''
+    
     f = os.path.basename(params.pic_url)# 获取文件名
     if f.lower().endswith((".png", ".jpg", ".jpeg")):
         stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
@@ -84,6 +101,23 @@ def add(params: InsertParam):
 
 @app.post("/insert")
 def add(params: InsertParams):
+    '''
+    批量插入图片
+    输入json格式：
+    {
+        items: [
+            {
+                uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                pic_url: "xxx"
+            },
+            {
+                uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                pic_url: "xxx"
+            }
+        ]
+    }
+    '''
+    
     vectors = []
     filenames = []
     uuids = []
