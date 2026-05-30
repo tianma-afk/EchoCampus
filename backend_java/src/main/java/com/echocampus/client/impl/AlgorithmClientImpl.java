@@ -1,12 +1,13 @@
 package com.echocampus.client.impl;
 
 import com.echocampus.client.AlgorithmClient;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-
+@Service
 public class AlgorithmClientImpl implements AlgorithmClient {
 
 

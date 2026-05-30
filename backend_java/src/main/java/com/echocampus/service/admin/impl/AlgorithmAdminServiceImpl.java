@@ -1,15 +1,21 @@
 package com.echocampus.service.admin.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.echocampus.client.AlgorithmClient;
+import com.echocampus.dto.CallbackRequest;
 import com.echocampus.entity.CampusEntity;
 import com.echocampus.entity.ImageEntity;
 import com.echocampus.entity.LandmarkEntity;
+import com.echocampus.entity.TaskEntity;
 import com.echocampus.entity.UniversityEntity;
-import com.echocampus.enums.TaskEnum;
+import com.echocampus.enums.TaskStatusEnum;
+import com.echocampus.enums.TaskTypeEnum;
 import com.echocampus.mapper.CampusMapper;
 import com.echocampus.mapper.ImageMapper;
 import com.echocampus.mapper.LandmarkMapper;
+import com.echocampus.mapper.TaskMapper;
 import com.echocampus.mapper.UniversityMapper;
 import com.echocampus.service.admin.AlgorithmAdminService;
 import com.echocampus.utils.CallBackUrlBuilder;
@@ -32,11 +38,12 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
     private final LandmarkMapper landmarkMapper;
     private final CampusMapper campusMapper;
     private final UniversityMapper universityMapper;
+    private final TaskMapper taskMapper;
 
     public AlgorithmAdminServiceImpl(AlgorithmClient algorithmClient, CallBackUrlBuilder callBackUrlBuilder,
                                      ImageUrlBuilder imageUrlBuilder, ImageMapper imageMapper,
                                      LandmarkMapper landmarkMapper, CampusMapper campusMapper,
-                                     UniversityMapper universityMapper) {
+                                     UniversityMapper universityMapper, TaskMapper taskMapper) {
         this.algorithmClient = algorithmClient;
         this.callBackUrlBuilder = callBackUrlBuilder;
         this.imageUrlBuilder = imageUrlBuilder;
@@ -44,6 +51,7 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
         this.landmarkMapper = landmarkMapper;
         this.campusMapper = campusMapper;
         this.universityMapper = universityMapper;
+        this.taskMapper = taskMapper;
     }
 
     @Override
@@ -58,6 +66,7 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
         Map<UUID, CampusEntity> campusCache = new HashMap<>();
         Map<UUID, UniversityEntity> universityCache = new HashMap<>();
 
+        //获取未向量化的图片
         List<Map<UUID, String>> idsAndUrls = new ArrayList<>();
         for (ImageEntity image : images) {
             UUID landmarkId = image.getLandmarkId();
@@ -78,11 +87,50 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
             idsAndUrls.add(Map.of(image.getId(), url));
         }
 
-        UUID taskId = UUID.randomUUID();
-        String callbackUrl = callBackUrlBuilder.build(taskId.toString(), TaskEnum.VECTORIZE);
-        algorithmClient.submitVectoredTask(idsAndUrls, callbackUrl);
+        //创建任务
+        TaskEntity task = new TaskEntity();
+        task.setId(UUID.randomUUID());
+        task.setTaskType(TaskTypeEnum.VECTORIZE.getValue());
+        task.setTaskStatus(TaskStatusEnum.READY.getValue());
+        taskMapper.insert(task);
+        UUID taskId = task.getId();
+
+        //构造回调url，发送任务
+        String callbackUrl = callBackUrlBuilder.build(taskId.toString(), TaskTypeEnum.VECTORIZE);
+        String algTaskId = algorithmClient.submitVectoredTask(idsAndUrls, callbackUrl);
+        task.setAlgTaskId(algTaskId);
+        taskMapper.updateById(task);
 
         return taskId;
+    }
+
+    @Override
+    public void updateTaskStatus(UUID taskId, CallbackRequest request) {
+        TaskEntity task = taskMapper.selectById(taskId);
+        if (task == null) {
+            return;
+        }
+        task.setTaskStatus(request.getResult());
+        taskMapper.updateById(task);
+
+        if (TaskStatusEnum.SUCCESS.getValue().equals(request.getResult())) {
+            LambdaUpdateWrapper<ImageEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.set(ImageEntity::getIsVectorized, true)
+                    .eq(ImageEntity::getIsVectorized, false);
+            imageMapper.update(updateWrapper);
+        }
+    }
+
+    @Override
+    public TaskEntity getTaskStatus(UUID taskId) {
+        return taskMapper.selectById(taskId);
+    }
+
+    @Override
+    public Page<TaskEntity> listTasks(int page, int pageSize) {
+        LambdaQueryWrapper<TaskEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(TaskEntity::getCreatedAt);
+        return taskMapper.selectPage(new Page<>(page, pageSize), wrapper);
     }
 
     private List<ImageEntity> getUnvectoredImages() {

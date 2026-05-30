@@ -1,6 +1,6 @@
 package com.echocampus.utils;
 
-import com.echocampus.enums.TaskEnum;
+import com.echocampus.enums.TaskTypeEnum;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,10 +28,10 @@ public class CallBackUrlBuilder {
      * @param type 回调任务类型（vectorize/search）
      * @return 完整的回调URL
      */
-    public String build(String taskId, TaskEnum type) {
+    public String build(String taskId, TaskTypeEnum type) {
         StringBuilder url = new StringBuilder();
         url.append(protocol).append("://").append(host).append(":").append(port)
-                .append(basePath).append("/").append(type.getValue()).append("/").append(taskId);
+                .append(basePath).append("/").append(type.getValue().toLowerCase()).append("/").append(taskId);
         return url.toString();
     }
 
