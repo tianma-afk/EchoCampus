@@ -67,7 +67,7 @@ scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), cand
 results_with_scores = []
 for hit, score in zip(result, scores):
     img_uuid = hit['uuid']
-    filename = os.path.basename(all_image_paths[img_uuid])
+    filename = hit["filename"]  # 直接从 result 中获取文件名
     print(f"  - {filename} (ID: {img_uuid} , score: {hit['score']})")
     results_with_scores.append((hit, score))
 
@@ -78,7 +78,7 @@ results_with_scores.sort(key=lambda x: x[1], reverse=True)
 print("搜索结果（按相似度排序）:")
 for hit, score in results_with_scores:
     img_uuid = hit['uuid']
-    filename = os.path.basename(all_image_paths[img_uuid])
+    filename = hit["filename"]  # 直接从 result 中获取文件名
     print(f"  - {filename} (uuid: {img_uuid}, score: {score})")
 
 end_time = time.time()

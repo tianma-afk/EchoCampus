@@ -10,6 +10,7 @@ from pathlib import Path
 import hashlib
 from typing import List, Optional
 import asyncio
+import httpx
 import Minio
 
 app = FastAPI()
@@ -21,20 +22,43 @@ def root():
     return {"message": "图搜图后端接口已启动！"}
 
 class Picture(BaseModel):
-    uuid: str = None  # 36位
-    pic_url: str  # 现在为路径
+    imageId: str = None  # 36位
+    url: str  # 现在为路径
     
 class InsertParams(BaseModel):
-    Pictures: List[Picture]
-    usePairVPR: bool
-    recallurl: str
+    images: List[Picture]
+    callbackUrl: str
+    usePairVPR: bool = True
+
+async def callback(callbackUrl:str,status:str):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.put(
+                    url=callbackUrl,
+                    json={"result": status},
+                    timeout=5.0  # 建议加上超时，防止无限等待
+                )
+            if response.status_code == 200:
+                print(f"回调成功: {response.json()}")
+            else:
+                print(f"回调失败，状态码: {response.status_code}")
+
+    except Exception as e:
+        print(f"回调请求异常: {e}")
 
 @app.post("/insert")
 async def insert_receive(params: InsertParams):
+    task_id = params.callbackUrl.split('/')[-1]
     asyncio.create_task(insert_process(params))
-    return {"result": "SUCCESS"}
+    return {"taskId": "alg-task-uuid-"+task_id}#创建任务完成后返回taskId
 
 async def insert_process(params: InsertParams):
+    task_id = params.callbackUrl.split('/')[-1]
+    # 插入图片逻辑
+    
+    
+    #任务完成后回调
+    await callback(params.callbackUrl, "SUCCESS")
 
 
 # 1. 专门定义一个类，规定好要传哪两个数据
@@ -57,18 +81,22 @@ def search(params: SearchParams):
     # 提取查询图片的完整特征（包括 tokens）
     goal_vector, goal_token = extractor.extract_complete_features(params.pic_path)
 
+    # 批量加载候选 tokens
+    candidate_ids = [hit['uuid'] for hit in result]
+    candidate_tokens = [core.token_manager.load_image_tokens(img_id) for img_id in candidate_ids]
+
+    # 批量计算相似度（优化版）
+    scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), candidate_tokens)
+    
     result = core.milvus_lite.search_similar(goal_vector, params.top_k)
     # print("搜索结果:")
     results_with_scores = []
     json_results_1 = []
-    for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
+    for hit,score in zip(result,scores):  # Milvus client 返回 [[hit1, hit2, ...]]
         img_uuid = hit["uuid"]
         filename = hit["filename"] 
         item = {"filename": filename, "uuid": img_uuid, "score": hit["score"]}
         json_results_1.append(item)
-        score = extractor.pair_similarity_from_cached_tokens(
-            goal_token, core.token_manager.load_image_tokens(img_uuid)
-        )
         results_with_scores.append((hit, score))
 
     # 按 score 降序排序
