@@ -10,6 +10,7 @@ from pathlib import Path
 import hashlib
 from typing import List, Optional
 import asyncio
+import httpx
 import Minio
 from core.dependencies import get_extractor
 from routers import insert, search
@@ -28,6 +29,22 @@ def root():
     return {"message": "图搜图后端接口已启动！"}
 
 
+
+# async def callback(callbackUrl:str,status:str):
+#     try:
+#         async with httpx.AsyncClient() as client:
+#             response = await client.put(
+#                     url=callbackUrl,
+#                     json={"result": status},
+#                     timeout=5.0  # 建议加上超时，防止无限等待
+#                 )
+#             if response.status_code == 200:
+#                 print(f"回调成功: {response.json()}")
+#             else:
+#                 print(f"回调失败，状态码: {response.status_code}")
+
+#     except Exception as e:
+#         print(f"回调请求异常: {e}")
 # @app.post("/insert")
 
 
