@@ -1,12 +1,13 @@
-import core.milvus_lite
-import core.token_manager
+from core import milvus_lite
+from core import token_manager
 from services.pair_vpr import PairVPRExtractor
 import os
 from pathlib import Path
-import core.select_pic as select_pic
+from core import select_pic as select_pic
 import uuid
 import hashlib
 import time
+from PIL import Image
 
 extractor = PairVPRExtractor(model_type="vitB",use_fp16=True)
 
@@ -27,21 +28,21 @@ print(f"共找到 {len(all_image_paths)} 张图片，开始提取特征...")
 
 vectors = []
 uuids = []
-filenames = []
 for image_uuid, image_path in all_image_paths.items():
-    vector, token = extractor.extract_complete_features(image_path)
-    filename = os.path.basename(image_path)# 获取文件名
-    filenames.append(filename)
+    if not os.path.exists(image_path):
+        continue
+    image = Image.open(image_path).convert("RGB")
+    vector, token = extractor.extract_complete_features(image)
     vectors.append(vector)
     uuids.append(image_uuid)
-    core.token_manager.save_image_tokens(image_uuid, token)
+    token_manager.save_image_tokens(image_uuid, token)
 print("检查uuids列表：")    
 print(uuids)
 # breakpoint()# 在这里检查 uuids 列表的内容，确保它们是字符串类型的 UUID
     
-core.milvus_lite.insert_vectors(vectors, uuids,filenames)  # 批量插入向量、uuid 和文件名
+milvus_lite.insert_vectors(vectors, uuids)  # 批量插入向量、uuid 和文件名
 
-core.milvus_lite.load_collection()
+milvus_lite.load_collection()
 print(f"特征提取完成，开始搜索相似图片...")
 
 print("选择你要搜索的图片:")
@@ -51,14 +52,15 @@ goal_path = select_pic.select_single_file()
 
 start_time = time.time()
 
-goal_vector, goal_token = extractor.extract_complete_features(goal_path)
+image = Image.open(goal_path).convert("RGB")
+goal_vector, goal_token = extractor.extract_complete_features(image)
 
-result = core.milvus_lite.search_similar(goal_vector, top_k=10)
+result = milvus_lite.search_similar(goal_vector, top_k=10)
 print("搜索结果:")
 
 # 批量加载候选 tokens
 candidate_ids = [hit['uuid'] for hit in result]
-candidate_tokens = [core.token_manager.load_image_tokens(img_id) for img_id in candidate_ids]
+candidate_tokens = [token_manager.load_image_tokens(img_id) for img_id in candidate_ids]
 
 # 批量计算相似度（优化版）
 scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), candidate_tokens)

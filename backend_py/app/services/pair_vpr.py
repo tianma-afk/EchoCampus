@@ -169,14 +169,13 @@ class PairVPRExtractor:
             _, global_desc = self.model(img_tensor, None, mode="global")
             return global_desc.cpu().numpy().flatten().tolist()
     
-    def extract_complete_features(self, image_path):
+    def extract_complete_features(self, image):
         """返回向量和 dense_features（缓存用）"""
-        if not os.path.exists(image_path):
+        if image is None:
             return None, None
         
         transform = self._get_transform()
-        img = Image.open(image_path).convert("RGB")
-        img_tensor = transform(img).unsqueeze(0).to(self.device)
+        img_tensor = transform(image).unsqueeze(0).to(self.device)
 
         if self.use_fp16:
             img_tensor = img_tensor.half()

@@ -2,6 +2,7 @@ import os
 import numpy as np
 import torch
 from pathlib import Path
+import asyncio
 
 # 定义 tokens 缓存的根目录：项目根目录/data/tokens/
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -27,6 +28,11 @@ def save_image_tokens(image_uuid, tokens):
 
     np.save(str(file_path), tokens_ndarray)
 
+async def save_image_tokens_async(image_uuid, tokens):
+    """异步保存"""
+    # 把同步操作丢到线程池
+    await asyncio.to_thread(save_image_tokens, image_uuid, tokens)
+
 
 def load_image_tokens(image_uuid, device=None):
     file_path = TOKENS_DIR / f"{image_uuid}.npy"
@@ -45,3 +51,8 @@ def load_image_tokens(image_uuid, device=None):
         return tokens_tensor
         
     return tokens_ndarray
+
+async def load_image_tokens_async(image_uuid, device=None):
+    """异步加载"""
+    # 把同步操作丢到线程池
+    return await asyncio.to_thread(load_image_tokens, image_uuid, device)

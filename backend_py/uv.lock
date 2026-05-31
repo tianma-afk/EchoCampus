@@ -96,6 +96,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
+    { name = "httpx", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "milvus-lite", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "minio", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
     { name = "numpy", marker = "sys_platform == 'win32' or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-cu126') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cpu' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-directml') or (extra == 'extra-10-backend-py-cu126' and extra == 'extra-10-backend-py-xpu') or (extra == 'extra-10-backend-py-directml' and extra == 'extra-10-backend-py-xpu')" },
@@ -132,6 +133,7 @@ xpu = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.136.1" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "milvus-lite", specifier = ">=3.0" },
     { name = "minio", specifier = ">=7.2.20" },
     { name = "numpy", specifier = ">=2.4.5" },

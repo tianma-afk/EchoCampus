@@ -11,82 +11,77 @@ import hashlib
 from typing import List, Optional
 import asyncio
 import Minio
+from core.dependencies import get_extractor
+from routers import insert, search
 
 app = FastAPI()
-extractor = PairVPRExtractor(model_type="vitB", use_fp16=True)
-core.milvus_lite.load_collection()
+app.include_router(insert.router)
+app.include_router(search.router)
+
+@app.on_event("startup")
+def startup_event():
+    get_extractor() # 提前加载模型
+    core.token_manager.load_collection()
 
 @app.get("/")
 def root():
     return {"message": "图搜图后端接口已启动！"}
 
-class Picture(BaseModel):
-    uuid: str = None  # 36位
-    pic_url: str  # 现在为路径
+
+# @app.post("/insert")
+
+
+
+# # 1. 专门定义一个类，规定好要传哪两个数据
+# class SearchParams(BaseModel):
+#     pic_path: str  # 必须的字符串参数，表示图片路径
+#     top_k: int = 10  # 可选的整数参数，默认值为10
+
+
+# @app.post("/search")
+# def search(params: SearchParams):
+#     '''
+#     搜索接口
+#     输入json参数格式：
+#     {
+#         "pic_path": "图片路径", #后将改为url
+#         "top_k": 10 #返回最相近的图片数量
+#     }
     
-class InsertParams(BaseModel):
-    Pictures: List[Picture]
-    usePairVPR: bool
-    recallurl: str
+#     '''
+#     # 提取查询图片的完整特征（包括 tokens）
+#     goal_vector, goal_token = extractor.extract_complete_features(params.pic_path)
 
-@app.post("/insert")
-async def insert_receive(params: InsertParams):
-    asyncio.create_task(insert_process(params))
-    return {"result": "SUCCESS"}
+#     result = core.milvus_lite.search_similar(goal_vector, params.top_k)
+#     # print("搜索结果:")
+#     results_with_scores = []
+#     json_results_1 = []
+#     for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
+#         img_uuid = hit["uuid"]
+#         filename = hit["filename"] 
+#         item = {"filename": filename, "uuid": img_uuid, "score": hit["score"]}
+#         json_results_1.append(item)
+#         score = extractor.pair_similarity_from_cached_tokens(
+#             goal_token, core.token_manager.load_image_tokens(img_uuid)
+#         )
+#         results_with_scores.append((hit, score))
 
-async def insert_process(params: InsertParams):
+#     # 按 score 降序排序
+#     results_with_scores.sort(key=lambda x: x[1], reverse=True)
 
-
-# 1. 专门定义一个类，规定好要传哪两个数据
-class SearchParams(BaseModel):
-    pic_path: str  # 必须的字符串参数，表示图片路径
-    top_k: int = 10  # 可选的整数参数，默认值为10
-
-
-@app.post("/search")
-def search(params: SearchParams):
-    '''
-    搜索接口
-    输入json参数格式：
-    {
-        "pic_path": "图片路径", #后将改为url
-        "top_k": 10 #返回最相近的图片数量
-    }
-    
-    '''
-    # 提取查询图片的完整特征（包括 tokens）
-    goal_vector, goal_token = extractor.extract_complete_features(params.pic_path)
-
-    result = core.milvus_lite.search_similar(goal_vector, params.top_k)
-    # print("搜索结果:")
-    results_with_scores = []
-    json_results_1 = []
-    for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
-        img_uuid = hit["uuid"]
-        filename = hit["filename"] 
-        item = {"filename": filename, "uuid": img_uuid, "score": hit["score"]}
-        json_results_1.append(item)
-        score = extractor.pair_similarity_from_cached_tokens(
-            goal_token, core.token_manager.load_image_tokens(img_uuid)
-        )
-        results_with_scores.append((hit, score))
-
-    # 按 score 降序排序
-    results_with_scores.sort(key=lambda x: x[1], reverse=True)
-
-    # 打印排序后的结果
-    json_results_2 = []
-    # print("搜索结果（按相似度排序）:")
-    for hit, score in results_with_scores:
-        img_uuid = hit["uuid"]
-        filename = hit["filename"]
-        item = {"filename": filename, "uuid": img_uuid, "score": score}
-        json_results_2.append(item)
-    return {
-        "message": "图搜图成功",
-        "results_1": json_results_1,  # 初始比较的结果
-        "results_2": json_results_2,  # 筛选后的结果
-    }
+#     # 打印排序后的结果
+#     json_results_2 = []
+#     # print("搜索结果（按相似度排序）:")
+#     for hit, score in results_with_scores:
+#         img_uuid = hit["uuid"]
+#         filename = hit["filename"]
+#         item = {"filename": filename, "uuid": img_uuid, "score": score}
+#         json_results_2.append(item)
+#     return {
+#         "message": "图搜图成功",
+#         "results_1": json_results_1,  # 初始比较的结果
+#         "results_2": json_results_2,  # 筛选后的结果
+#     }
   
 # @app.post("/insert_one")
 # def add(params: InsertParam):
