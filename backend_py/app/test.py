@@ -63,7 +63,8 @@ candidate_ids = [hit['uuid'] for hit in result]
 candidate_tokens = [token_manager.load_image_tokens(img_id) for img_id in candidate_ids]
 
 # 批量计算相似度（优化版）
-scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), candidate_tokens)
+# scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), candidate_tokens)
+scores = extractor.pair_similarity_batch_single_query(goal_token, candidate_tokens)
 
 # 构建结果
 results_with_scores = []
