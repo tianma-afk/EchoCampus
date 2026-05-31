@@ -8,19 +8,25 @@ from core.token_manager import save_image_tokens_async
 from core.milvus_lite import insert_vector_async, insert_vectors_async
 import asyncio
 import httpx
+from asyncio import Semaphore
 
 router = APIRouter(prefix="/insert", tags=["insert"])
+global_semaphore = Semaphore(10)
 @router.post("/")
 async def insert_receive(params: InsertParams):
-    asyncio.create_task(insert_process(params))
+
+    asyncio.create_task(insert_process_with_limit(params))
     task_id = params.callbackUrl.split('/')[-1]
     return {
         "taskId": "alg-task-" + task_id
         }
 
+async def insert_process_with_limit(params: InsertParams):
+    async with global_semaphore:
+        await insert_process(params)
 async def insert_process(params: InsertParams):
-    img_queue = asyncio.Queue(maxsize=50)
-    info_queue = asyncio.Queue(maxsize=50)
+    img_queue = asyncio.Queue(maxsize=10)
+    info_queue = asyncio.Queue(maxsize=10)
 
     download_task = asyncio.create_task(download_images(params, img_queue))
     process_task = asyncio.create_task(process_images(img_queue, info_queue))
