@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import axios from 'axios'
 import SearchPage from './views/search/SearchPage.vue'
 import MapPage from './views/map/MapPage.vue'
 import LandmarkRepo from './views/repo/LandmarkRepo.vue'
 import LandmarkDetail from './views/detail/LandmarkDetail.vue'
 import ProfilePage from './views/profile/ProfilePage.vue'
 import BottomNav from './components/BottomNav.vue'
+
+const API_BASE_URL = 'http://localhost:8080/api/v1'
 
 interface LandmarkData {
   id: string
@@ -44,6 +47,16 @@ const handleSelectLandmark = (landmark: LandmarkData) => {
   showDetail.value = true
 }
 
+const handleOpenLandmarkDetail = async (landmarkId: string) => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/landmarks/${landmarkId}`)
+    selectedLandmark.value = res.data.data
+    showDetail.value = true
+  } catch (err) {
+    console.error('获取地标详情失败:', err)
+  }
+}
+
 const handleBack = () => {
   showDetail.value = false
   selectedLandmark.value = null
@@ -51,14 +64,16 @@ const handleBack = () => {
 </script>
 
 <template>
-  <SearchPage v-if="currentTab === 'scan'" />
-  <MapPage v-else-if="currentTab === 'map'" />
   <LandmarkDetail
-    v-else-if="currentTab === 'repo' && showDetail && selectedLandmark"
+    v-if="showDetail && selectedLandmark"
     :landmark="selectedLandmark"
     @back="handleBack"
   />
-  <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
-  <ProfilePage v-else-if="currentTab === 'profile'" />
-  <BottomNav v-if="!showDetail" v-model="currentTab" />
+  <template v-else>
+    <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
+    <MapPage v-else-if="currentTab === 'map'" />
+    <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
+    <ProfilePage v-else-if="currentTab === 'profile'" />
+    <BottomNav v-model="currentTab" />
+  </template>
 </template>
