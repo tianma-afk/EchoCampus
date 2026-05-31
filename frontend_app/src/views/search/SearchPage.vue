@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
+
+const emit = defineEmits<{
+  openDetail: [landmarkId: string]
+}>()
 
 const showCamera = ref(false)
 const videoElement = ref<HTMLVideoElement | null>(null)
@@ -10,11 +14,19 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 const API_BASE_URL = 'http://localhost:8080/api/v1'
 const UPLOAD_API = `${API_BASE_URL}/upload`
+const SEARCH_API = `${API_BASE_URL}/user/algorithm/search`
 const MINIO_BASE_URL = 'http://localhost:9000'
 
 const uploading = ref(false)
 const showPreview = ref(false)
 const previewImageUrl = ref('')
+const resultShowImageUrl = ref('')
+
+const isRecognizing = ref(false)
+const recognizingTaskId = ref('')
+const recognitionResults = ref<Array<{landmarkId: string, landmarkName: string, similarity: number, coverUrl: string}>>([])
+const showResult = ref(false)
+let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const handleCameraClick = () => {
   showCamera.value = true
@@ -117,13 +129,118 @@ const handleImageSelected = async (file: File | Blob) => {
   }
 }
 
-const handleConfirm = () => {
+const handleConfirm = async () => {
   showPreview.value = false
-  previewImageUrl.value = ''
+  resultShowImageUrl.value = previewImageUrl.value
+  try {
+    const imageUrl = previewImageUrl.value
+    const res = await axios.post(SEARCH_API, { imageUrl })
+    const taskId = res.data.data
+
+    recognizingTaskId.value = taskId
+    isRecognizing.value = true
+    startPolling(taskId)
+  } catch (error) {
+    console.error('创建识别任务失败:', error)
+    alert('创建识别任务失败，请重试')
+    previewImageUrl.value = ''
+  }
 }
+
+const startPolling = (taskId: string) => {
+  let attempts = 0
+
+  pollTimer = setInterval(async () => {
+    attempts++
+    try {
+      const res = await axios.get(`${SEARCH_API}/${taskId}/result`)
+      const results = res.data.data
+
+      if (results && results.length > 0) {
+        clearInterval(pollTimer!)
+        pollTimer = null
+        recognitionResults.value = results
+        isRecognizing.value = false
+        showResult.value = true
+      } else if (attempts >= 30) {
+        clearInterval(pollTimer!)
+        pollTimer = null
+        isRecognizing.value = false
+        alert('识别超时，请重试')
+      }
+    } catch {
+      if (attempts >= 30) {
+        clearInterval(pollTimer!)
+        pollTimer = null
+        isRecognizing.value = false
+        alert('识别超时，请重试')
+      }
+    }
+  }, 2000)
+}
+
+const topResult = ref<{landmarkId: string, landmarkName: string, similarity: number, coverUrl: string} | null>(null)
+
+watch(recognitionResults, (list) => {
+  if (!list.length) {
+    topResult.value = null
+    return
+  }
+  const sorted = [...list].sort((a, b) => b.similarity - a.similarity)
+  topResult.value = sorted[0]
+}, { immediate: true })
+
+const formatPercent = (num: number) => Math.round(num * 100)
+
+const handleCardClick = (item: {landmarkId: string, landmarkName: string, similarity: number, coverUrl: string}) => {
+  emit('openDetail', item.landmarkId)
+}
+
+const onCoverImgError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  img.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect fill="%23e8e8e8" width="120" height="120"/><text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-size="40" fill="%23bbb">?</text></svg>'
+}
+
+const visibleCards = ref(new Set<number>())
+let cardObserver: IntersectionObserver | null = null
+
+const setupCardObserver = () => {
+  const root = document.querySelector('.card-list')
+  if (!root) return
+
+  cardObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const idx = Number((entry.target as HTMLElement).dataset.index)
+      const next = new Set(visibleCards.value)
+      if (entry.isIntersecting) {
+        next.add(idx)
+      } else {
+        next.delete(idx)
+      }
+      visibleCards.value = next
+    })
+  }, { threshold: 0.7, root })
+
+  document.querySelectorAll('.landmark-card').forEach((card, i) => {
+    (card as HTMLElement).dataset.index = String(i)
+    cardObserver!.observe(card)
+  })
+}
+
+watch(showResult, (val) => {
+  if (val) {
+    nextTick(() => setupCardObserver())
+  } else {
+    cardObserver?.disconnect()
+    cardObserver = null
+    visibleCards.value.clear()
+  }
+})
 
 onUnmounted(() => {
   stopCamera()
+  cardObserver?.disconnect()
+  if (pollTimer) clearInterval(pollTimer)
 })
 </script>
 
@@ -133,7 +250,7 @@ onUnmounted(() => {
     <div class="bg-container"></div>
 
     <!-- 主页面 -->
-    <div v-if="!showCamera && !showPreview && !uploading" class="main-page">
+    <div v-if="!showCamera && !showPreview && !uploading && !isRecognizing && !showResult" class="main-page">
       <!-- 顶部标题区 -->
       <header class="page-header">
         <h1 class="title">映像校园</h1>
@@ -173,14 +290,67 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <!-- 等待识别中 -->
+    <div v-if="isRecognizing" class="uploading-overlay">
+      <div class="uploading-spinner">
+        <div class="spinner-icon"></div>
+        <p class="uploading-text">等待识别中...</p>
+        <p class="task-id-text">TaskId: {{ recognizingTaskId }}</p>
+      </div>
+    </div>
+
     <!-- 图片预览 -->
     <div v-if="showPreview" class="preview-view">
       <div class="preview-image-wrapper">
         <img :src="previewImageUrl" class="preview-image" />
       </div>
       <footer class="preview-footer">
-        <button class="confirm-btn" @click="handleConfirm">确认</button>
+        <button class="confirm-btn" @click="handleConfirm">确认识别</button>
       </footer>
+    </div>
+
+    <!-- 识别结果 -->
+    <div v-if="showResult" class="result-view">
+      <div class="result-top-img">
+        <img :src="resultShowImageUrl" alt="拍摄图片" class="user-capture-img" />
+        <div class="result-img-overlay"></div>
+        <button class="result-close-btn" @click="showResult = false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="result-text-desc">
+        <h2 v-if="!topResult" class="desc-title no-match">未能识别到建筑</h2>
+        <h2 v-else-if="formatPercent(topResult.similarity) < 30" class="desc-title">这有点难倒我了</h2>
+        <h2 v-else class="desc-title">识别完成</h2>
+        <p v-if="topResult" class="desc-sub">
+          它可能是{{ topResult.landmarkName }}（相似度{{ formatPercent(topResult.similarity) }}%）
+        </p>
+        <p v-else class="desc-sub empty-sub">请换个角度再试一次</p>
+      </div>
+
+      <div v-if="recognitionResults.length > 0" class="result-card-scroll">
+        <div class="card-list">
+          <div class="landmark-card" v-for="(item, index) in recognitionResults" :key="item.coverUrl"
+               :class="{ 'in-view': visibleCards.has(index) }"
+               @click="handleCardClick(item)">
+            <div class="circle-img-box">
+              <img :src="item.coverUrl" alt="建筑封面" class="circle-img" @error="onCoverImgError" />
+            </div>
+            <div class="card-text">
+              <p class="land-name">{{ item.landmarkName }}</p>
+              <p class="land-score">{{ formatPercent(item.similarity) }}%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-bottom-btn">
+        <button class="back-btn" @click="showResult = false">重新拍摄</button>
+      </div>
     </div>
 
     <!-- 拍摄界面 -->
@@ -613,6 +783,16 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+.task-id-text {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 12px;
+  word-break: break-all;
+  padding: 0 40px;
+  user-select: all;
+  cursor: text;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -678,5 +858,190 @@ onUnmounted(() => {
 
 .confirm-btn:active {
   transform: scale(0.95);
+}
+
+/* ========== 识别结果样式 ========== */
+.result-view {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+  animation: resultFadeIn 0.4s ease-out;
+}
+
+@keyframes resultFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-top-img {
+  position: relative;
+  width: 100%;
+  height: 40vh;
+  flex-shrink: 0;
+  background: radial-gradient(ellipse at center, rgba(22,150,105,0.12) 0%, transparent 60%),
+              #1a1a1a;
+}
+
+.user-capture-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.result-img-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+}
+
+.result-close-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.35);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+/* 文字描述区 */
+.result-text-desc {
+  padding: 12px 24px 6px;
+  text-align: center;
+}
+
+.desc-title {
+  font-size: 22px;
+  color: #222;
+  font-weight: 500;
+  margin-bottom: 6px;
+  animation: slideUpText 0.5s 0.1s ease-out both;
+}
+
+@keyframes slideUpText {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.desc-title.no-match {
+  color: #999;
+}
+
+.desc-sub {
+  font-size: 14px;
+  color: #777;
+  animation: slideUpText 0.5s 0.2s ease-out both;
+}
+
+.desc-sub.empty-sub {
+  color: #aaa;
+}
+
+/* 横向滚动圆形卡片列表 */
+.result-card-scroll {
+  flex: 1;
+  overflow: hidden;
+  padding: 0 0 20px;
+}
+
+.card-list {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px;
+  overflow-x: auto;
+  height: 100%;
+  align-items: center;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.card-list::-webkit-scrollbar {
+  display: none;
+}
+
+.landmark-card {
+  flex-shrink: 0;
+  width: 220px;
+  text-align: center;
+  scroll-snap-align: center;
+  opacity: 0.5;
+  transform: scale(0.85);
+  transition: all 0.35s ease;
+  cursor: default;
+}
+
+.landmark-card.in-view {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.landmark-card:active {
+  transform: scale(0.95);
+}
+
+.circle-img-box {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+  margin: 0 auto 10px;
+}
+
+.circle-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.land-name {
+  font-size: 16px;
+  color: #222;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.land-score {
+  font-size: 14px;
+  color: #169669;
+  font-weight: 600;
+}
+
+/* 底部返回按钮 */
+.result-bottom-btn {
+  padding: 12px 30px calc(72px + env(safe-area-inset-bottom));
+  flex-shrink: 0;
+}
+
+.back-btn {
+  width: 100%;
+  height: 52px;
+  border-radius: 52px;
+  background: #169669;
+  color: #fff;
+  border: none;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 5px 18px rgba(22,150,105,0.28);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-btn:active {
+  transform: scale(0.97);
 }
 </style>
