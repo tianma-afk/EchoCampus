@@ -69,18 +69,22 @@ def root():
 #     # 提取查询图片的完整特征（包括 tokens）
 #     goal_vector, goal_token = extractor.extract_complete_features(params.pic_path)
 
+    # # 批量加载候选 tokens
+    # candidate_ids = [hit['uuid'] for hit in result]
+    # candidate_tokens = [core.token_manager.load_image_tokens(img_id) for img_id in candidate_ids]
+
+    # # 批量计算相似度（优化版）
+    # scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), candidate_tokens)
+  
 #     result = core.milvus_lite.search_similar(goal_vector, params.top_k)
 #     # print("搜索结果:")
 #     results_with_scores = []
 #     json_results_1 = []
-#     for hit in result:  # Milvus client 返回 [[hit1, hit2, ...]]
+#     for hit,score in zip(result,scores):  # Milvus client 返回 [[hit1, hit2, ...]]
 #         img_uuid = hit["uuid"]
 #         filename = hit["filename"] 
 #         item = {"filename": filename, "uuid": img_uuid, "score": hit["score"]}
 #         json_results_1.append(item)
-#         score = extractor.pair_similarity_from_cached_tokens(
-#             goal_token, core.token_manager.load_image_tokens(img_uuid)
-#         )
 #         results_with_scores.append((hit, score))
 
 #     # 按 score 降序排序

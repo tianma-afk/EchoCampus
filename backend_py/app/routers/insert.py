@@ -43,6 +43,8 @@ async def insert_recall(params: InsertParams):
                 response = await client.post(params.callbackUrl, json=data, timeout=5.0)
                 if response.status_code == 200:
                     return  # 成功则退出
+            except httpx.TimeoutException:
+                continue    
             except httpx.RequestError:
                 pass  # 忽略异常，继续重试
             await asyncio.sleep(2 ** attempt)  # 指数退避
