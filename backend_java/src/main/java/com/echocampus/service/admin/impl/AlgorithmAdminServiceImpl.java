@@ -97,7 +97,7 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
 
         //构造回调url，发送任务
         String callbackUrl = callBackUrlBuilder.build(taskId.toString(), TaskTypeEnum.VECTORIZE);
-        String algTaskId = algorithmClient.submitVectoredTask(idsAndUrls, callbackUrl);
+        String algTaskId = algorithmClient.submitInsertTask(idsAndUrls, callbackUrl);
         task.setAlgTaskId(algTaskId);
         taskMapper.updateById(task);
 

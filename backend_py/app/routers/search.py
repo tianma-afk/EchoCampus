@@ -25,7 +25,7 @@ async def search_process_with_limit(params: SearchParams):
         await search_process(params)
 async def search_process(params: SearchParams):
     try:
-        img = await download_images(params)
+        img = await download_image_to_pil(params.imgUrl)
         extractor = get_extractor()
         async with gpu_lock:  # 确保同一时间只有一个任务在使用 GPU
             vector, token = await asyncio.to_thread(extractor.extract_complete_features, img)
@@ -54,13 +54,6 @@ async def search_process(params: SearchParams):
     except Exception as e:
         results = []
         await search_callback(params.callbackUrl, "FAILED", results)
-
-
-async def download_images(params: SearchParams):
-    image_url = params.imgUrl
-    img = await download_image_to_pil(image_url)
-    return img
-
 
 async def search_callback(callback_url, status, results=None):
     async with httpx.AsyncClient() as client:
