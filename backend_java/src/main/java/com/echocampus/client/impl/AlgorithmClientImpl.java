@@ -1,26 +1,102 @@
 package com.echocampus.client.impl;
 
 import com.echocampus.client.AlgorithmClient;
+import com.echocampus.client.CircuitBreaker;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+
+
 @Service
 public class AlgorithmClientImpl implements AlgorithmClient {
+    private static final CircuitBreaker insertCB = new CircuitBreaker(10, 60000, 3, 0.5f);
+    private static final CircuitBreaker serachCB = new CircuitBreaker(5, 30000, 5, 0.5f);
+    public record ImageInfo(UUID uuid, String url) {}
+    public record CreateInsertTaskRequest(List<ImageInfo> images, String callbackUrl) {}
+    public record CreateSearchTaskRequest(String imageUrl, String callbackUrl,int TopK, boolean usePairVPR) {}
 
+    static final String BASE_URL = "http://localhost:8000";
 
-    @Override
-    public String submitVectoredTask(List<Map<UUID,String>> imageUrl, String callbackUrl) {
-        return "task-vector-123"; // TODO: 实现向算法后台发送向量化任务的请求 并 返回任务ID
+    private void sameIdCheck(String callbackUrl, String taskId){
+        if(!callbackUrl.substring(callbackUrl.lastIndexOf("/")+1).equals(taskId.substring(taskId.lastIndexOf("-")+1)))
+            throw new RuntimeException("Callback URL does not match task ID");
     }
 
     @Override
+    public String submitInsertTask(List<Map<UUID, String>> imageUrl, String callbackUrl) {
+
+        List<ImageInfo> images = new ArrayList<ImageInfo>();
+        for(Map<UUID, String> imagesMap : imageUrl){
+            for(Map.Entry<UUID, String> entry : imagesMap.entrySet()){
+                images.add(new ImageInfo(entry.getKey(), entry.getValue()));
+            }
+        }
+        CreateInsertTaskRequest requestBody = new CreateInsertTaskRequest(images, callbackUrl);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+
+            String bodyJson = mapper.writeValueAsString(requestBody);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/insert"))
+                    .timeout(Duration.ofSeconds(5))
+                    .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
+                    .build();
+            
+            HttpResponse<String> response = insertCB.execute(request);
+            String taskId = response.body();
+
+            sameIdCheck(callbackUrl, taskId);
+
+            return taskId;
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Post insert task failed: " + e.getMessage());
+        }
+    }
+
+    public String submitSearchTask(String imageUrl, String callbackUrl,int topK, boolean usePairVPR) {
+        CreateSearchTaskRequest requestBody = new CreateSearchTaskRequest(imageUrl, callbackUrl, topK, usePairVPR);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            String bodyJson = mapper.writeValueAsString(requestBody);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/search"))
+                    .timeout(Duration.ofSeconds(10))
+                    .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
+                    .build();
+
+            HttpResponse<String> response = serachCB.execute(request);
+            String taskId = response.body();
+
+            sameIdCheck(callbackUrl, taskId);
+
+            return taskId;
+        }
+        catch (Exception e){
+            throw new RuntimeException("Post search task failed: ", e);
+        }
+    }
+    public String submitSearchTask(String imageUrl, String callbackUrl,int topK) {
+        return submitSearchTask(imageUrl, callbackUrl, topK,true);
+    }
+
     public String submitSearchTask(String imageUrl, String callbackUrl) {
-        return "task-search-123"; // TODO: 实现向算法后台发送搜索任务的请求 并 返回任务ID
+        return submitSearchTask(imageUrl, callbackUrl, 10);
     }
-
-
-
 }

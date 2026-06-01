@@ -20,17 +20,12 @@ print_device_info()
 BACKEND_PY_PATH = Path(__file__).resolve().parents[2]
 
 # ==================== 添加官方仓库到路径 ====================
-PAIR_VPR_ROOT = BACKEND_PY_PATH / "Pair-VPR"
+PAIR_VPR_ROOT = BACKEND_PY_PATH / "app/vendors/pairvpr"
 if not PAIR_VPR_ROOT.exists():
-    print(f"❌ 未找到官方仓库，请执行:")
-    print(f"   cd {BACKEND_PY_PATH}")
-    print(f"   git clone https://github.com/csiro-robotics/Pair-VPR.git")
+    print(f"❌ 未找到官方仓库，程序退出:")
     exit(1)
-
-sys.path.insert(0, str(PAIR_VPR_ROOT))
+from vendors.pairvpr.models.pairvpr import PairVPRNet
 print(f"✅ 已加载官方 Pair-VPR 库: {PAIR_VPR_ROOT}")
-
-from pairvpr.models.pairvpr import PairVPRNet
 
 
 # ==================== 配置加载 ====================
@@ -41,7 +36,7 @@ def get_cfg(model_type="vitB"):
         "vitG": "stagetwo_default_config.yaml"
     }
     config_name = config_map.get(model_type, "stagetwo_default_config.yaml")
-    config_path = PAIR_VPR_ROOT / "pairvpr/configs" / config_name
+    config_path = PAIR_VPR_ROOT / "configs" / config_name
     
     if not config_path.exists():
         raise FileNotFoundError(f"配置文件不存在: {config_path}")
@@ -174,14 +169,13 @@ class PairVPRExtractor:
             _, global_desc = self.model(img_tensor, None, mode="global")
             return global_desc.cpu().numpy().flatten().tolist()
     
-    def extract_complete_features(self, image_path):
+    def extract_complete_features(self, image):
         """返回向量和 dense_features（缓存用）"""
-        if not os.path.exists(image_path):
+        if image is None:
             return None, None
         
         transform = self._get_transform()
-        img = Image.open(image_path).convert("RGB")
-        img_tensor = transform(img).unsqueeze(0).to(self.device)
+        img_tensor = transform(image).unsqueeze(0).to(self.device)
 
         if self.use_fp16:
             img_tensor = img_tensor.half()
@@ -194,6 +188,16 @@ class PairVPRExtractor:
             tokens = dense_features.float().squeeze(0).cpu()
         return vector, tokens
     
+    def ensure_tensor(self,x):
+        if isinstance(x, np.ndarray):
+            t = torch.from_numpy(x)
+        elif isinstance(x, torch.Tensor):
+            t = x
+        else:
+            t = torch.tensor(x)
+        return t.half() if self.use_fp16 else t.float()
+
+    
     def pair_similarity_from_cached_tokens(self, q_tokens, c_tokens):
         """
         q_tokens, c_tokens: 已经是 torch.Tensor 或 numpy.ndarray，形状为 [1, L, D] 或 [L, D]
@@ -201,17 +205,9 @@ class PairVPRExtractor:
         实现细节：对称得分 = model(q,c,'pairvpr') + model(c,q,'pairvpr')，始终返回 float（batch=1 的常见情况）。
         """
         # 转换为 torch.Tensor
-        def ensure_tensor(x):
-            if isinstance(x, np.ndarray):
-                t = torch.from_numpy(x)
-            elif isinstance(x, torch.Tensor):
-                t = x
-            else:
-                t = torch.tensor(x)
-            return t.half() if self.use_fp16 else t.float()
-
-        q = ensure_tensor(q_tokens)
-        c = ensure_tensor(c_tokens)
+        
+        q = self.ensure_tensor(q_tokens)
+        c = self.ensure_tensor(c_tokens)
 
         # 形状规范化
         if q.dim() == 2:
@@ -234,55 +230,60 @@ class PairVPRExtractor:
 
     def pair_similarity_batch(self, q_tokens_list, c_tokens_list):
         """
-        批量比对优化：一次处理多对 (q, c)，减少循环与设备转移开销
-        
+        向量化批量比对：尽量将多对 (q, c) 一次性堆成 [B, L, D] 调用 model，以减少 Python 循环与设备切换开销。
+        如果输入的 token 形状不一致（无法 stack），回退到逐对循环实现以保证兼容性。
+
         q_tokens_list: list of Tensor/ndarray，每个形状 [1, L, D] 或 [L, D]
         c_tokens_list: list of Tensor/ndarray，每个形状 [1, L, D] 或 [L, D]
-        
+
         返回: list of float，每个是相应对的相似度
-        示例用法:
-            scores = extractor.pair_similarity_batch(
-                [q1_tokens, q2_tokens], 
-                [c1_tokens, c2_tokens]
-            )
         """
-        def ensure_tensor(x):
-            if isinstance(x, np.ndarray):
-                t = torch.from_numpy(x)
-            elif isinstance(x, torch.Tensor):
-                t = x
-            else:
-                t = torch.tensor(x)
-            if self.use_fp16:
-                return t.half()
-            else:
-                return t.float()
 
-        scores = []
-        
+        if len(q_tokens_list) != len(c_tokens_list):
+            raise ValueError("q_tokens_list and c_tokens_list must have the same length")
+
+        q_tensors = []
+        c_tensors = []
+        for qt, ct in zip(q_tokens_list, c_tokens_list):
+            q = self.ensure_tensor(qt)
+            c = self.ensure_tensor(ct)
+
+            # 仅支持每项为 [L, D] 或 [1, L, D] 的情况；若为 [1, L, D] 则 squeeze
+            if q.dim() == 3:
+                if q.shape[0] == 1:
+                    q = q.squeeze(0)
+                else:
+                    raise RuntimeError("cannot vectorize: q item has batch>1")
+            if c.dim() == 3:
+                if c.shape[0] == 1:
+                    c = c.squeeze(0)
+                else:
+                    raise RuntimeError("cannot vectorize: c item has batch>1")
+
+            if q.dim() != 2 or c.dim() != 2:
+                raise RuntimeError("cannot vectorize: unexpected tensor dims")
+
+            q_tensors.append(q)
+            c_tensors.append(c)
+
+        # stack -> [B, L, D]
+        q_batch = torch.stack(q_tensors, dim=0).to(self.device)
+        c_batch = torch.stack(c_tensors, dim=0).to(self.device)
+
+
+        # 成功构建批次后一次性计算
         with torch.no_grad():
-            for q_tokens, c_tokens in zip(q_tokens_list, c_tokens_list):
-                q = ensure_tensor(q_tokens)
-                c = ensure_tensor(c_tokens)
+            s1 = self.model(q_batch, c_batch, mode="pairvpr")
+            s2 = self.model(c_batch, q_batch, mode="pairvpr")
+            score = (s1 + s2).squeeze(-1).float().cpu()
 
-                # 形状规范化
-                if q.dim() == 2:
-                    q = q.unsqueeze(0)
-                if c.dim() == 2:
-                    c = c.unsqueeze(0)
-
-                # 一次转移到设备
-                q = q.to(self.device)
-                c = c.to(self.device)
-
-                # 对称计算
-                s1 = self.model(q, c, mode="pairvpr")
-                s2 = self.model(c, q, mode="pairvpr")
-                score = (s1 + s2).squeeze(-1).float().cpu()
-                
-                scores.append(float(score.item()) if score.numel() == 1 else score.numpy().tolist())
-
-        return scores
+            # 返回 Python list
+            if score.dim() == 0:
+                return [float(score.item())]
+            return score.numpy().tolist()
+    
+    def pair_similarity_batch_single_query(self, q_tokens, c_tokens_list):
+        return self.pair_similarity_batch([q_tokens] * len(c_tokens_list), c_tokens_list)
     
 
 if __name__ == "__main__":

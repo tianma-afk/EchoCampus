@@ -1,5 +1,6 @@
 from pymilvus import MilvusClient,CollectionSchema, FieldSchema, DataType
 from pathlib import Path
+import asyncio
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]  # 往上3级
 DATA_DIR = PROJECT_ROOT / "data"
@@ -33,8 +34,7 @@ if not client.has_collection(COLLECTION_NAME):
     # 定义 schema，明确 uuid 字段类型为 VARCHAR (字符串)
     schema = CollectionSchema([
         FieldSchema(name="uuid", dtype=DataType.VARCHAR, max_length=36, is_primary=True),
-        FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=VECTOR_DIM),
-        FieldSchema(name="filename", dtype=DataType.VARCHAR, max_length=256)
+        FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=VECTOR_DIM)
     ])
     
     client.create_collection(
@@ -64,7 +64,7 @@ if "vector" not in indexes:
 else:
     print("✅ 索引已存在，跳过创建")
 
-def insert_vector(vector, uuid: str = None, filename: str = None):  # 改为 str 类型
+def insert_vector(vector, uuid: str = None):  # 改为 str 类型
     if uuid is None:
         print("错误: uuid不能为None")
         return None
@@ -73,7 +73,7 @@ def insert_vector(vector, uuid: str = None, filename: str = None):  # 改为 str
     if len(uuid) != 36:
         print(f"警告: uuid '{uuid}' 长度不是36位")
     
-    data = [{"uuid": uuid, "vector": vector, "filename": filename}]
+    data = [{"uuid": uuid, "vector": vector}]
 
     result = client.insert(
         collection_name=COLLECTION_NAME,
@@ -81,7 +81,7 @@ def insert_vector(vector, uuid: str = None, filename: str = None):  # 改为 str
     )
     client.load_collection(collection_name=COLLECTION_NAME)
     return result
-def insert_vectors(vectors, uuids: list = None,filenames : list = None):  # uuids 改为字符串列表
+def insert_vectors(vectors, uuids: list = None):  # uuids 改为字符串列表
     data_to_insert = []
     if vectors is None or len(vectors) == 0:
         print("错误: vectors不能为None或空")
@@ -91,17 +91,13 @@ def insert_vectors(vectors, uuids: list = None,filenames : list = None):  # uuid
         print("错误: uuids不能为None或长度与vectors不一致")
         return None
     
-    if filenames is None or len(filenames) != len(vectors):
-        print("错误: filenames不能为None或长度与vectors不一致")
-        return None
-    
     # 可选：验证每个 uuid 长度
     for uuid_val in uuids:
         if len(uuid_val) != 36:
             print(f"警告: uuid '{uuid_val}' 长度不是36位")
     
     for i, vector in enumerate(vectors):
-        data_to_insert.append({"uuid": uuids[i], "vector": vector, "filename": filenames[i]})
+        data_to_insert.append({"uuid": uuids[i], "vector": vector})
     result = client.insert(
         collection_name=COLLECTION_NAME,
         data=data_to_insert
@@ -118,10 +114,46 @@ def search_similar(query_vector, top_k=10):
         data=[query_vector],              # 查询的向量（支持批量，这里用单条）
         limit=top_k,                      # 返回数量
         search_params=SEARCH_PARAMS,      # 搜索参数（你已定义好）
-        output_fields=["uuid", "filename"]  # 需要返回的字段（这里只要uuid和filename）
+        output_fields=["uuid"]              # 需要返回的字段（这里只要uuid）
     )
     
-    return [{'uuid': r['uuid'], 'filename': r['filename'], 'score': r['distance']} for r in results[0]]
+    return [{'uuid': r['uuid'], 'score': r['distance']} for r in results[0]]
 
 
+# ========== 异步版本 ==========
+async def insert_vector_async(vector, uuid: str = None):
+    if uuid is None:
+        print("错误: uuid不能为None")
+        return None
+    if len(uuid) != 36:
+        print(f"警告: uuid '{uuid}' 长度不是36位")
+    data = [{"uuid": uuid, "vector": vector}]
+    result = await asyncio.to_thread(client.insert, collection_name=COLLECTION_NAME, data=data)
+    await asyncio.to_thread(client.load_collection, collection_name=COLLECTION_NAME)
+    return result
 
+async def insert_vectors_async(vectors, uuids: list = None):
+    if vectors is None or len(vectors) == 0:
+        print("错误: vectors不能为None或空")
+        return None
+    if uuids is None or len(uuids) != len(vectors):
+        print("错误: uuids不能为None或长度与vectors不一致")
+        return None
+    data_to_insert = [{"uuid": uuids[i], "vector": vectors[i]} for i in range(len(vectors))]
+    result = await asyncio.to_thread(client.insert, collection_name=COLLECTION_NAME, data=data_to_insert)
+    await asyncio.to_thread(client.load_collection, collection_name=COLLECTION_NAME)
+    return result
+
+async def load_collection_async():
+    await asyncio.to_thread(client.load_collection, collection_name=COLLECTION_NAME)
+
+async def search_similar_async(query_vector, top_k=10):
+    results = await asyncio.to_thread(
+        client.search,
+        collection_name=COLLECTION_NAME,
+        data=[query_vector],
+        limit=top_k,
+        search_params=SEARCH_PARAMS,
+        output_fields=["uuid"]
+    )
+    return [{'uuid': r['uuid'], 'score': r['distance']} for r in results[0]]
