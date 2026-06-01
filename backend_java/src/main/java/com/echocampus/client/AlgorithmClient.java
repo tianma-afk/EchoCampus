@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface AlgorithmClient {
     // TODO: 解决HACK问题
-    // HACK: [YourName/2026-06-02] API设计问题：List<Map<UUID,String>> 存在冗余
+    // HACK: [Lunaunde/2026-06-02] API设计问题：List<Map<UUID,String>> 存在冗余
     // 问题：
     // 1. Map<UUID,String> 本身已支持批量图片（key=图片ID, value=URL）
     // 2. 外层List导致歧义：是多个独立任务？还是支持分批处理？
