@@ -10,7 +10,7 @@ import java.util.UUID;
 @Service
 public class AlgorithmClientImpl implements AlgorithmClient {
 
-
+    static final String BASE_URL = "http://localhost:8000/api/";
     @Override
     public String submitVectoredTask(List<Map<UUID,String>> imageUrl, String callbackUrl) {
         return "task-vector-123"; // TODO: 实现向算法后台发送向量化任务的请求 并 返回任务ID
