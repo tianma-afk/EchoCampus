@@ -38,7 +38,7 @@ async def search_process(params: SearchParams):
 
         # 批量计算相似度（优化版）
         async with gpu_lock:  # 确保同一时间只有一个任务在使用 GPU
-            scores = await asyncio.to_thread(extractor.pair_similarity_batch,[token] * len(candidate_ids),candidate_tokens)
+            scores = await asyncio.to_thread(extractor.pair_similarity_batch_single_query, token, candidate_tokens)
 
         results = []
         for hit, score in zip(result, scores):  # Milvus client 返回 [[hit1, hit2, ...]]
