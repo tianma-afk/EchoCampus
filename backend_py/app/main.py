@@ -11,7 +11,6 @@ import hashlib
 from typing import List, Optional
 import asyncio
 import httpx
-import Minio
 from core.dependencies import get_extractor
 from routers import insert, search
 
@@ -22,7 +21,7 @@ app.include_router(search.router)
 @app.on_event("startup")
 def startup_event():
     get_extractor() # 提前加载模型
-    core.token_manager.load_collection()
+    core.milvus_lite.load_collection() # 提前加载 Milvus 集合
 
 @app.get("/")
 def root():
