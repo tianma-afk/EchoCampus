@@ -5,7 +5,7 @@ from services.image_downloader import download_image_to_pil
 from core.gpu_lock import gpu_lock
 from core.dependencies import get_extractor
 from core.token_manager import save_image_tokens_async
-from core.milvus_lite import insert_vector_async, insert_vectors_async
+from core import milvus_lite
 import asyncio
 import httpx
 from asyncio import Semaphore
@@ -83,9 +83,9 @@ async def save_images_info(info_queue: asyncio.Queue):
         vectors.append(vector)
         uuids.append(image_uuid)
         if len(vectors) >= 100:  # 每100个向量保存一次
-            await insert_vectors_async(vectors, uuids)
+            await milvus_lite.service.insert_vectors_async(vectors, uuids)
             vectors = []
             uuids = []
     if len(vectors) > 0 and len(uuids) > 0:
-        await insert_vectors_async(vectors, uuids)  # 保存剩余的向量
+        await milvus_lite.service.insert_vectors_async(vectors, uuids)  # 保存剩余的向量
     

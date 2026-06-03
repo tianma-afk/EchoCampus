@@ -47,7 +47,7 @@ const hasAnyImage = () => {
 
     <div v-else-if="!hasAnyImage()" class="empty-state">
       <el-icon :size="48" color="#d1d5db"><PictureFilled /></el-icon>
-      <p>暂无图片</p>
+      <p>暂未设置封面和精选图片</p>
     </div>
 
     <template v-else>
