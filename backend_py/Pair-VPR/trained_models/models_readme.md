@@ -1,2 +1,0 @@
-This folder is designed to store all of the pre-trained Pair-VPR models.
-Models can be downloaded from our Dropbox and placed into this folder for use in this repository, from the following link: [https://tinyurl.com/Pair-VPR-models]https://tinyurl.com/Pair-VPR-models.
