@@ -12,7 +12,7 @@ from asyncio import Semaphore
 
 router = APIRouter(prefix="/insert", tags=["insert"])
 global_semaphore = Semaphore(10)
-@router.post("/")
+@router.post("")
 async def insert_receive(params: InsertParams):
 
     asyncio.create_task(insert_process_with_limit(params))
@@ -39,8 +39,9 @@ async def insert_recall(params: InsertParams):
     async with httpx.AsyncClient() as client:
         data = {"result": "SUCCESS"}
         for attempt in range(5):
+
             try:
-                response = await client.post(params.callbackUrl, json=data, timeout=5.0)
+                response = await client.put(params.callbackUrl, json=data, timeout=5.0)
                 if response.status_code == 200:
                     return  # 成功则退出
             except httpx.TimeoutException:
@@ -62,9 +63,10 @@ async def download_images(params: InsertParams, img_queue: asyncio.Queue):
 async def process_images(img_queue: asyncio.Queue,info_queue: asyncio.Queue):
     extractor = get_extractor()
     while True:
-        img, image_uuid = await img_queue.get()
-        if img is None:
+        item = await img_queue.get()
+        if item is None: # 检查队列是否为空
             break
+        img, image_uuid = item
         async with gpu_lock:  # 确保同一时间只有一个任务在使用 GPU
             vector, token = await asyncio.to_thread(extractor.extract_complete_features, img)
         await info_queue.put((vector, token, image_uuid))

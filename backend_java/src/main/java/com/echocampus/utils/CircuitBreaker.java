@@ -1,4 +1,4 @@
-package com.echocampus.client;
+package com.echocampus.utils;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
