@@ -1,5 +1,5 @@
-from core import milvus_lite
 from core import token_manager
+from core import milvus_lite
 from services.pair_vpr import PairVPRExtractor
 import os
 from pathlib import Path
@@ -9,6 +9,7 @@ import hashlib
 import time
 from PIL import Image
 
+milvus_lite.init()
 extractor = PairVPRExtractor(model_type="vitB",use_fp16=True)
 
 # 3. 获取文件夹下所有的图片路径（模拟 10000 张的场景）
@@ -40,9 +41,9 @@ print("检查uuids列表：")
 print(uuids)
 # breakpoint()# 在这里检查 uuids 列表的内容，确保它们是字符串类型的 UUID
     
-milvus_lite.insert_vectors(vectors, uuids)  # 批量插入向量、uuid 和文件名
+milvus_lite.service.insert_vectors(vectors, uuids)  # 批量插入向量、uuid 和文件名
 
-milvus_lite.load_collection()
+milvus_lite.service.load_collection()
 print(f"特征提取完成，开始搜索相似图片...")
 
 print("选择你要搜索的图片:")
@@ -55,7 +56,7 @@ start_time = time.time()
 image = Image.open(goal_path).convert("RGB")
 goal_vector, goal_token = extractor.extract_complete_features(image)
 
-result = milvus_lite.search_similar(goal_vector, top_k=10)
+result = milvus_lite.service.search_similar(goal_vector, top_k=10)
 print("搜索结果:")
 
 # 批量加载候选 tokens

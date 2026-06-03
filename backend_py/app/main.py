@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 from pydantic import BaseModel # 接收时：它能一键把前端传来的 JSON 字典，直接变成你代码里可以点来点去的 Python 对象
 
-import core.milvus_lite
+import core.milvus_lite 
 import core.token_manager
 from services.pair_vpr import PairVPRExtractor
 import os
@@ -21,7 +21,7 @@ app.include_router(search.router)
 @app.on_event("startup")
 def startup_event():
     get_extractor() # 提前加载模型
-    core.milvus_lite.load_collection() # 提前加载 Milvus 集合
+    core.milvus_lite.init()                  # 初始化 Milvus 服务单例
 
 @app.get("/")
 def root():

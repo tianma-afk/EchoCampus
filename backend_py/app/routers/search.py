@@ -5,7 +5,7 @@ from services.image_downloader import download_image_to_pil
 from core.gpu_lock import gpu_lock
 from schemas.search import SearchParams
 from core.dependencies import get_extractor
-from core.milvus_lite import search_similar_async
+from core import milvus_lite
 from core.token_manager import load_image_tokens_async
 import httpx
 from asyncio import Semaphore
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/search", tags=["search"])
 global_semaphore = Semaphore(10)
 
 
-@router.post("/")
+@router.post("")
 async def search_receive(params: SearchParams):
     task_id = params.callbackUrl.split("/")[-1]
     asyncio.create_task(search_process_with_limit(params))
@@ -29,7 +29,7 @@ async def search_process(params: SearchParams):
         extractor = get_extractor()
         async with gpu_lock:  # 确保同一时间只有一个任务在使用 GPU
             vector, token = await asyncio.to_thread(extractor.extract_complete_features, img)
-        result = await search_similar_async(vector, params.topK)
+        result = await milvus_lite.service.search_similar_async(vector, params.topK)
 
         # 批量加载候选 tokens
         candidate_ids = [hit["uuid"] for hit in result]

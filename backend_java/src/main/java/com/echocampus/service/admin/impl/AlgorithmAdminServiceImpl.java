@@ -22,7 +22,6 @@ import com.echocampus.utils.CallBackUrlBuilder;
 import com.echocampus.utils.ImageUrlBuilder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +66,7 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
         Map<UUID, UniversityEntity> universityCache = new HashMap<>();
 
         //获取未向量化的图片
-        List<Map<UUID, String>> idsAndUrls = new ArrayList<>();
+        Map<UUID, String> idsAndUrls = new HashMap<>();
         for (ImageEntity image : images) {
             UUID landmarkId = image.getLandmarkId();
             LandmarkEntity landmark = landmarkCache.computeIfAbsent(landmarkId,
@@ -84,7 +83,7 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
             String url = imageUrlBuilder.buildUrl(
                     university.getId(), campus.getId(), landmark.getId(),
                     image.getId(), image.getFileExt());
-            idsAndUrls.add(Map.of(image.getId(), url));
+            idsAndUrls.put(image.getId(), url);
         }
 
         //创建任务

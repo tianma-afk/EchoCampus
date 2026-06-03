@@ -1,7 +1,7 @@
 package com.echocampus.client.impl;
 
 import com.echocampus.client.AlgorithmClient;
-import com.echocampus.client.CircuitBreaker;
+import com.echocampus.utils.CircuitBreaker;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -11,15 +11,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 
 
 @Service
@@ -33,18 +28,18 @@ public class AlgorithmClientImpl implements AlgorithmClient {
     static final String BASE_URL = "http://localhost:8000";
 
     private void sameIdCheck(String callbackUrl, String taskId){
-        if(!callbackUrl.substring(callbackUrl.lastIndexOf("/")+1).equals(taskId.substring(taskId.lastIndexOf("-")+1)))
+        String uuidFromCallback = callbackUrl.substring(callbackUrl.lastIndexOf("/") + 1);
+        String uuidFromTaskId = taskId.replace("alg-task-", "");
+        if (!uuidFromCallback.equals(uuidFromTaskId))
             throw new RuntimeException("Callback URL does not match task ID");
     }
 
     @Override
-    public String submitInsertTask(List<Map<UUID, String>> imageUrl, String callbackUrl) {
+    public String submitInsertTask(Map<UUID, String> imageUrls, String callbackUrl) {
 
-        List<ImageInfo> images = new ArrayList<ImageInfo>();
-        for(Map<UUID, String> imagesMap : imageUrl){
-            for(Map.Entry<UUID, String> entry : imagesMap.entrySet()){
-                images.add(new ImageInfo(entry.getKey(), entry.getValue()));
-            }
+        List<ImageInfo> images = new ArrayList<>();
+        for (Map.Entry<UUID, String> entry : imageUrls.entrySet()) {
+            images.add(new ImageInfo(entry.getKey(), entry.getValue()));
         }
         CreateInsertTaskRequest requestBody = new CreateInsertTaskRequest(images, callbackUrl);
 
@@ -55,11 +50,12 @@ public class AlgorithmClientImpl implements AlgorithmClient {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(BASE_URL + "/insert"))
                     .timeout(Duration.ofSeconds(5))
+                    .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
                     .build();
             
             HttpResponse<String> response = insertCB.execute(request);
-            String taskId = response.body();
+            String taskId = mapper.readTree(response.body()).get("taskId").asText();
 
             sameIdCheck(callbackUrl, taskId);
 
@@ -78,6 +74,7 @@ public class AlgorithmClientImpl implements AlgorithmClient {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(BASE_URL + "/search"))
                     .timeout(Duration.ofSeconds(10))
+                    .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
                     .build();
 
