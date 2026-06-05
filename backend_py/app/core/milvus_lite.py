@@ -1,11 +1,9 @@
 from pymilvus import MilvusClient, CollectionSchema, FieldSchema, DataType
-from pathlib import Path
 from typing import Optional
 import asyncio
+from . import settings
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-DATA_DIR = PROJECT_ROOT / "data"
-MILVUS_DB_PATH = DATA_DIR / "milvus_lite.db"
+MILVUS_URI = settings.settings.MILVUS_URI
 
 COLLECTION_NAME = "image_collection"
 VECTOR_DIM = 512
@@ -26,9 +24,8 @@ SEARCH_PARAMS = {
 class MilvusService:
     """Milvus 向量数据库服务"""
 
-    def __init__(self, db_path: Path):
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        self.client = MilvusClient(str(db_path))
+    def __init__(self, uri: str):
+        self.client = MilvusClient(uri=uri)
         self._setup_collection()
         self._setup_index()
 
@@ -67,18 +64,14 @@ class MilvusService:
         if len(uuid) != 36:
             print(f"警告: uuid '{uuid}' 长度不是36位")
         data = [{"uuid": uuid, "vector": vector}]
-        result = self.client.insert(collection_name=COLLECTION_NAME, data=data)
-        self.client.load_collection(collection_name=COLLECTION_NAME)
-        return result
+        return self.client.insert(collection_name=COLLECTION_NAME, data=data)
 
     def insert_vectors(self, vectors, uuids: list):
         if not vectors or not uuids or len(vectors) != len(uuids):
             print("错误: vectors/uuids 不能为空且长度必须一致")
             return None
         data = [{"uuid": uuids[i], "vector": vectors[i]} for i in range(len(vectors))]
-        result = self.client.insert(collection_name=COLLECTION_NAME, data=data)
-        self.client.load_collection(collection_name=COLLECTION_NAME)
-        return result
+        return self.client.insert(collection_name=COLLECTION_NAME, data=data)
 
     def search_similar(self, query_vector, top_k: int = 10):
         results = self.client.search(
@@ -96,18 +89,14 @@ class MilvusService:
         if len(uuid) != 36:
             print(f"警告: uuid '{uuid}' 长度不是36位")
         data = [{"uuid": uuid, "vector": vector}]
-        result = await asyncio.to_thread(self.client.insert, collection_name=COLLECTION_NAME, data=data)
-        await asyncio.to_thread(self.client.load_collection, collection_name=COLLECTION_NAME)
-        return result
+        return await asyncio.to_thread(self.client.insert, collection_name=COLLECTION_NAME, data=data)
 
     async def insert_vectors_async(self, vectors, uuids: list):
         if not vectors or not uuids or len(vectors) != len(uuids):
             print("错误: vectors/uuids 不能为空且长度必须一致")
             return None
         data = [{"uuid": uuids[i], "vector": vectors[i]} for i in range(len(vectors))]
-        result = await asyncio.to_thread(self.client.insert, collection_name=COLLECTION_NAME, data=data)
-        await asyncio.to_thread(self.client.load_collection, collection_name=COLLECTION_NAME)
-        return result
+        return await asyncio.to_thread(self.client.insert, collection_name=COLLECTION_NAME, data=data)
 
     async def load_collection_async(self):
         await asyncio.to_thread(self.client.load_collection, collection_name=COLLECTION_NAME)
@@ -134,7 +123,7 @@ def init():
     global service
     if service is not None:
         return
-    service = MilvusService(MILVUS_DB_PATH)
-    print("✅MilvusLite连接成功")
+    service = MilvusService(MILVUS_URI)
+    print(f"✅ Milvus 连接成功 ({MILVUS_URI})")
     service.load_collection()
-    print("✅MilvusLite已加载集合")
+    print("✅ 集合已加载")

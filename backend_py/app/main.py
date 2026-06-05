@@ -3,30 +3,24 @@ import uvicorn
 from pydantic import BaseModel # 接收时：它能一键把前端传来的 JSON 字典，直接变成你代码里可以点来点去的 Python 对象
 
 import core.milvus_lite 
-import core.token_manager
-from services.pair_vpr import PairVPRExtractor
-import os
-from pathlib import Path
-import hashlib
-from typing import List, Optional
-import asyncio
-import httpx
+from contextlib import asynccontextmanager
+
 from core.dependencies import get_extractor
 from routers import insert, search
-from contextlib import asynccontextmanager  
 
-@asynccontextmanager                                                                                                                   
-async def lifespan(app: FastAPI):                                                                                                      
-   get_extractor()  # 提前加载模型                                                                                                    
-   core.milvus_lite.init()  # 初始化 Milvus 服务单例                                                                                  
-   yield                                                                                                                              
-                                                                                                                                       
-                                                                                                                                       
-app = FastAPI(lifespan=lifespan) 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    get_extractor()
+    core.milvus_lite.init() # 初始化 Milvus 服务单例
+    print("服务已启动，资源已加载")
 
+    yield
+    
+    print("服务已关闭，资源已释放")
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(insert.router)
 app.include_router(search.router)
-
 
 @app.get("/")
 def root():
