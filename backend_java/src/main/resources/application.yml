@@ -17,9 +17,9 @@ spring:
     locations: classpath:db/migration
 
 mybatis-plus:
-  mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.echocampus.entity
-  type-handlers-package: com.echocampus.handler
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.echocampus
+  type-handlers-package: com.echocampus.shared.handler
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
