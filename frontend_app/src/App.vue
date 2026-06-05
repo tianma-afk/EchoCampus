@@ -71,7 +71,7 @@ const handleBack = () => {
   />
   <template v-else>
     <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
-    <MapPage v-else-if="currentTab === 'map'" />
+    <MapPage v-else-if="currentTab === 'map'" @open-detail="handleOpenLandmarkDetail" />
     <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
     <ProfilePage v-else-if="currentTab === 'profile'" />
     <BottomNav v-model="currentTab" />
