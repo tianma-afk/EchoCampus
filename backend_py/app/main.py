@@ -3,162 +3,29 @@ import uvicorn
 from pydantic import BaseModel # 接收时：它能一键把前端传来的 JSON 字典，直接变成你代码里可以点来点去的 Python 对象
 
 import core.milvus_lite 
-import core.token_manager
-from services.pair_vpr import PairVPRExtractor
-import os
-from pathlib import Path
-import hashlib
-from typing import List, Optional
-import asyncio
-import httpx
+from contextlib import asynccontextmanager
+
 from core.dependencies import get_extractor
 from routers import insert, search
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    get_extractor()
+    core.milvus_lite.init() # 初始化 Milvus 服务单例
+    print("服务已启动，资源已加载")
+
+    yield
+    
+    print("服务已关闭，资源已释放")
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(insert.router)
 app.include_router(search.router)
 
-@app.on_event("startup")
-def startup_event():
-    get_extractor() # 提前加载模型
-    core.milvus_lite.init()                  # 初始化 Milvus 服务单例
-
 @app.get("/")
 def root():
-    return {"message": "图搜图后端接口已启动！"}
+    return {"message": "图搜图后端根路由，访问 /search 或 /insert 来使用搜索或插入功能"}
 
-
-
-# async def callback(callbackUrl:str,status:str):
-#     try:
-#         async with httpx.AsyncClient() as client:
-#             response = await client.put(
-#                     url=callbackUrl,
-#                     json={"result": status},
-#                     timeout=5.0  # 建议加上超时，防止无限等待
-#                 )
-#             if response.status_code == 200:
-#                 print(f"回调成功: {response.json()}")
-#             else:
-#                 print(f"回调失败，状态码: {response.status_code}")
-
-#     except Exception as e:
-#         print(f"回调请求异常: {e}")
-# @app.post("/insert")
-
-
-
-# # 1. 专门定义一个类，规定好要传哪两个数据
-# class SearchParams(BaseModel):
-#     pic_path: str  # 必须的字符串参数，表示图片路径
-#     top_k: int = 10  # 可选的整数参数，默认值为10
-
-
-# @app.post("/search")
-# def search(params: SearchParams):
-#     '''
-#     搜索接口
-#     输入json参数格式：
-#     {
-#         "pic_path": "图片路径", #后将改为url
-#         "top_k": 10 #返回最相近的图片数量
-#     }
-    
-#     '''
-#     # 提取查询图片的完整特征（包括 tokens）
-#     goal_vector, goal_token = extractor.extract_complete_features(params.pic_path)
-
-    # # 批量加载候选 tokens
-    # candidate_ids = [hit['uuid'] for hit in result]
-    # candidate_tokens = [core.token_manager.load_image_tokens(img_id) for img_id in candidate_ids]
-
-    # # 批量计算相似度（优化版）
-    # scores = extractor.pair_similarity_batch([goal_token] * len(candidate_ids), candidate_tokens)
-  
-#     result = core.milvus_lite.search_similar(goal_vector, params.top_k)
-#     # print("搜索结果:")
-#     results_with_scores = []
-#     json_results_1 = []
-#     for hit,score in zip(result,scores):  # Milvus client 返回 [[hit1, hit2, ...]]
-#         img_uuid = hit["uuid"]
-#         filename = hit["filename"] 
-#         item = {"filename": filename, "uuid": img_uuid, "score": hit["score"]}
-#         json_results_1.append(item)
-#         results_with_scores.append((hit, score))
-
-#     # 按 score 降序排序
-#     results_with_scores.sort(key=lambda x: x[1], reverse=True)
-
-#     # 打印排序后的结果
-#     json_results_2 = []
-#     # print("搜索结果（按相似度排序）:")
-#     for hit, score in results_with_scores:
-#         img_uuid = hit["uuid"]
-#         filename = hit["filename"]
-#         item = {"filename": filename, "uuid": img_uuid, "score": score}
-#         json_results_2.append(item)
-#     return {
-#         "message": "图搜图成功",
-#         "results_1": json_results_1,  # 初始比较的结果
-#         "results_2": json_results_2,  # 筛选后的结果
-#     }
-  
-# @app.post("/insert_one")
-# def add(params: InsertParam):
-#     '''
-#     添加一个图片
-#     输入json格式：
-#     {
-#         "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-#         "pic_url": "xxx
-#     }
-#     '''
-    
-#     f = os.path.basename(params.pic_url)# 获取文件名
-#     if f.lower().endswith((".png", ".jpg", ".jpeg")):
-#         stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
-#         if not params.uuid:  # 默认使用文件名MD5值
-#             params.uuid = stable_uuid
-#         vector, token = extractor.extract_complete_features(params.pic_url)
-#         core.token_manager.save_image_tokens(params.uuid, token)
-#         core.milvus_lite.insert_vectors(vector, params.uuid,os.path.basename(params.pic_url))
-#     return {"message": f"你提交的图片url是: {params.pic_url}, uuid是: {params.uuid}"}
-
-# @app.post("/insert")
-# def add(params: InsertParams):
-#     '''
-#     批量插入图片
-#     输入json格式：
-#     {
-#         items: [
-#             {
-#                 uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-#                 pic_url: "xxx"
-#             },
-#             {
-#                 uuid: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-#                 pic_url: "xxx"
-#             }
-#         ]
-#     }
-#     '''
-    
-#     vectors = []
-#     filenames = []
-#     uuids = []
-#     for item in params.items:
-#         f = os.path.basename(item.pic_url)# 获取文件名
-#         if f.lower().endswith((".png", ".jpg", ".jpeg")):
-#             stable_uuid = hashlib.md5(f.encode("utf-8")).hexdigest() + "----"
-#             if not item.uuid:  # 默认使用文件名MD5值
-#                 item.uuid = stable_uuid
-#             vector, token = extractor.extract_complete_features(item.pic_url)
-#             core.token_manager.save_image_tokens(item.uuid, token)
-#             uuids.append(item.uuid)  
-#             vectors.append(vector)
-#             filenames.append(os.path.basename(item.pic_url))
-#     core.milvus_lite.insert_vectors(vectors,uuids,filenames)
-#     return {"message": f"添加成功，共添加了 {len(params.items)} 张图片"}
 
 
 if __name__ == "__main__":
