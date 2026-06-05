@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 from pydantic import BaseModel # 接收时：它能一键把前端传来的 JSON 字典，直接变成你代码里可以点来点去的 Python 对象
 
-import core.milvus_lite 
+from core.milvus_service import milvus_init
 from contextlib import asynccontextmanager
 
 from core.dependencies import get_extractor
@@ -11,7 +11,7 @@ from routers import insert, search
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     get_extractor()
-    core.milvus_lite.init() # 初始化 Milvus 服务单例
+    milvus_init() # 初始化 Milvus 服务单例
     print("服务已启动，资源已加载")
 
     yield

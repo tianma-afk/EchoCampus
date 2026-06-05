@@ -118,7 +118,7 @@ class MilvusService:
 service: Optional[MilvusService] = None
 
 
-def init():
+def milvus_init():
     """启动时调用，初始化 MilvusService 单例。"""
     global service
     if service is not None:
