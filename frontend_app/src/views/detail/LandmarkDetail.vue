@@ -397,9 +397,14 @@ const bubblePositions = computed(() => {
 
 <style scoped>
 .landmark-detail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: #f0f7f4;
 }
 

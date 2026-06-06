@@ -69,11 +69,13 @@ const handleBack = () => {
     :landmark="selectedLandmark"
     @back="handleBack"
   />
-  <template v-else>
-    <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
-    <MapPage v-else-if="currentTab === 'map'" @open-detail="handleOpenLandmarkDetail" />
-    <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
-    <ProfilePage v-else-if="currentTab === 'profile'" />
+  <div v-show="!showDetail">
+    <KeepAlive>
+      <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
+      <MapPage v-else-if="currentTab === 'map'" @open-detail="handleOpenLandmarkDetail" />
+      <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
+      <ProfilePage v-else-if="currentTab === 'profile'" />
+    </KeepAlive>
     <BottomNav v-model="currentTab" />
-  </template>
+  </div>
 </template>
