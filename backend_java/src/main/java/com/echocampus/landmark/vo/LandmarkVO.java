@@ -23,6 +23,7 @@ public class LandmarkVO {
     private List<String> tags;
     private String coverImg;
 
+    private BigDecimal latitude;
 
-
+    private BigDecimal longitude;
 }

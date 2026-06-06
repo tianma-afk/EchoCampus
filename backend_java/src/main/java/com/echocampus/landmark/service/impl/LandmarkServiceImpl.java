@@ -137,6 +137,8 @@ public class LandmarkServiceImpl implements LandmarkService {
                         .category(categoryNameMap.getOrDefault(entity.getCategoryId(), "未分类"))
                         .tags(entity.getTags())
                         .coverImg(buildCoverUrl(entity, coverImageMap, campusMap, universityMap))
+                        .latitude(entity.getLatitude())
+                        .longitude(entity.getLongitude())
                         .build())
                 .collect(Collectors.toList());
 

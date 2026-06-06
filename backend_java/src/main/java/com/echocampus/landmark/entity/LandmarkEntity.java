@@ -45,6 +45,10 @@ public class LandmarkEntity {
 
     private String location;
 
+    private BigDecimal latitude;
+
+    private BigDecimal longitude;
+
     private String description;
 
     private UUID campusId;
