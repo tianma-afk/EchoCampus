@@ -4,6 +4,7 @@ import { ref, computed } from 'vue'
 interface LandmarkDetail {
   id?: number
   name: string
+  category: string
   rating: number
   checkins: number
   recommendRate: number
@@ -38,7 +39,7 @@ const emit = defineEmits<{
 const selectedFloorNumber = ref(1)
 
 const currentFloor = computed(() =>
-  props.landmark.floorList?.find(f => f.floorNumber === selectedFloorNumber.value)
+    props.landmark.floorList?.find(f => f.floorNumber === selectedFloorNumber.value)
 )
 
 const renderStars = (rating: number) => {
@@ -107,14 +108,14 @@ const bubblePositions = computed(() => {
 <template>
   <div class="landmark-detail">
     <div
-      class="detail-header"
-      :style="{
+        class="detail-header"
+        :style="{
         backgroundImage: props.landmark.imgs?.length ? `url(${props.landmark.imgs[currentImageIndex]})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }"
-      @touchstart="handleTouchStart"
-      @touchend="handleTouchEnd"
+        @touchstart="handleTouchStart"
+        @touchend="handleTouchEnd"
     >
       <div class="header-overlay"></div>
       <div class="header-top">
@@ -142,11 +143,11 @@ const bubblePositions = computed(() => {
         <h1 class="detail-title">{{ props.landmark.name }}</h1>
         <div class="image-dots">
           <span
-            v-for="(_img, i) in props.landmark.imgs"
-            :key="i"
-            class="dot"
-            :class="{ active: i === currentImageIndex }"
-            @click="selectImage(i)"
+              v-for="(_img, i) in props.landmark.imgs"
+              :key="i"
+              class="dot"
+              :class="{ active: i === currentImageIndex }"
+              @click="selectImage(i)"
           ></span>
         </div>
       </div>
@@ -163,17 +164,17 @@ const bubblePositions = computed(() => {
                 <div class="stars">
                   <template v-for="i in 5" :key="i">
                     <svg
-                      v-if="i <= renderStars(props.landmark.rating).full"
-                      class="star-icon filled"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
+                        v-if="i <= renderStars(props.landmark.rating).full"
+                        class="star-icon filled"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
                     >
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
                     <svg
-                      v-else-if="i === renderStars(props.landmark.rating).full + 1 && renderStars(props.landmark.rating).half"
-                      class="star-icon half"
-                      viewBox="0 0 24 24"
+                        v-else-if="i === renderStars(props.landmark.rating).full + 1 && renderStars(props.landmark.rating).half"
+                        class="star-icon half"
+                        viewBox="0 0 24 24"
                     >
                       <defs>
                         <linearGradient id="half-detail">
@@ -182,15 +183,15 @@ const bubblePositions = computed(() => {
                         </linearGradient>
                       </defs>
                       <path
-                        fill="url(#half-detail)"
-                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                          fill="url(#half-detail)"
+                          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                       />
                     </svg>
                     <svg
-                      v-else
-                      class="star-icon empty"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
+                        v-else
+                        class="star-icon empty"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
                     >
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
@@ -201,10 +202,10 @@ const bubblePositions = computed(() => {
             </div>
             <div class="tags-bubbles">
               <span
-                v-for="(tag, i) in props.landmark.tags"
-                :key="tag"
-                class="tag-bubble"
-                :style="{
+                  v-for="(tag, i) in props.landmark.tags"
+                  :key="tag"
+                  class="tag-bubble"
+                  :style="{
                   width: tagBubbleSizes[i] + 'px',
                   height: tagBubbleSizes[i] + 'px',
                   background: tagBubbleGradients[i % tagBubbleGradients.length],
@@ -218,6 +219,18 @@ const bubblePositions = computed(() => {
           </div>
 
           <div class="info-list">
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
+                </svg>
+              </div>
+              <div class="info-text">
+                <span class="info-label">地标分类</span>
+                <span class="info-value">{{ props.landmark.category }}</span>
+              </div>
+            </div>
             <div class="info-item">
               <div class="info-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -311,11 +324,11 @@ const bubblePositions = computed(() => {
           </div>
           <div class="floor-buttons">
             <button
-              v-for="f in props.landmark.floorList"
-              :key="f.floorNumber"
-              class="floor-btn"
-              :class="{ active: selectedFloorNumber === f.floorNumber }"
-              @click="selectFloor(f.floorNumber)"
+                v-for="f in props.landmark.floorList"
+                :key="f.floorNumber"
+                class="floor-btn"
+                :class="{ active: selectedFloorNumber === f.floorNumber }"
+                @click="selectFloor(f.floorNumber)"
             >
               {{ f.floorName }}
             </button>
@@ -326,9 +339,9 @@ const bubblePositions = computed(() => {
             </div>
             <div class="area-tags">
               <span
-                v-for="tag in currentFloor?.tags"
-                :key="tag"
-                class="area-tag"
+                  v-for="tag in currentFloor?.tags"
+                  :key="tag"
+                  class="area-tag"
               >
                 {{ tag }}
               </span>
@@ -826,8 +839,8 @@ const bubblePositions = computed(() => {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(45, 138, 110, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(45, 138, 110, 0.1) 1px, transparent 1px);
+      linear-gradient(rgba(45, 138, 110, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45, 138, 110, 0.1) 1px, transparent 1px);
   background-size: 30px 30px;
 }
 
