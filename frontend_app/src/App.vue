@@ -42,6 +42,18 @@ const currentTab = ref('scan')
 const showDetail = ref(false)
 const selectedLandmark = ref<LandmarkData | null>(null)
 
+interface FocusMarker {
+  id: string
+  name: string
+  lat: number
+  lng: number
+  category: string
+  rating: number
+  openTime: string
+}
+
+const mapFocusTarget = ref<FocusMarker | null>(null)
+
 const handleSelectLandmark = (landmark: LandmarkData) => {
   selectedLandmark.value = landmark
   showDetail.value = true
@@ -57,6 +69,12 @@ const handleOpenLandmarkDetail = async (landmarkId: string) => {
   }
 }
 
+const handleNavigateToMap = (data: FocusMarker) => {
+  mapFocusTarget.value = data
+  showDetail.value = false
+  currentTab.value = 'map'
+}
+
 const handleBack = () => {
   showDetail.value = false
   selectedLandmark.value = null
@@ -68,12 +86,15 @@ const handleBack = () => {
     v-if="showDetail && selectedLandmark"
     :landmark="selectedLandmark"
     @back="handleBack"
+    @navigate-map="handleNavigateToMap"
   />
-  <template v-else>
-    <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
-    <MapPage v-else-if="currentTab === 'map'" @open-detail="handleOpenLandmarkDetail" />
-    <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
-    <ProfilePage v-else-if="currentTab === 'profile'" />
+  <div v-show="!showDetail">
+    <KeepAlive>
+      <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
+      <MapPage v-else-if="currentTab === 'map'" :focus-landmark="mapFocusTarget" @open-detail="handleOpenLandmarkDetail" />
+      <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
+      <ProfilePage v-else-if="currentTab === 'profile'" />
+    </KeepAlive>
     <BottomNav v-model="currentTab" />
-  </template>
+  </div>
 </template>

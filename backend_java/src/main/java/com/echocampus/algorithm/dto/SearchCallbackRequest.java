@@ -1,5 +1,5 @@
 package com.echocampus.algorithm.dto;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -43,6 +43,7 @@ public class SearchCallbackRequest {
          */
         @Schema(description = "匹配的图片 ID", example = "550e8400-e29b-41d4-a716-446655440000")
         @NotBlank(message = "图片 ID 不能为空")
+        @JsonProperty("uuid")  // ← 告诉 Jackson：JSON 中的 "uuid" 映射到这个字段
         private String imageId;
 
         /**

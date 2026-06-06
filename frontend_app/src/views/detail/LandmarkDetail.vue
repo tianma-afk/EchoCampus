@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 interface LandmarkDetail {
   id?: number
   name: string
+  category: string
   rating: number
   checkins: number
   recommendRate: number
+  openTime: string
   tags: string[]
   imgs: string[]
   campusName: string
@@ -15,6 +19,8 @@ interface LandmarkDetail {
   openTimeDetail: string
   floors: string
   location: string
+  latitude: number
+  longitude: number
   description: string
   totalFloors: number
   floorList: FloorInfo[]
@@ -33,12 +39,23 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   back: []
+  'navigate-map': [data: {
+    id: string
+    name: string
+    lat: number
+    lng: number
+    category: string
+    rating: number
+    openTime: string
+  }]
 }>()
+
+const minimapContainer = ref<HTMLDivElement>()
 
 const selectedFloorNumber = ref(1)
 
 const currentFloor = computed(() =>
-  props.landmark.floorList?.find(f => f.floorNumber === selectedFloorNumber.value)
+    props.landmark.floorList?.find(f => f.floorNumber === selectedFloorNumber.value)
 )
 
 const renderStars = (rating: number) => {
@@ -50,6 +67,43 @@ const renderStars = (rating: number) => {
 
 const selectFloor = (floorNumber: number) => {
   selectedFloorNumber.value = floorNumber
+}
+
+onMounted(() => {
+  if (!minimapContainer.value) return
+  const lat = props.landmark.latitude || 0
+  const lng = props.landmark.longitude || 0
+  if (!lat && !lng) return
+
+  const minimap = L.map(minimapContainer.value, {
+    zoomControl: false,
+    attributionControl: false,
+    dragging: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    touchZoom: false,
+    boxZoom: false,
+    keyboard: false,
+  }).setView([lat, lng], 16)
+
+  L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+    subdomains: ['1', '2', '3', '4'],
+    maxZoom: 18,
+  }).addTo(minimap)
+
+  L.marker([lat, lng]).addTo(minimap)
+})
+
+function handleViewLargeMap() {
+  emit('navigate-map', {
+    id: String(props.landmark.id || ''),
+    name: props.landmark.name,
+    lat: props.landmark.latitude || 0,
+    lng: props.landmark.longitude || 0,
+    category: props.landmark.category,
+    rating: props.landmark.rating,
+    openTime: props.landmark.openTime || '',
+  })
 }
 
 const currentImageIndex = ref(0)
@@ -107,14 +161,14 @@ const bubblePositions = computed(() => {
 <template>
   <div class="landmark-detail">
     <div
-      class="detail-header"
-      :style="{
+        class="detail-header"
+        :style="{
         backgroundImage: props.landmark.imgs?.length ? `url(${props.landmark.imgs[currentImageIndex]})` : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }"
-      @touchstart="handleTouchStart"
-      @touchend="handleTouchEnd"
+        @touchstart="handleTouchStart"
+        @touchend="handleTouchEnd"
     >
       <div class="header-overlay"></div>
       <div class="header-top">
@@ -142,11 +196,11 @@ const bubblePositions = computed(() => {
         <h1 class="detail-title">{{ props.landmark.name }}</h1>
         <div class="image-dots">
           <span
-            v-for="(_img, i) in props.landmark.imgs"
-            :key="i"
-            class="dot"
-            :class="{ active: i === currentImageIndex }"
-            @click="selectImage(i)"
+              v-for="(_img, i) in props.landmark.imgs"
+              :key="i"
+              class="dot"
+              :class="{ active: i === currentImageIndex }"
+              @click="selectImage(i)"
           ></span>
         </div>
       </div>
@@ -163,17 +217,17 @@ const bubblePositions = computed(() => {
                 <div class="stars">
                   <template v-for="i in 5" :key="i">
                     <svg
-                      v-if="i <= renderStars(props.landmark.rating).full"
-                      class="star-icon filled"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
+                        v-if="i <= renderStars(props.landmark.rating).full"
+                        class="star-icon filled"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
                     >
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
                     <svg
-                      v-else-if="i === renderStars(props.landmark.rating).full + 1 && renderStars(props.landmark.rating).half"
-                      class="star-icon half"
-                      viewBox="0 0 24 24"
+                        v-else-if="i === renderStars(props.landmark.rating).full + 1 && renderStars(props.landmark.rating).half"
+                        class="star-icon half"
+                        viewBox="0 0 24 24"
                     >
                       <defs>
                         <linearGradient id="half-detail">
@@ -182,15 +236,15 @@ const bubblePositions = computed(() => {
                         </linearGradient>
                       </defs>
                       <path
-                        fill="url(#half-detail)"
-                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                          fill="url(#half-detail)"
+                          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                       />
                     </svg>
                     <svg
-                      v-else
-                      class="star-icon empty"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
+                        v-else
+                        class="star-icon empty"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
                     >
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
@@ -201,10 +255,10 @@ const bubblePositions = computed(() => {
             </div>
             <div class="tags-bubbles">
               <span
-                v-for="(tag, i) in props.landmark.tags"
-                :key="tag"
-                class="tag-bubble"
-                :style="{
+                  v-for="(tag, i) in props.landmark.tags"
+                  :key="tag"
+                  class="tag-bubble"
+                  :style="{
                   width: tagBubbleSizes[i] + 'px',
                   height: tagBubbleSizes[i] + 'px',
                   background: tagBubbleGradients[i % tagBubbleGradients.length],
@@ -218,6 +272,18 @@ const bubblePositions = computed(() => {
           </div>
 
           <div class="info-list">
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
+                </svg>
+              </div>
+              <div class="info-text">
+                <span class="info-label">地标分类</span>
+                <span class="info-value">{{ props.landmark.category }}</span>
+              </div>
+            </div>
             <div class="info-item">
               <div class="info-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -311,11 +377,11 @@ const bubblePositions = computed(() => {
           </div>
           <div class="floor-buttons">
             <button
-              v-for="f in props.landmark.floorList"
-              :key="f.floorNumber"
-              class="floor-btn"
-              :class="{ active: selectedFloorNumber === f.floorNumber }"
-              @click="selectFloor(f.floorNumber)"
+                v-for="f in props.landmark.floorList"
+                :key="f.floorNumber"
+                class="floor-btn"
+                :class="{ active: selectedFloorNumber === f.floorNumber }"
+                @click="selectFloor(f.floorNumber)"
             >
               {{ f.floorName }}
             </button>
@@ -326,9 +392,9 @@ const bubblePositions = computed(() => {
             </div>
             <div class="area-tags">
               <span
-                v-for="tag in currentFloor?.tags"
-                :key="tag"
-                class="area-tag"
+                  v-for="tag in currentFloor?.tags"
+                  :key="tag"
+                  class="area-tag"
               >
                 {{ tag }}
               </span>
@@ -339,14 +405,17 @@ const bubblePositions = computed(() => {
         <div class="location-card">
           <div class="card-header">
             <h3 class="card-title">地标位置</h3>
-            <button class="view-map-btn">
+            <button class="view-map-btn" @click="handleViewLargeMap">
               查看大地图
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
           </div>
-          <div class="map-placeholder">
+          <div v-if="props.landmark.latitude && props.landmark.longitude" class="map-minimap-wrapper">
+            <div ref="minimapContainer" class="map-minimap"></div>
+          </div>
+          <div v-else class="map-placeholder">
             <div class="map-grid">
               <div class="map-dot" style="top: 30%; left: 40%"></div>
               <div class="map-dot" style="top: 50%; left: 60%"></div>
@@ -384,9 +453,14 @@ const bubblePositions = computed(() => {
 
 <style scoped>
 .landmark-detail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: #f0f7f4;
 }
 
@@ -814,6 +888,22 @@ const bubblePositions = computed(() => {
   height: 14px;
 }
 
+.map-minimap-wrapper {
+  position: relative;
+  height: 160px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.map-minimap {
+  width: 100%;
+  height: 100%;
+}
+
+.map-minimap-wrapper :deep(.leaflet-control-attribution) {
+  display: none;
+}
+
 .map-placeholder {
   position: relative;
   height: 160px;
@@ -826,8 +916,8 @@ const bubblePositions = computed(() => {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(45, 138, 110, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(45, 138, 110, 0.1) 1px, transparent 1px);
+      linear-gradient(rgba(45, 138, 110, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45, 138, 110, 0.1) 1px, transparent 1px);
   background-size: 30px 30px;
 }
 

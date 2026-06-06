@@ -134,9 +134,11 @@ public class LandmarkServiceImpl implements LandmarkService {
                         .rating(entity.getRating())
                         .checkins(entity.getCheckInCount())
                         .openTime(entity.getOpenTime())
-                        .category(categoryNameMap.get(entity.getCategoryId()))
+                        .category(categoryNameMap.getOrDefault(entity.getCategoryId(), "未分类"))
                         .tags(entity.getTags())
                         .coverImg(buildCoverUrl(entity, coverImageMap, campusMap, universityMap))
+                        .latitude(entity.getLatitude())
+                        .longitude(entity.getLongitude())
                         .build())
                 .collect(Collectors.toList());
 
@@ -153,8 +155,7 @@ public class LandmarkServiceImpl implements LandmarkService {
         }
 
         CategoryEntity category = categoryMapper.selectById(landmark.getCategoryId());
-        String categoryName = category != null ? category.getName() : null;
-
+        String categoryName = category != null ? category.getName() : "未分类";
         CampusEntity campus = campusMapper.selectById(landmark.getCampusId());
         String campusName = campus != null ? campus.getName() : null;
         UUID universityId = campus != null ? campus.getUniversityId() : null;
@@ -197,6 +198,8 @@ public class LandmarkServiceImpl implements LandmarkService {
                 .openTimeDetail(landmark.getOpenTimeDetail())
                 .floors(landmark.getFloors())
                 .location(landmark.getLocation())
+                .latitude(landmark.getLatitude())
+                .longitude(landmark.getLongitude())
                 .description(landmark.getDescription())
                 .campusName(campusName)
                 .universityName(universityName)
