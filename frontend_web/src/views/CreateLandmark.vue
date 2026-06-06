@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { createLandmark } from '../api/landmark'
 import type { LandmarkCreateRequest } from '../api/landmark'
@@ -9,6 +9,7 @@ import { searchCampuses, type CampusVO } from '../api/campus'
 import SearchableSelect, { type SelectOption } from '../components/SearchableSelect.vue'
 import TagListInput from '../components/TagListInput.vue'
 import FloorManager, { type FloorEntry } from '../components/FloorManager.vue'
+import MapPicker from '../components/MapPicker.vue'
 
 const router = useRouter()
 
@@ -24,6 +25,8 @@ const form = ref<LandmarkCreateRequest>({
   location: '',
   description: '',
   totalFloors: undefined,
+  latitude: undefined,
+  longitude: undefined,
   floorList: undefined,
 })
 
@@ -44,6 +47,16 @@ const floorList = ref<FloorEntry[]>([])
 
 const submitting = ref(false)
 const error = ref('')
+
+const mapCoords = computed(() => ({
+  lat: form.value.latitude ?? null,
+  lng: form.value.longitude ?? null,
+}))
+
+function onMapUpdate(coords: { lat: number; lng: number }) {
+  form.value.latitude = coords.lat
+  form.value.longitude = coords.lng
+}
 
 onMounted(async () => {
   try {
@@ -242,6 +255,24 @@ onBeforeUnmount(() => {
           <div class="form-group">
             <label>位置描述</label>
             <input v-model="form.location" type="text" placeholder="如：校园中心" maxlength="200" />
+          </div>
+        </div>
+
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label>GPS 纬度</label>
+            <input v-model.number="form.latitude" type="number" step="any" placeholder="如：39.9928000" />
+          </div>
+          <div class="form-group">
+            <label>GPS 经度</label>
+            <input v-model.number="form.longitude" type="number" step="any" placeholder="如：116.3280000" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>地图选点</label>
+            <MapPicker :model-value="mapCoords" @update:model-value="onMapUpdate" />
           </div>
         </div>
 

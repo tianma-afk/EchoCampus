@@ -22,6 +22,8 @@ export interface LandmarkCreateRequest {
   campusId: string
   totalFloors?: number
   recommendRate?: number
+  latitude?: number
+  longitude?: number
   floorList?: FloorCreateDTO[]
 }
 
@@ -86,6 +88,8 @@ export interface LandmarkDetailVO {
   universityId: string | null
   totalFloors: number | null
   recommendRate: number | null
+  latitude: number | null
+  longitude: number | null
   floorList: FloorVO[] | null
 }
 

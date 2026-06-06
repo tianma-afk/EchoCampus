@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getLandmarkDetail, type LandmarkDetailVO } from '../api/landmark'
+import MapPicker from '../components/MapPicker.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -10,6 +11,11 @@ const id = route.params.id as string
 const landmark = ref<LandmarkDetailVO | null>(null)
 const loading = ref(true)
 const error = ref('')
+
+const mapCoords = computed(() => ({
+  lat: landmark.value?.latitude ?? null,
+  lng: landmark.value?.longitude ?? null,
+}))
 
 onMounted(async () => {
   try {
@@ -102,6 +108,13 @@ onMounted(async () => {
           <div class="form-group">
             <label>位置描述</label>
             <div class="field-value">{{ landmark.location || '-' }}</div>
+          </div>
+        </div>
+
+        <div class="form-row" v-if="mapCoords.lat != null && mapCoords.lng != null">
+          <div class="form-group">
+            <label>地图位置</label>
+            <MapPicker :model-value="mapCoords" readonly />
           </div>
         </div>
 

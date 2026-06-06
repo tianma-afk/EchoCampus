@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Delete } from '@element-plus/icons-vue'
 import { getLandmarkDetail, updateLandmark, deleteLandmark } from '../api/landmark'
@@ -11,6 +11,7 @@ import SearchableSelect, { type SelectOption } from '../components/SearchableSel
 import TagListInput from '../components/TagListInput.vue'
 import FloorManager, { type FloorEntry } from '../components/FloorManager.vue'
 import CoverCuratedPreview from '../components/CoverCuratedPreview.vue'
+import MapPicker from '../components/MapPicker.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,6 +29,8 @@ const form = ref<LandmarkCreateRequest>({
   location: '',
   description: '',
   totalFloors: undefined,
+  latitude: undefined,
+  longitude: undefined,
   floorList: undefined,
 })
 
@@ -50,6 +53,16 @@ const submitting = ref(false)
 const deleting = ref(false)
 const error = ref('')
 const loading = ref(true)
+
+const mapCoords = computed(() => ({
+  lat: form.value.latitude ?? null,
+  lng: form.value.longitude ?? null,
+}))
+
+function onMapUpdate(coords: { lat: number; lng: number }) {
+  form.value.latitude = coords.lat
+  form.value.longitude = coords.lng
+}
 
 onMounted(async () => {
   try {
@@ -74,6 +87,8 @@ onMounted(async () => {
       location: d.location ?? '',
       description: d.description ?? '',
       totalFloors: d.totalFloors ?? undefined,
+      latitude: d.latitude ?? undefined,
+      longitude: d.longitude ?? undefined,
       floorList: undefined,
     }
     tagList.value = d.tags ?? []
@@ -306,6 +321,24 @@ onBeforeUnmount(() => {
           <div class="form-group">
             <label>位置描述</label>
             <input v-model="form.location" type="text" placeholder="如：校园中心" maxlength="200" />
+          </div>
+        </div>
+
+        <div class="form-row two-col">
+          <div class="form-group">
+            <label>GPS 纬度</label>
+            <input v-model.number="form.latitude" type="number" step="any" placeholder="如：39.9928000" />
+          </div>
+          <div class="form-group">
+            <label>GPS 经度</label>
+            <input v-model.number="form.longitude" type="number" step="any" placeholder="如：116.3280000" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>地图选点</label>
+            <MapPicker :model-value="mapCoords" @update:model-value="onMapUpdate" />
           </div>
         </div>
 
