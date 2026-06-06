@@ -23,7 +23,7 @@ public class AlgorithmClientImpl implements AlgorithmClient {
     private static final CircuitBreaker serachCB = new CircuitBreaker(5, 30000, 5, 0.5f);
     public record ImageInfo(UUID uuid, String url) {}
     public record CreateInsertTaskRequest(List<ImageInfo> images, String callbackUrl) {}
-    public record CreateSearchTaskRequest(String imageUrl, String callbackUrl,int TopK, boolean usePairVPR) {}
+    public record CreateSearchTaskRequest(String imgUrl, String callbackUrl,int topK, boolean usePairSimilarity) {}
 
     static final String BASE_URL = "http://localhost:8000";
 
@@ -66,8 +66,8 @@ public class AlgorithmClientImpl implements AlgorithmClient {
         }
     }
 
-    public String submitSearchTask(String imageUrl, String callbackUrl,int topK, boolean usePairVPR) {
-        CreateSearchTaskRequest requestBody = new CreateSearchTaskRequest(imageUrl, callbackUrl, topK, usePairVPR);
+    public String submitSearchTask(String imgUrl, String callbackUrl,int topK, boolean usePairSimilarity) {
+        CreateSearchTaskRequest requestBody = new CreateSearchTaskRequest(imgUrl, callbackUrl, topK, usePairSimilarity);
         ObjectMapper mapper = new ObjectMapper();
         try {
             String bodyJson = mapper.writeValueAsString(requestBody);
@@ -79,7 +79,7 @@ public class AlgorithmClientImpl implements AlgorithmClient {
                     .build();
 
             HttpResponse<String> response = serachCB.execute(request);
-            String taskId = response.body();
+            String taskId = mapper.readTree(response.body()).get("taskId").asText();
 
             sameIdCheck(callbackUrl, taskId);
 
@@ -89,11 +89,11 @@ public class AlgorithmClientImpl implements AlgorithmClient {
             throw new RuntimeException("Post search task failed: ", e);
         }
     }
-    public String submitSearchTask(String imageUrl, String callbackUrl,int topK) {
-        return submitSearchTask(imageUrl, callbackUrl, topK,true);
+    public String submitSearchTask(String imgUrl, String callbackUrl,int topK) {
+        return submitSearchTask(imgUrl, callbackUrl, topK,true);
     }
 
-    public String submitSearchTask(String imageUrl, String callbackUrl) {
-        return submitSearchTask(imageUrl, callbackUrl, 10);
+    public String submitSearchTask(String imgUrl, String callbackUrl) {
+        return submitSearchTask(imgUrl, callbackUrl, 10,true);
     }
 }
