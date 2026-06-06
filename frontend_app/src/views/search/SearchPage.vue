@@ -305,7 +305,7 @@ onUnmounted(() => {
         <img :src="previewImageUrl" class="preview-image" />
       </div>
       <footer class="preview-footer">
-        <button class="confirm-btn" @click="handleConfirm">确认识别</button>
+        <button class="confirm-btn" @click="handleConfirm">开始识别</button>
       </footer>
     </div>
 
