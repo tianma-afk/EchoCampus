@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onActivated, watch, nextTick } from 'vue'
 import axios from 'axios'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -18,6 +18,20 @@ const API_BASE_URL = 'http://localhost:8080/api/v1'
 
 const emit = defineEmits<{
   'open-detail': [landmarkId: string]
+}>()
+
+interface FocusMarker {
+  id: string
+  name: string
+  lat: number
+  lng: number
+  category: string
+  rating: number
+  openTime: string
+}
+
+const props = defineProps<{
+  focusLandmark: FocusMarker | null
 }>()
 
 const landmarks = ref<LandmarkMarker[]>([])
@@ -43,6 +57,8 @@ const filteredLandmarks = computed(() => {
 
 const selectedLandmark = ref<LandmarkMarker | null>(null)
 let activeMarkerData: { marker: L.Marker; lm: LandmarkMarker } | null = null
+
+const isFirstActivation = ref(true)
 
 const starData = computed(() => {
   if (!selectedLandmark.value) return { full: 0, hasHalf: false }
@@ -161,7 +177,6 @@ function selectSuggestion(lm: LandmarkMarker) {
 
 function handleCategoryChange(cat: string) {
   activeCategory.value = cat
-  refreshMarkers()
 }
 
 function onBlur() {
@@ -205,6 +220,7 @@ onMounted(async () => {
 
   const center = calcCenter()
   initMap(center[0], center[1])
+  isFirstActivation.value = false
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -229,6 +245,41 @@ onUnmounted(() => {
     map.remove()
     map = null
   }
+})
+
+watch(filteredLandmarks, () => {
+  refreshMarkers()
+})
+
+onActivated(() => {
+  if (isFirstActivation.value) return
+  const target = props.focusLandmark
+  if (!target || !map) return
+
+  handleCategoryChange(target.category)
+
+  const lm: LandmarkMarker = {
+    id: target.id,
+    name: target.name,
+    lat: target.lat,
+    lng: target.lng,
+    category: target.category,
+    rating: target.rating,
+    openTime: target.openTime,
+  }
+
+  nextTick(() => {
+    map!.flyTo([lm.lat, lm.lng], 17)
+    map!.once('moveend', () => {
+      const m = markers.find(mk => {
+        const p = mk.getLatLng()
+        return p.lat === lm.lat && p.lng === lm.lng
+      })
+      if (m) {
+        onMarkerClick(lm, m)
+      }
+    })
+  })
 })
 </script>
 

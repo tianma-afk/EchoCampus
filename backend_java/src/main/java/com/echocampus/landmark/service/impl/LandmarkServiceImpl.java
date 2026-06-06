@@ -198,6 +198,8 @@ public class LandmarkServiceImpl implements LandmarkService {
                 .openTimeDetail(landmark.getOpenTimeDetail())
                 .floors(landmark.getFloors())
                 .location(landmark.getLocation())
+                .latitude(landmark.getLatitude())
+                .longitude(landmark.getLongitude())
                 .description(landmark.getDescription())
                 .campusName(campusName)
                 .universityName(universityName)

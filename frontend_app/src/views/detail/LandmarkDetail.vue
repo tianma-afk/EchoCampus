@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 interface LandmarkDetail {
   id?: number
@@ -8,6 +10,7 @@ interface LandmarkDetail {
   rating: number
   checkins: number
   recommendRate: number
+  openTime: string
   tags: string[]
   imgs: string[]
   campusName: string
@@ -16,6 +19,8 @@ interface LandmarkDetail {
   openTimeDetail: string
   floors: string
   location: string
+  latitude: number
+  longitude: number
   description: string
   totalFloors: number
   floorList: FloorInfo[]
@@ -34,7 +39,18 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   back: []
+  'navigate-map': [data: {
+    id: string
+    name: string
+    lat: number
+    lng: number
+    category: string
+    rating: number
+    openTime: string
+  }]
 }>()
+
+const minimapContainer = ref<HTMLDivElement>()
 
 const selectedFloorNumber = ref(1)
 
@@ -51,6 +67,43 @@ const renderStars = (rating: number) => {
 
 const selectFloor = (floorNumber: number) => {
   selectedFloorNumber.value = floorNumber
+}
+
+onMounted(() => {
+  if (!minimapContainer.value) return
+  const lat = props.landmark.latitude || 0
+  const lng = props.landmark.longitude || 0
+  if (!lat && !lng) return
+
+  const minimap = L.map(minimapContainer.value, {
+    zoomControl: false,
+    attributionControl: false,
+    dragging: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    touchZoom: false,
+    boxZoom: false,
+    keyboard: false,
+  }).setView([lat, lng], 16)
+
+  L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+    subdomains: ['1', '2', '3', '4'],
+    maxZoom: 18,
+  }).addTo(minimap)
+
+  L.marker([lat, lng]).addTo(minimap)
+})
+
+function handleViewLargeMap() {
+  emit('navigate-map', {
+    id: String(props.landmark.id || ''),
+    name: props.landmark.name,
+    lat: props.landmark.latitude || 0,
+    lng: props.landmark.longitude || 0,
+    category: props.landmark.category,
+    rating: props.landmark.rating,
+    openTime: props.landmark.openTime || '',
+  })
 }
 
 const currentImageIndex = ref(0)
@@ -352,14 +405,17 @@ const bubblePositions = computed(() => {
         <div class="location-card">
           <div class="card-header">
             <h3 class="card-title">地标位置</h3>
-            <button class="view-map-btn">
+            <button class="view-map-btn" @click="handleViewLargeMap">
               查看大地图
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
           </div>
-          <div class="map-placeholder">
+          <div v-if="props.landmark.latitude && props.landmark.longitude" class="map-minimap-wrapper">
+            <div ref="minimapContainer" class="map-minimap"></div>
+          </div>
+          <div v-else class="map-placeholder">
             <div class="map-grid">
               <div class="map-dot" style="top: 30%; left: 40%"></div>
               <div class="map-dot" style="top: 50%; left: 60%"></div>
@@ -830,6 +886,22 @@ const bubblePositions = computed(() => {
 .view-map-btn svg {
   width: 14px;
   height: 14px;
+}
+
+.map-minimap-wrapper {
+  position: relative;
+  height: 160px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.map-minimap {
+  width: 100%;
+  height: 100%;
+}
+
+.map-minimap-wrapper :deep(.leaflet-control-attribution) {
+  display: none;
 }
 
 .map-placeholder {
