@@ -126,7 +126,7 @@ const fetchLandmarks = async (params?: LandmarkQueryParams): Promise<void> => {
       }
     })
     
-    if (response.data.code === 200) {
+    if (response.data.code === "00000") {
       const data = response.data.data
       landmarks.value = data.records || []
       currentPage.value = data.current || 1
@@ -157,7 +157,7 @@ const loadMore = async () => {
         sortBy: sortByKey.value
       }
     })
-    if (response.data.code === 200) {
+    if (response.data.code === "00000") {
       const data = response.data.data
       landmarks.value.push(...(data.records || []))
       currentPage.value = data.current || nextPage
@@ -177,7 +177,7 @@ const fetchLandmarkDetail = async (id: string): Promise<Landmark | null> => {
   loading.value = true
   try {
     const response = await axios.get(`${LANDMARK_API}/${id}`)
-    if (response.data.code === 200) {
+    if (response.data.code === "00000") {
       return response.data.data
     }
     return null

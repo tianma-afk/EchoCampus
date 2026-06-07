@@ -5,23 +5,23 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class BusinessException extends RuntimeException {
+public class TechnicalException extends RuntimeException {
     private final String code;
 
     //错误码
-    public BusinessException(ErrorCode errorCode) {
+    public TechnicalException(ErrorCode errorCode) {
         super(errorCode.getMessage());
         this.code = errorCode.getCode();
     }
 
     //错误详情
-    public BusinessException(ErrorCode errorCode, String detail) {
+    public TechnicalException(ErrorCode errorCode, String detail) {
         super(errorCode.getMessage() + ": " + detail);
         this.code = errorCode.getCode();
     }
 
     //错误原因
-    public BusinessException(ErrorCode errorCode, Throwable cause) {
+    public TechnicalException(ErrorCode errorCode, Throwable cause) {
         super(errorCode.getMessage(), cause);
         this.code = errorCode.getCode();
     }

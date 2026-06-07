@@ -1,6 +1,9 @@
 package com.echocampus.algorithm.client.impl;
 
 import com.echocampus.algorithm.client.AlgorithmClient;
+import com.echocampus.shared.exception.BusinessException;
+import com.echocampus.shared.exception.ErrorCode;
+import com.echocampus.shared.exception.TechnicalException;
 import com.echocampus.shared.util.CircuitBreaker;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +34,7 @@ public class AlgorithmClientImpl implements AlgorithmClient {
         String uuidFromCallback = callbackUrl.substring(callbackUrl.lastIndexOf("/") + 1);
         String uuidFromTaskId = taskId.replace("alg-task-", "");
         if (!uuidFromCallback.equals(uuidFromTaskId))
-            throw new RuntimeException("Callback URL does not match task ID");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Callback URL does not match task ID");
     }
 
     @Override
@@ -62,7 +65,7 @@ public class AlgorithmClientImpl implements AlgorithmClient {
             return taskId;
         }
         catch (Exception e) {
-            throw new RuntimeException("Post insert task failed: " + e.getMessage());
+            throw new TechnicalException(ErrorCode.ALGORITHM_SERVICE_ERROR, e);
         }
     }
 
@@ -86,7 +89,7 @@ public class AlgorithmClientImpl implements AlgorithmClient {
             return taskId;
         }
         catch (Exception e){
-            throw new RuntimeException("Post search task failed: ", e);
+            throw new TechnicalException(ErrorCode.ALGORITHM_SERVICE_ERROR, e);
         }
     }
     public String submitSearchTask(String imgUrl, String callbackUrl,int topK) {

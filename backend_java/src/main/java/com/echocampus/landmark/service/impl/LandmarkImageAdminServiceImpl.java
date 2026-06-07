@@ -13,6 +13,9 @@ import com.echocampus.landmark.mapper.ImageMapper;
 import com.echocampus.landmark.mapper.LandmarkMapper;
 import com.echocampus.university.mapper.UniversityMapper;
 import com.echocampus.landmark.service.LandmarkImageAdminService;
+import com.echocampus.shared.exception.BusinessException;
+import com.echocampus.shared.exception.ErrorCode;
+import com.echocampus.shared.exception.TechnicalException;
 import com.echocampus.shared.util.MinioUtil;
 import com.echocampus.landmark.vo.BatchDeleteImagesResponse;
 import com.echocampus.landmark.vo.ImagePageVO;
@@ -66,22 +69,22 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     public ImagePresignResponse presignUpload(UUID landmarkId, ImagePresignRequest request) {
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         CampusEntity campus = campusMapper.selectById(landmark.getCampusId());
         if (campus == null) {
-            throw new RuntimeException("校区不存在");
+            throw new BusinessException(ErrorCode.CAMPUS_NOT_FOUND);
         }
 
         UniversityEntity university = universityMapper.selectById(campus.getUniversityId());
         if (university == null) {
-            throw new RuntimeException("大学不存在");
+            throw new BusinessException(ErrorCode.UNIVERSITY_NOT_FOUND);
         }
 
         String ext = extractExtension(request.getFilename());
         if (!ALLOWED_EXTENSIONS.contains(ext)) {
-            throw new RuntimeException("不支持的文件类型：" + ext);
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "不支持的文件类型：" + ext);
         }
 
         UUID imageId = UUID.randomUUID();
@@ -93,7 +96,7 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
             presignedUrl = minioUtil.getPresignedObjectUrl(
                     bucket, key, PRESIGN_UPLOAD_EXPIRY, TimeUnit.MINUTES, Method.PUT, mimeType(ext));
         } catch (Exception e) {
-            throw new RuntimeException("生成预签名 URL 失败", e);
+            throw new TechnicalException(ErrorCode.FILE_STORAGE_ERROR, e);
         }
 
         ImagePresignResponse response = new ImagePresignResponse();
@@ -106,23 +109,23 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     public UUID confirmUpload(UUID landmarkId, ImageConfirmRequest request) {
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         StatObjectResponse stat;
         try {
             stat = minioUtil.statObject(bucket, request.getKey());
         } catch (Exception e) {
-            throw new RuntimeException("文件不存在或无法访问", e);
+            throw new TechnicalException(ErrorCode.FILE_STORAGE_ERROR, e);
         }
 
         if (stat.size() > MAX_FILE_SIZE) {
-            throw new RuntimeException("文件大小超过限制 10MB");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "文件大小超过限制 10MB");
         }
 
         String contentType = stat.contentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new RuntimeException("文件类型不是图片");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "文件类型不是图片");
         }
 
         String ext = extractExtension(request.getKey());
@@ -146,12 +149,12 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     public void setCover(UUID landmarkId, UUID imageId) {
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         ImageEntity image = imageMapper.selectById(imageId);
         if (image == null || !image.getLandmarkId().equals(landmarkId)) {
-            throw new RuntimeException("图片不属于该地标");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "图片不属于该地标");
         }
 
         landmark.setCoverImageId(imageId);
@@ -161,21 +164,21 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     @Override
     public void setCuratedImages(UUID landmarkId, List<UUID> imageIds) {
         if (imageIds != null && imageIds.size() > 5) {
-            throw new RuntimeException("精选图片最多 5 张");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "精选图片最多 5 张");
         }
 
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         List<ImageEntity> images = imageMapper.selectBatchIds(imageIds);
         if (images.size() != imageIds.size()) {
-            throw new RuntimeException("部分图片不存在");
+            throw new BusinessException(ErrorCode.IMAGE_NOT_FOUND);
         }
         for (ImageEntity image : images) {
             if (!image.getLandmarkId().equals(landmarkId)) {
-                throw new RuntimeException("图片不属于该地标");
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR, "图片不属于该地标");
             }
         }
 
@@ -187,7 +190,7 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     public ImagePageVO listImages(UUID landmarkId, int page, int pageSize) {
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         CampusEntity campus = campusMapper.selectById(landmark.getCampusId());
@@ -275,12 +278,12 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     public void deleteImage(UUID landmarkId, UUID imageId) {
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         ImageEntity image = imageMapper.selectById(imageId);
         if (image == null || !image.getLandmarkId().equals(landmarkId)) {
-            throw new RuntimeException("图片不属于该地标");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "图片不属于该地标");
         }
 
         // delete from MinIO
@@ -316,7 +319,7 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     public BatchDeleteImagesResponse batchDeleteImages(UUID landmarkId, List<UUID> imageIds) {
         LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
         if (landmark == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         boolean affectedCover = false;
@@ -379,7 +382,7 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     private String extractExtension(String filename) {
         int dotIndex = filename.lastIndexOf('.');
         if (dotIndex == -1 || dotIndex == filename.length() - 1) {
-            throw new RuntimeException("无法识别文件扩展名");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "无法识别文件扩展名");
         }
         return filename.substring(dotIndex + 1).toLowerCase();
     }

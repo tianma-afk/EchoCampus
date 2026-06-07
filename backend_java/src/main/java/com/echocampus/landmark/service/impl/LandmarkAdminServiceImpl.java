@@ -18,6 +18,8 @@ import com.echocampus.landmark.mapper.ImageMapper;
 import com.echocampus.landmark.mapper.LandmarkMapper;
 import com.echocampus.university.mapper.UniversityMapper;
 import com.echocampus.landmark.service.LandmarkAdminService;
+import com.echocampus.shared.exception.BusinessException;
+import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.util.MinioUtil;
 import com.echocampus.landmark.vo.FloorVO;
 import com.echocampus.landmark.vo.LandmarkAdminVO;
@@ -169,7 +171,7 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     public LandmarkDetailVO getLandmark(UUID id) {
         LandmarkEntity entity = landmarkMapper.selectById(id);
         if (entity == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         CategoryEntity category = categoryMapper.selectById(entity.getCategoryId());
@@ -238,7 +240,7 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     public void updateLandmark(UUID id, LandmarkUpdateRequest request) {
         LandmarkEntity entity = landmarkMapper.selectById(id);
         if (entity == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
         if (request.getName() != null) entity.setName(request.getName());
         if (request.getRating() != null) entity.setRating(request.getRating());
@@ -274,7 +276,7 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     public void deleteLandmark(UUID id) {
         LandmarkEntity entity = landmarkMapper.selectById(id);
         if (entity == null) {
-            throw new RuntimeException("地标不存在");
+            throw new BusinessException(ErrorCode.LANDMARK_NOT_FOUND);
         }
 
         // delete images from MinIO and DB

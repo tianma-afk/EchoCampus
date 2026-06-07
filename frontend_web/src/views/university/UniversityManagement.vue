@@ -67,14 +67,14 @@ async function handleSave() {
   try {
     if (editingId.value) {
       const res = await updateUniversity(editingId.value, editName.value.trim())
-      if (res.code !== 200) {
+      if (res.code !== "00000") {
         error.value = res.message
         saving.value = false
         return
       }
     } else {
       const res = await createUniversity(editName.value.trim())
-      if (res.code !== 200) {
+      if (res.code !== "00000") {
         error.value = res.message
         saving.value = false
         return
@@ -93,7 +93,7 @@ async function handleDelete(uni: UniversityVO) {
   if (!confirm(`确定要删除「${uni.name}」吗？`)) return
   try {
     const res = await deleteUniversity(uni.id)
-    if (res.code !== 200) {
+    if (res.code !== "00000") {
       alert(res.message)
       return
     }

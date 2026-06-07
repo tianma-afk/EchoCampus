@@ -83,15 +83,8 @@ public class CallbackUserController {
             }
         }
 
-        try {
-            // 调用 Service 层处理回调逻辑，更新任务状态
-            algorithmUserService.updateSearchTaskStatus(taskId, request);
-            
-            log.info("图像搜索任务回调处理成功: taskId={}", taskId);
-            return Result.success(null);
-        } catch (Exception e) {
-            log.error("处理图像搜索任务回调失败: taskId={}", taskId, e);
-            return Result.failure(500, "处理回调失败: " + e.getMessage());
-        }
+        algorithmUserService.updateSearchTaskStatus(taskId, request);
+        log.info("图像搜索任务回调处理成功: taskId={}", taskId);
+        return Result.success(null);
     }
 }

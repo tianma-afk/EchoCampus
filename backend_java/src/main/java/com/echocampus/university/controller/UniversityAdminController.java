@@ -34,52 +34,28 @@ public class UniversityAdminController {
     @GetMapping("/{id}")
     @Operation(summary = "获取大学详情", description = "根据ID获取单个大学")
     public Result<UniversityVO> getUniversity(@PathVariable UUID id) {
-        try {
-            return Result.success(universityAdminService.getUniversity(id));
-        } catch (RuntimeException e) {
-            return Result.failure(404, e.getMessage());
-        }
+        return Result.success(universityAdminService.getUniversity(id));
     }
 
     @PostMapping("/")
     @Operation(summary = "创建大学", description = "创建一个新的大学")
     public Result<UUID> createUniversity(@Valid @RequestBody UniversityCreateRequest request) {
-        try {
-            UUID id = universityAdminService.createUniversity(request);
-            return Result.success(id);
-        } catch (RuntimeException e) {
-            return Result.failure(409, e.getMessage());
-        }
+        UUID id = universityAdminService.createUniversity(request);
+        return Result.success(id);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "更新大学", description = "更新大学名称")
     public Result<Void> updateUniversity(@PathVariable UUID id, @RequestBody UniversityUpdateRequest request) {
-        try {
-            universityAdminService.updateUniversity(id, request);
-            return Result.success(null);
-        } catch (RuntimeException e) {
-            String msg = e.getMessage();
-            if (msg.contains("不存在")) {
-                return Result.failure(404, msg);
-            }
-            return Result.failure(409, msg);
-        }
+        universityAdminService.updateUniversity(id, request);
+        return Result.success(null);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除大学", description = "删除大学（存在校区时拒绝）")
     public Result<Void> deleteUniversity(@PathVariable UUID id) {
-        try {
-            universityAdminService.deleteUniversity(id);
-            return Result.success(null);
-        } catch (RuntimeException e) {
-            String msg = e.getMessage();
-            if (msg.contains("不存在")) {
-                return Result.failure(404, msg);
-            }
-            return Result.failure(400, msg);
-        }
+        universityAdminService.deleteUniversity(id);
+        return Result.success(null);
     }
 
     @GetMapping("/search")
