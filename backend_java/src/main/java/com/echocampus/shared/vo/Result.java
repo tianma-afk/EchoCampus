@@ -51,4 +51,7 @@ public class Result<T> {
     public static <T> Result<T> failure(ErrorCode errorCode, String message) {
         return new Result<>(errorCode.getCode(), message, null);
     }
+	public static <T> Result<T> success(String message, T data) {
+		return new Result<>("200", message, data);
+	}
 }
