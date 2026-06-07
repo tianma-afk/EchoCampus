@@ -4,6 +4,7 @@ from io import BytesIO
 from PIL import Image
 from typing import Optional, Union
 import asyncio
+from loguru import logger
 
 class AsyncImageDownloader:
     """异步图片下载服务"""
@@ -28,7 +29,7 @@ class AsyncImageDownloader:
                 return img.convert("RGB")
                 
             except Exception as e:
-                print(f"下载失败 {url}: {e}")
+                logger.error(f"下载失败 {url}: {e}")
                 return None
     
     async def download_to_bytes(self, url: str) -> Optional[BytesIO]:
@@ -44,7 +45,7 @@ class AsyncImageDownloader:
                 return BytesIO(response.content)
                 
             except Exception as e:
-                print(f"下载失败 {url}: {e}")
+                logger.error(f"下载失败 {url}: {e}")
                 return None
 
 

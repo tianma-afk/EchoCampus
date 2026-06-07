@@ -1,6 +1,8 @@
 from pymilvus import MilvusClient, CollectionSchema, FieldSchema, DataType
 from typing import Optional
 import asyncio
+from loguru import logger
+
 from . import settings
 
 MILVUS_URI = settings.settings.MILVUS_URI
@@ -31,19 +33,19 @@ class MilvusService:
 
     def _setup_collection(self):
         if self.client.has_collection(COLLECTION_NAME):
-            print(f"库 {COLLECTION_NAME} 已存在")
+            logger.info(f"集合 {COLLECTION_NAME} 已存在")
             return
         schema = CollectionSchema([
             FieldSchema(name="uuid", dtype=DataType.VARCHAR, max_length=36, is_primary=True),
             FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=VECTOR_DIM),
         ])
         self.client.create_collection(collection_name=COLLECTION_NAME, schema=schema)
-        print(f"库 {COLLECTION_NAME} 创建成功")
+        logger.info(f"集合 {COLLECTION_NAME} 创建成功")
 
     def _setup_index(self):
         indexes = self.client.list_indexes(collection_name=COLLECTION_NAME)
         if "vector" in indexes:
-            print("✅ 索引已存在，跳过创建")
+            logger.info("索引已存在，跳过创建")
             return
         index_params = self.client.prepare_index_params()
         index_params.add_index(
@@ -53,7 +55,7 @@ class MilvusService:
             params=INDEX_PARAMS["params"],
         )
         self.client.create_index(collection_name=COLLECTION_NAME, index_params=index_params)
-        print("✅ 索引创建成功")
+        logger.info("索引创建成功")
 
     # ========== 同步 ==========
 
@@ -62,13 +64,13 @@ class MilvusService:
 
     def insert_vector(self, vector, uuid: str):
         if len(uuid) != 36:
-            print(f"警告: uuid '{uuid}' 长度不是36位")
+            logger.warning(f"uuid '{uuid}' 长度不是36位")
         data = [{"uuid": uuid, "vector": vector}]
         return self.client.insert(collection_name=COLLECTION_NAME, data=data)
 
     def insert_vectors(self, vectors, uuids: list):
         if not vectors or not uuids or len(vectors) != len(uuids):
-            print("错误: vectors/uuids 不能为空且长度必须一致")
+            logger.error("vectors/uuids 不能为空且长度必须一致")
             return None
         data = [{"uuid": uuids[i], "vector": vectors[i]} for i in range(len(vectors))]
         return self.client.insert(collection_name=COLLECTION_NAME, data=data)
@@ -87,13 +89,13 @@ class MilvusService:
 
     async def insert_vector_async(self, vector, uuid: str):
         if len(uuid) != 36:
-            print(f"警告: uuid '{uuid}' 长度不是36位")
+            logger.warning(f"uuid '{uuid}' 长度不是36位")
         data = [{"uuid": uuid, "vector": vector}]
         return await asyncio.to_thread(self.client.insert, collection_name=COLLECTION_NAME, data=data)
 
     async def insert_vectors_async(self, vectors, uuids: list):
         if not vectors or not uuids or len(vectors) != len(uuids):
-            print("错误: vectors/uuids 不能为空且长度必须一致")
+            logger.error("vectors/uuids 不能为空且长度必须一致")
             return None
         data = [{"uuid": uuids[i], "vector": vectors[i]} for i in range(len(vectors))]
         return await asyncio.to_thread(self.client.insert, collection_name=COLLECTION_NAME, data=data)
@@ -124,6 +126,6 @@ def milvus_init():
     if service is not None:
         return
     service = MilvusService(MILVUS_URI)
-    print(f"✅ Milvus 连接成功 ({MILVUS_URI})")
+    logger.info(f"Milvus 连接成功 ({MILVUS_URI})")
     service.load_collection()
-    print("✅ 集合已加载")
+    logger.info("集合已加载到内存")

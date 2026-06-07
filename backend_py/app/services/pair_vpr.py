@@ -9,23 +9,24 @@ import requests
 import sys
 from omegaconf import OmegaConf
 import re
+from loguru import logger
 
 
 sys.path.append(str(Path(__file__).resolve().parent))
-from core.device import get_available_device, get_device, get_device_type, to_device, print_device_info
+from core.device import get_available_device, get_device, get_device_type, to_device, get_device_info
 
-print(f"PyTorch版本: {torch.__version__}")
-print_device_info()
+logger.info(f"PyTorch 版本: {torch.__version__}")
+logger.info(f"设备信息: {get_device_info()}")
 
 BACKEND_PY_PATH = Path(__file__).resolve().parents[2]
 
 # ==================== 添加官方仓库到路径 ====================
 PAIR_VPR_ROOT = BACKEND_PY_PATH / "app/vendors/pairvpr"
 if not PAIR_VPR_ROOT.exists():
-    print(f"❌ 未找到官方仓库，程序退出:")
+    logger.error(f"未找到官方仓库 Pair-VPR: {PAIR_VPR_ROOT}")
     exit(1)
 from vendors.pairvpr.models.pairvpr import PairVPRNet
-print(f"✅ 已加载官方 Pair-VPR 库: {PAIR_VPR_ROOT}")
+logger.info(f"已加载官方 Pair-VPR 库: {PAIR_VPR_ROOT}")
 
 
 # ==================== 配置加载 ====================
@@ -86,7 +87,7 @@ class PairVPRExtractor:
         if use_fp16:
             self.use_fp16 = use_fp16
             self.model = self.model.half()
-            print("✨ 已启用 FP16 半精度推理")
+            logger.info("已启用 FP16 半精度推理")
         else:
             self.use_fp16 = False
 
@@ -101,10 +102,10 @@ class PairVPRExtractor:
         self.dec_norm = self.model.dec_norm
         self.classvprmodule = self.model.classvprmodule
         
-        print(f"✨ 官方 Pair-VPR 部署成功！(模型: {model_type}, 特征维度: {out_dim})")
+        logger.info(f"Pair-VPR 部署成功 (模型: {model_type}, 特征维度: {out_dim})")
     
     def _load_weights(self):
-        print(f"🔥 加载权重: {self.model_path}")
+        logger.debug(f"加载权重: {self.model_path}")
         state_dict = torch.load(self.model_path, map_location="cpu")
         
         if isinstance(state_dict, dict) and "state_dict" in state_dict:
@@ -121,14 +122,14 @@ class PairVPRExtractor:
         
         missing, unexpected = self.model.load_state_dict(fixed_state_dict, strict=False)
         if missing:
-            print(f"⚠️ 缺失的键: {missing}")
+            logger.warning(f"权重缺失的键: {missing}")
         if unexpected:
-            print(f"⚠️ 多余的键: {unexpected}")
-        print(f"✅ 权重加载成功")
+            logger.warning(f"权重多余的键: {unexpected}")
+        logger.info("权重加载成功")
     
     def download_file(self):
         try:
-            print(f"📥 下载权重: {self.model_dict[self.model_type]['path']}")
+            logger.info(f"下载权重: {self.model_dict[self.model_type]['path']}")
             response = requests.get(self.model_dict[self.model_type]["download_url"], stream=True)
             response.raise_for_status()
             total_size = int(response.headers.get('content-length', 0))
@@ -142,10 +143,10 @@ class PairVPRExtractor:
                         downloaded += len(chunk)
                         if total_size > 0:
                             percent = (downloaded / total_size) * 100
-                            print(f"\r下载进度: {percent:.1f}%", end='')
-            print(f"\n✅ 下载完成: {self.model_path}")
+                            logger.debug(f"下载进度: {percent:.1f}%")
+            logger.info(f"下载完成: {self.model_path}")
         except Exception as e:
-            print(f"❌ 下载失败: {e}")
+            logger.error(f"下载失败: {e}")
             raise
     
     def _get_transform(self):
@@ -284,14 +285,3 @@ class PairVPRExtractor:
     
     def pair_similarity_batch_single_query(self, q_tokens, c_tokens_list):
         return self.pair_similarity_batch([q_tokens] * len(c_tokens_list), c_tokens_list)
-    
-
-if __name__ == "__main__":
-    extractor = PairVPRExtractor(model_type="vitB")
-    
-    test_img = str(BACKEND_PY_PATH / "app/temp_resources/B1.jpg")
-    if os.path.exists(test_img):
-        vector, tokens = extractor.extract_complete_features(test_img)
-        if vector:
-            print(f"✅ 向量维度: {len(vector)}")
-            print(f"✅ tokens 形状: {tokens.shape}")

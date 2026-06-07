@@ -1,6 +1,7 @@
 import asyncio
 import httpx
 from asyncio import Semaphore
+from loguru import logger
 
 from utils.image_downloader import download_image_to_pil
 from core.gpu_lock import gpu_lock
@@ -44,7 +45,7 @@ class VectorizeService:
                 except httpx.RequestError:
                     pass  # 忽略异常，继续重试
                 await asyncio.sleep(2 ** attempt)  # 指数退避
-            print(f"回调在5次尝试后均失败: {params.callbackUrl}")
+            logger.error(f"回调在 5 次尝试后均失败: {params.callbackUrl}")
 
 
     async def download_images(self, params: InsertParams, img_queue: asyncio.Queue):

@@ -5,9 +5,7 @@
 """
 
 import torch
-import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 # 全局设备对象
 _device = None
@@ -33,16 +31,16 @@ def get_available_device():
     if torch.cuda.is_available():
         _device = torch.device('cuda')
         _device_type = 'cuda'
-        logger.info(f"✅ 使用 NVIDIA CUDA: {torch.cuda.get_device_name(0)}")
-        logger.info(f"   CUDA 版本: {torch.version.cuda}")
+        logger.info(f"使用 NVIDIA CUDA: {torch.cuda.get_device_name(0)}")
+        logger.info(f"CUDA 版本: {torch.version.cuda}")
         return _device, _device_type
 
     if hasattr(torch,'xpu') and torch.xpu.is_available():
         _device = torch.device('xpu')
         _device_type = 'xpu'
-        logger.info(f"✅ 使用 Intel XPU: {torch.xpu.get_device_name(0) if hasattr(torch.xpu, 'get_device_name') else 'Intel GPU'}")
+        logger.info(f"使用 Intel XPU: {torch.xpu.get_device_name(0) if hasattr(torch.xpu, 'get_device_name') else 'Intel GPU'}")
         if hasattr(torch, 'version') and hasattr(torch.version, 'xpu'):
-            logger.info(f"   XPU 版本: {torch.version.xpu}")
+            logger.info(f"XPU 版本: {torch.version.xpu}")
         return _device, _device_type
     
     # 2. 检查 DirectML (Windows GPU 通用加速)
@@ -51,8 +49,8 @@ def get_available_device():
         if torch_directml.is_available():
             _device = torch_directml.device()
             _device_type = 'directml'
-            logger.info(f"✅ 使用 DirectML GPU 加速")
-            logger.info(f"   设备: {_device}")
+            logger.info(f"使用 DirectML GPU 加速")
+            logger.info(f"设备: {_device}")
             return _device, _device_type
     except ImportError:
         logger.debug("torch-directml 未安装")
@@ -62,7 +60,7 @@ def get_available_device():
     # 3. 最终回退到 CPU
     _device = torch.device('cpu')
     _device_type = 'cpu'
-    logger.warning("⚠️ 未检测到可用 GPU，使用 CPU 运行（速度较慢）")
+    logger.warning("未检测到可用 GPU，使用 CPU 运行（速度较慢）")
     
     return _device, _device_type
 
@@ -152,11 +150,7 @@ def get_device_info():
     return info
 
 
-def print_device_info():
-    """打印设备信息（用于调试）"""
+def log_device_info():
+    """记录设备信息到日志"""
     info = get_device_info()
-    print("\n" + "="*50)
-    print("🔧 设备信息:")
-    for key, value in info.items():
-        print(f"   {key}: {value}")
-    print("="*50 + "\n")
+    logger.info("设备信息: {}", info)

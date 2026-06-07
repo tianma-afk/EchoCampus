@@ -19,6 +19,7 @@ dependencies = [
     "omegaconf>=2.3.0",
     "minio>=7.2.20",
     "httpx>=0.28.1",
+    "loguru>=0.7.3",
 ]
 
 [project.optional-dependencies]

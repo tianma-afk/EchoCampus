@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from pathlib import Path
 import asyncio
+from loguru import logger
 
 # 定义 tokens 缓存的根目录：项目根目录/data/tokens/
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -39,7 +40,7 @@ def load_image_tokens(image_uuid, device=None):
     
     # 健壮性检查：防止文件丢失或未提取直接读取
     if not file_path.exists():
-        print(f"❌ [读取失败]: 找不到对应的 Token 二进制文件 -> {file_path}")
+        logger.error(f"找不到 Token 缓存文件 -> {file_path}")
         return None
 
     # 1. 使用底层磁盘映射机制闪电读取原始字节
