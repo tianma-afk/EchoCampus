@@ -62,17 +62,9 @@ public class AlgorithmUserController {
     public Result<UUID> createSearchTask(@RequestBody SearchTaskRequest request) {
         log.info("接收到图像搜索任务请求: imageUrl={}", request.getImageUrl());
         
-        try {
-            UUID taskId = algorithmUserService.createSearchTask(request.getImageUrl());
-            log.info("图像搜索任务创建成功: taskId={}", taskId);
-            return Result.success(taskId);
-        } catch (IllegalArgumentException e) {
-            log.error("参数错误: {}", e.getMessage());
-            return Result.failure(400, e.getMessage());
-        } catch (Exception e) {
-            log.error("创建图像搜索任务失败", e);
-            return Result.failure(500, "创建任务失败: " + e.getMessage());
-        }
+        UUID taskId = algorithmUserService.createSearchTask(request.getImageUrl());
+        log.info("图像搜索任务创建成功: taskId={}", taskId);
+        return Result.success(taskId);
     }
 
     /**
@@ -100,13 +92,8 @@ public class AlgorithmUserController {
     @Operation(summary = "查询图像搜索结果", description = "查询已处理完成的图像搜索识别结果")
     public Result<List<SearchResultVO>> getSearchResult(@PathVariable UUID taskId) {
         log.info("查询图像搜索结果: taskId={}", taskId);
-        try {
-            List<SearchResultVO> results = algorithmUserService.getSearchResult(taskId);
-            return Result.success(results);
-        } catch (Exception e) {
-            log.error("查询图像搜索结果失败: taskId={}", taskId, e);
-            return Result.failure(500, "查询结果失败: " + e.getMessage());
-        }
+        List<SearchResultVO> results = algorithmUserService.getSearchResult(taskId);
+        return Result.success(results);
     }
 
     /**

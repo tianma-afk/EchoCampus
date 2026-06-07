@@ -10,6 +10,8 @@ import com.echocampus.campus.mapper.CampusMapper;
 import com.echocampus.landmark.mapper.LandmarkMapper;
 import com.echocampus.campus.service.CampusAdminService;
 import com.echocampus.campus.vo.CampusVO;
+import com.echocampus.shared.exception.BusinessException;
+import com.echocampus.shared.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,7 +30,7 @@ public class CampusAdminServiceImpl implements CampusAdminService {
     @Override
     public UUID createCampus(CampusCreateRequest request) {
         if (nameExists(request.getName(), request.getUniversityId(), null)) {
-            throw new RuntimeException("该大学下已存在同名校区");
+            throw new BusinessException(ErrorCode.CAMPUS_NAME_CONFLICT);
         }
         CampusEntity entity = new CampusEntity();
         entity.setId(UUID.randomUUID());
@@ -63,7 +65,7 @@ public class CampusAdminServiceImpl implements CampusAdminService {
     public CampusVO getCampus(UUID id) {
         CampusEntity entity = campusMapper.selectById(id);
         if (entity == null) {
-            throw new RuntimeException("校区不存在");
+            throw new BusinessException(ErrorCode.CAMPUS_NOT_FOUND);
         }
         return CampusVO.builder()
                 .id(entity.getId())
@@ -76,19 +78,19 @@ public class CampusAdminServiceImpl implements CampusAdminService {
     public void updateCampus(UUID id, CampusUpdateRequest request) {
         CampusEntity entity = campusMapper.selectById(id);
         if (entity == null) {
-            throw new RuntimeException("校区不存在");
+            throw new BusinessException(ErrorCode.CAMPUS_NOT_FOUND);
         }
         UUID effectiveUniversityId = request.getUniversityId() != null ? request.getUniversityId() : entity.getUniversityId();
         if (request.getName() != null && !request.getName().isBlank()) {
             if (nameExists(request.getName(), effectiveUniversityId, id)) {
-                throw new RuntimeException("该大学下已存在同名校区");
+                throw new BusinessException(ErrorCode.CAMPUS_NAME_CONFLICT);
             }
             entity.setName(request.getName());
         }
         if (request.getUniversityId() != null) {
             if (request.getName() == null || request.getName().isBlank()) {
                 if (nameExists(entity.getName(), request.getUniversityId(), id)) {
-                    throw new RuntimeException("该大学下已存在同名校区");
+                    throw new BusinessException(ErrorCode.CAMPUS_NAME_CONFLICT);
                 }
             }
             entity.setUniversityId(request.getUniversityId());
@@ -100,13 +102,13 @@ public class CampusAdminServiceImpl implements CampusAdminService {
     public void deleteCampus(UUID id) {
         CampusEntity entity = campusMapper.selectById(id);
         if (entity == null) {
-            throw new RuntimeException("校区不存在");
+            throw new BusinessException(ErrorCode.CAMPUS_NOT_FOUND);
         }
         Long landmarkCount = landmarkMapper.selectCount(
                 new LambdaQueryWrapper<LandmarkEntity>()
                         .eq(LandmarkEntity::getCampusId, id));
         if (landmarkCount > 0) {
-            throw new RuntimeException("该校区下存在地标，请先删除地标");
+            throw new BusinessException(ErrorCode.CONFLICT, "该校区下存在地标，请先删除地标");
         }
         campusMapper.deleteById(id);
     }

@@ -16,11 +16,11 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/images")
-@Tag(name = "管理员分类", description = "提供图片算法功能")
-public class ImageAdminController {
+@Tag(name = "管理员图像", description = "提供图片算法功能")
+public class AlgorithmAdminController {
 
     private final AlgorithmAdminService algorithmAdminService;
-    public ImageAdminController(AlgorithmAdminService algorithmAdminService) {
+    public AlgorithmAdminController(AlgorithmAdminService algorithmAdminService) {
         this.algorithmAdminService = algorithmAdminService;
     }
 

@@ -38,11 +38,7 @@ public class LandmarkAdminController {
     @GetMapping("/{id}")
     @Operation(summary = "获取地标详情", description = "根据ID获取地标详情（含楼层列表）")
     public Result<LandmarkDetailVO> getLandmark(@PathVariable UUID id) {
-        try {
-            return Result.success(landmarkAdminService.getLandmark(id));
-        } catch (RuntimeException e) {
-            return Result.failure(404, e.getMessage());
-        }
+        return Result.success(landmarkAdminService.getLandmark(id));
     }
 
     @PostMapping("/")
@@ -55,30 +51,14 @@ public class LandmarkAdminController {
     @PutMapping("/{id}")
     @Operation(summary = "更新地标", description = "更新地标信息")
     public Result<Void> updateLandmark(@PathVariable UUID id, @RequestBody LandmarkUpdateRequest request) {
-        try {
-            landmarkAdminService.updateLandmark(id, request);
-            return Result.success(null);
-        } catch (RuntimeException e) {
-            String msg = e.getMessage();
-            if (msg.contains("不存在")) {
-                return Result.failure(404, msg);
-            }
-            return Result.failure(400, msg);
-        }
+        landmarkAdminService.updateLandmark(id, request);
+        return Result.success(null);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除地标", description = "删除地标及其关联的图片、楼层")
     public Result<Void> deleteLandmark(@PathVariable UUID id) {
-        try {
-            landmarkAdminService.deleteLandmark(id);
-            return Result.success(null);
-        } catch (RuntimeException e) {
-            String msg = e.getMessage();
-            if (msg.contains("不存在")) {
-                return Result.failure(404, msg);
-            }
-            return Result.failure(400, msg);
-        }
+        landmarkAdminService.deleteLandmark(id);
+        return Result.success(null);
     }
 }

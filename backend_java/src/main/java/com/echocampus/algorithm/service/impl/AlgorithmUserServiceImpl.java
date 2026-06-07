@@ -13,6 +13,8 @@ import com.echocampus.landmark.mapper.ImageMapper;
 import com.echocampus.landmark.mapper.LandmarkMapper;
 import com.echocampus.algorithm.mapper.TaskMapper;
 import com.echocampus.algorithm.service.AlgorithmUserService;
+import com.echocampus.shared.exception.BusinessException;
+import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.util.CallBackUrlBuilder;
 import com.echocampus.shared.util.ImageUrlBuilder;
 import com.echocampus.algorithm.vo.SearchResultVO;
@@ -68,7 +70,7 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
     public UUID createSearchTask(String imageUrl) {
         // 参数校验
         if (imageUrl == null || imageUrl.isEmpty()) {
-            throw new IllegalArgumentException("图片 URL 不能为空");
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR, "图片 URL 不能为空");
         }
 
         log.info("开始创建图像搜索任务: imageUrl={}", imageUrl);

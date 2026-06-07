@@ -1,6 +1,8 @@
 package com.echocampus.upload.service.impl;
 
 import com.echocampus.upload.service.UploadService;
+import com.echocampus.shared.exception.ErrorCode;
+import com.echocampus.shared.exception.TechnicalException;
 import com.echocampus.shared.util.MinioUtil;
 import com.echocampus.upload.vo.UploadPresignedUrlVO;
 import io.minio.http.Method;
@@ -59,7 +61,7 @@ public class UploadServiceImpl implements UploadService {
                     .build();
         } catch (Exception e) {
             log.error("生成预签名上传URL失败", e);
-            throw new RuntimeException("生成预签名上传URL失败", e);
+            throw new TechnicalException(ErrorCode.FILE_STORAGE_ERROR, e);
         }
     }
 

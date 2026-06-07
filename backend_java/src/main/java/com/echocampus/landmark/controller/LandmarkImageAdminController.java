@@ -37,12 +37,7 @@ public class LandmarkImageAdminController {
             @PathVariable UUID landmarkId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int pageSize) {
-        try {
-            return Result.success(landmarkImageAdminService.listImages(landmarkId, page, pageSize));
-        } catch (RuntimeException e) {
-            log.error("listImages failed for landmark {}: {}", landmarkId, e.getMessage(), e);
-            return Result.failure(404, e.getMessage());
-        }
+        return Result.success(landmarkImageAdminService.listImages(landmarkId, page, pageSize));
     }
 
     @PostMapping("/images/presign")
@@ -86,16 +81,8 @@ public class LandmarkImageAdminController {
     public Result<Void> deleteImage(
             @PathVariable UUID landmarkId,
             @PathVariable UUID imageId) {
-        try {
-            landmarkImageAdminService.deleteImage(landmarkId, imageId);
-            return Result.success(null);
-        } catch (RuntimeException e) {
-            String msg = e.getMessage();
-            if (msg.contains("不存在") || msg.contains("不属于")) {
-                return Result.failure(404, msg);
-            }
-            return Result.failure(400, msg);
-        }
+        landmarkImageAdminService.deleteImage(landmarkId, imageId);
+        return Result.success(null);
     }
 
     @DeleteMapping("/images/batch")
@@ -103,12 +90,8 @@ public class LandmarkImageAdminController {
     public Result<BatchDeleteImagesResponse> deleteImagesBatch(
             @PathVariable UUID landmarkId,
             @Valid @RequestBody BatchDeleteImagesRequest request) {
-        try {
-            BatchDeleteImagesResponse response = landmarkImageAdminService.batchDeleteImages(
-                    landmarkId, request.getImageIds());
-            return Result.success(response);
-        } catch (RuntimeException e) {
-            return Result.failure(400, e.getMessage());
-        }
+        BatchDeleteImagesResponse response = landmarkImageAdminService.batchDeleteImages(
+                landmarkId, request.getImageIds());
+        return Result.success(response);
     }
 }

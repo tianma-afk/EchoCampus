@@ -72,7 +72,7 @@ async function handleUpdateUniName() {
   savingUni.value = true
   try {
     const res = await updateUniversity(universityId, editUniName.value.trim())
-    if (res.code !== 200) {
+    if (res.code !== "00000") {
       alert(res.message)
       editUniName.value = university.value?.name ?? ''
     } else {
@@ -90,7 +90,7 @@ async function handleDeleteUni() {
   if (!confirm(`确定要删除「${university.value?.name}」吗？\n如果该大学下有校区，将无法删除。`)) return
   try {
     const res = await deleteUniversity(universityId)
-    if (res.code !== 200) {
+    if (res.code !== "00000") {
       alert(res.message)
       return
     }
@@ -131,14 +131,14 @@ async function handleSaveCampus() {
   try {
     if (editingCampusId.value) {
       const res = await updateCampus(editingCampusId.value, editCampusName.value.trim())
-      if (res.code !== 200) {
+      if (res.code !== "00000") {
         campusError.value = res.message
         savingCampus.value = false
         return
       }
     } else {
       const res = await createCampus(editCampusName.value.trim(), universityId)
-      if (res.code !== 200) {
+      if (res.code !== "00000") {
         campusError.value = res.message
         savingCampus.value = false
         return
@@ -157,7 +157,7 @@ async function handleDeleteCampus(cam: CampusVO) {
   if (!confirm(`确定要删除「${cam.name}」吗？`)) return
   try {
     const res = await deleteCampus(cam.id)
-    if (res.code !== 200) {
+    if (res.code !== "00000") {
       alert(res.message)
       return
     }
