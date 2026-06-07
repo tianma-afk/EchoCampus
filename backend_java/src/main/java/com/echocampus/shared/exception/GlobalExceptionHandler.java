@@ -2,15 +2,47 @@ package com.echocampus.shared.exception;
 
 import com.echocampus.shared.vo.Result;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    // 处理参数校验失败
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<Map<String, String>> handleValidationException(
+            MethodArgumentNotValidException e, HttpServletRequest request) {
+        log.info("参数校验失败 | 请求路径: {}", request.getRequestURI());
+
+        Map<String, String> errors = new HashMap<>();
+        e.getBindingResult().getFieldErrors().forEach(fe ->
+                errors.put(fe.getField(), fe.getDefaultMessage()));
+
+        return Result.failure(ErrorCode.VALIDATION_ERROR, errors);
+    }
+
+    // 处理路径参数/请求参数校验失败
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Result<Map<String, String>> handleConstraintViolationException(
+            ConstraintViolationException e, HttpServletRequest request) {
+        log.info("参数校验失败 | 请求路径: {}", request.getRequestURI());
+
+        Map<String, String> errors = new HashMap<>();
+        e.getConstraintViolations().forEach(cv -> {
+            String paramName = cv.getPropertyPath().toString();
+            errors.put(paramName, cv.getMessage());
+        });
+
+        return Result.failure(ErrorCode.VALIDATION_ERROR, errors);
+    }
 
     // 处理业务异常
     @ExceptionHandler(BusinessException.class)
