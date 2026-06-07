@@ -14,8 +14,7 @@ public class Result<T> {
 		this.data = data;
 	}
 
-
-    public int getCode() {
+	public int getCode() {
 		return code;
 	}
 
@@ -41,6 +40,10 @@ public class Result<T> {
 
 	public static <T> Result<T> success(T data) {
 		return new Result<>(200, "success", data);
+	}
+
+	public static <T> Result<T> success(String message, T data) {
+		return new Result<>(200, message, data);
 	}
 
 	public static <T> Result<T> failure(int code, String message) {

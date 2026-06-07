@@ -5,11 +5,13 @@ import com.echocampus.auth.dto.RegisterRequest;
 import com.echocampus.auth.dto.SendCodeRequest;
 import com.echocampus.auth.service.AuthService;
 import com.echocampus.auth.vo.LoginVO;
+import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -24,10 +26,12 @@ public class AuthController {
 
     @PostMapping("/send-code")
     @Operation(summary = "发送邮箱验证码", description = "向指定邮箱发送验证码，用于注册或登录")
-    public Result<Void> sendCode(@Valid @RequestBody SendCodeRequest request) {
+    public Result<Map<String, Object>> sendCode(@Valid @RequestBody SendCodeRequest request) {
         try {
             authService.sendCode(request);
-            return Result.success(null);
+            return Result.success("验证码已发送", Map.of("expires_in", 300));
+        } catch (BusinessException e) {
+            return Result.failure(e.getCode(), e.getMessage());
         } catch (RuntimeException e) {
             return Result.failure(400, e.getMessage());
         }
