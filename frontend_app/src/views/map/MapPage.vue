@@ -12,6 +12,7 @@ interface LandmarkMarker {
   category: string
   rating: number
   openTime: string
+  checkins?: number
 }
 
 const API_BASE_URL = 'http://localhost:8080/api/v1'
@@ -46,6 +47,10 @@ const suggestions = ref<LandmarkMarker[]>([])
 const showSuggestions = ref(false)
 const loading = ref(false)
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const hotRankings = ref<LandmarkMarker[]>([])
+const isSearchFocused = ref(false)
+const showRanking = computed(() => isSearchFocused.value && !searchQuery.value.trim() && hotRankings.value.length > 0)
 
 const categories = ['全部', '教学楼', '图书馆', '体育场馆', '生活区', '活动场馆', '景观景点']
 const activeCategory = ref('全部')
@@ -110,7 +115,6 @@ function initMap(lat: number, lng: number) {
     zoomControl: false,
   }).setView([lat, lng], DEFAULT_ZOOM)
 
-  L.control.zoom({ position: 'topright' }).addTo(map)
 
   L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
     subdomains: ['1', '2', '3', '4'],
@@ -179,8 +183,13 @@ function handleCategoryChange(cat: string) {
   activeCategory.value = cat
 }
 
+function onFocus() {
+  isSearchFocused.value = true
+}
+
 function onBlur() {
   setTimeout(() => {
+    isSearchFocused.value = false
     showSuggestions.value = false
   }, 200)
 }
@@ -208,6 +217,27 @@ async function loadLandmarks() {
   }
 }
 
+async function loadHotRankings() {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/landmarks`, {
+      params: { sortBy: 'hot', pageSize: 10 },
+    })
+    const records = res.data?.data?.records || []
+    hotRankings.value = records.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      lat: item.latitude,
+      lng: item.longitude,
+      category: item.category,
+      rating: item.rating,
+      openTime: item.openTime,
+      checkins: item.checkins || 0,
+    }))
+  } catch (e) {
+    console.error('加载热度榜失败:', e)
+  }
+}
+
 function calcCenter(): [number, number] {
   if (landmarks.value.length === 0) return DEFAULT_CENTER
   const sumLat = landmarks.value.reduce((s, l) => s + l.lat, 0)
@@ -216,7 +246,7 @@ function calcCenter(): [number, number] {
 }
 
 onMounted(async () => {
-  await loadLandmarks()
+  await Promise.all([loadLandmarks(), loadHotRankings()])
 
   const center = calcCenter()
   initMap(center[0], center[1])
@@ -288,9 +318,6 @@ onActivated(() => {
     <div ref="mapContainer" class="map-container"></div>
 
     <div class="search-bar">
-      <header class="map-header">
-        <h1 class="map-title">地图导览</h1>
-      </header>
       <div class="search-input-wrapper">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
@@ -302,9 +329,30 @@ onActivated(() => {
           type="text"
           placeholder="搜索地标..."
           @input="handleSearchInput"
+          @focus="onFocus"
           @blur="onBlur"
         />
       </div>
+      <ul v-if="showRanking" class="ranking-list">
+        <li
+          v-for="(lm, index) in hotRankings"
+          :key="lm.id"
+          class="ranking-item"
+          @mousedown.prevent="selectSuggestion(lm)"
+        >
+          <span class="rank-badge" :class="'rank-' + (index + 1)">
+            <template v-if="index === 0">&#129351;</template>
+            <template v-else-if="index === 1">&#129352;</template>
+            <template v-else-if="index === 2">&#129353;</template>
+            <template v-else>{{ index + 1 }}</template>
+          </span>
+          <div class="ranking-info">
+            <span class="ranking-name">{{ lm.name }}</span>
+            <span class="ranking-category">{{ lm.category }}</span>
+          </div>
+          <span class="ranking-count">{{ (lm.checkins || 0).toLocaleString() }} 次打卡</span>
+        </li>
+      </ul>
       <ul v-if="showSuggestions && suggestions.length > 0" class="suggestions-list">
         <li
           v-for="lm in suggestions"
@@ -386,38 +434,27 @@ onActivated(() => {
 
 .search-bar {
   position: absolute;
-  top: 16px;
+  top: 24px;
   left: 16px;
   right: 16px;
   z-index: 1000;
-}
-
-.map-header {
-  margin-bottom: 16px;
-}
-
-.map-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0;
 }
 
 .search-input-wrapper {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #e8f5e9;
-  border-radius: 12px;
+  background: var(--color-bg-input);
+  border-radius: var(--radius-md);
   padding: 0 16px;
   height: 44px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .search-icon {
   width: 18px;
   height: 18px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
   flex-shrink: 0;
 }
 
@@ -426,20 +463,20 @@ onActivated(() => {
   border: none;
   outline: none;
   font-size: 15px;
-  color: #333;
+  color: var(--color-text-heading);
   background: transparent;
 }
 
 .search-input::placeholder {
-  color: #bbb;
+  color: var(--color-text-muted);
 }
 
 .suggestions-list {
   margin: 8px 0 0;
   padding: 8px 0;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   list-style: none;
   overflow: hidden;
 }
@@ -455,18 +492,92 @@ onActivated(() => {
 
 .suggestion-item:hover,
 .suggestion-item:active {
-  background: #f0f7f4;
+  background: var(--color-bg);
 }
 
 .suggestion-name {
   font-size: 15px;
-  color: #333;
+  color: var(--color-text-heading);
   font-weight: 500;
 }
 
 .suggestion-category {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
+}
+
+.ranking-list {
+  margin: 8px 0 0;
+  padding: 8px 0;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  list-style: none;
+  overflow: hidden;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ranking-item:hover,
+.ranking-item:active {
+  background: var(--color-bg);
+}
+
+.rank-badge {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.rank-badge.rank-1,
+.rank-badge.rank-2,
+.rank-badge.rank-3 {
+  font-size: 20px;
+  width: 28px;
+  height: 28px;
+}
+
+.ranking-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ranking-name {
+  font-size: 15px;
+  color: var(--color-text-heading);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-category {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.ranking-count {
+  font-size: 13px;
+  color: var(--color-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .category-tabs {
@@ -486,8 +597,8 @@ onActivated(() => {
   padding: 6px 14px;
   border-radius: 16px;
   border: none;
-  background: rgba(232, 245, 233, 0.95);
-  color: #6b7280;
+  background: rgba(242, 240, 235, 0.95);
+  color: var(--color-text);
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
@@ -496,29 +607,29 @@ onActivated(() => {
 }
 
 .category-tab.active {
-  background: #2d8a6e;
+  background: var(--color-primary);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(45, 138, 110, 0.3);
+  box-shadow: 0 2px 8px var(--color-primary-shadow);
 }
 
 .category-tab:hover:not(.active) {
-  background: #d4edda;
+  background: var(--color-primary-light);
 }
 
 .landmark-count-bar {
   margin-top: 10px;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text);
 }
 
 .landmark-count-bar strong {
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 
 .landmark-popup {
   width: 94%;
   margin: 0 auto;
-  background: #fff;
+  background: var(--color-bg-card);
   border-radius: 20px;
   padding: 24px 20px;
   position: fixed;
@@ -526,7 +637,7 @@ onActivated(() => {
   left: 0;
   right: 0;
   z-index: 2000;
-  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   animation: popupSlideIn 0.25s ease-out;
 }
 
@@ -551,11 +662,11 @@ onActivated(() => {
 .pop-icon {
   width: 80px;
   height: 80px;
-  border-radius: 18px;
-  background: #418879;
+  border-radius: var(--radius-xl);
+  background: #5a8f7b;
   flex-shrink: 0;
-  background-image: radial-gradient(circle at 80% 20%, #59a896 32%, transparent 33%),
-    radial-gradient(circle at 20% 80%, #357568 32%, transparent 33%);
+  background-image: radial-gradient(circle at 80% 20%, #7ab8a0 32%, transparent 33%),
+    radial-gradient(circle at 20% 80%, #4a7d6a 32%, transparent 33%);
 }
 
 .pop-title-area {
@@ -565,14 +676,14 @@ onActivated(() => {
 
 .pop-name {
   font-size: 20px;
-  font-weight: 700;
-  color: #222;
+  font-weight: 600;
+  color: var(--color-text-heading);
   margin: 0 0 6px;
 }
 
 .pop-tag-time {
   font-size: 13px;
-  color: #778885;
+  color: var(--color-text);
   margin-bottom: 8px;
 }
 
@@ -585,7 +696,7 @@ onActivated(() => {
 .star {
   width: 18px;
   height: 18px;
-  background: #f59e0b;
+  background: var(--color-star);
   clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
 }
 
@@ -595,7 +706,7 @@ onActivated(() => {
 
 .score-text {
   font-size: 16px;
-  color: #f59e0b;
+  color: var(--color-star);
   font-weight: 600;
   margin-left: 6px;
 }
@@ -605,7 +716,7 @@ onActivated(() => {
   top: -4px;
   right: -4px;
   font-size: 28px;
-  color: #999;
+  color: var(--color-text-secondary);
   cursor: pointer;
   user-select: none;
   line-height: 1;
@@ -620,10 +731,10 @@ onActivated(() => {
 .btn-nav {
   flex: 1;
   padding: 12px 0;
-  border: 2px solid #398072;
-  border-radius: 99px;
-  background: #fff;
-  color: #398072;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-card);
+  color: var(--color-primary);
   font-size: 15px;
   font-weight: 500;
   display: flex;
@@ -635,15 +746,15 @@ onActivated(() => {
 }
 
 .btn-nav:active {
-  background: #e8f5e9;
+  background: var(--color-primary-light);
 }
 
 .btn-detail {
   flex: 1.3;
   padding: 12px 0;
   border: none;
-  border-radius: 99px;
-  background: #398072;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
   color: #fff;
   font-size: 15px;
   font-weight: 500;
@@ -656,7 +767,7 @@ onActivated(() => {
 }
 
 .btn-detail:active {
-  background: #2d6c5e;
+  background: var(--color-primary-hover);
 }
 </style>
 
@@ -671,9 +782,9 @@ onActivated(() => {
 
 .marker-label {
   display: inline-block;
-  background: #fff;
-  color: #1a1a1a;
-  font-weight: 700;
+  background: var(--color-bg-card);
+  color: var(--color-text-heading);
+  font-weight: 600;
   font-size: 14px;
   padding: 4px 10px;
   border-radius: 6px;
@@ -684,18 +795,14 @@ onActivated(() => {
 }
 
 .marker-label.active {
-  background: #e8f5e9;
+  background: var(--color-primary-light);
   font-size: 16px;
   padding: 6px 14px;
-  box-shadow: 0 2px 8px rgba(45, 138, 110, 0.25);
+  box-shadow: 0 2px 8px var(--color-primary-shadow);
 }
 
 .leaflet-bottom {
   bottom: 72px !important;
-}
-
-.leaflet-top.leaflet-right {
-  top: 175px;
 }
 
 .leaflet-bottom.leaflet-left {

@@ -418,7 +418,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 基础重置 */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -431,20 +430,18 @@ onUnmounted(() => {
   width: 100%;
   height: 100vh;
   overflow: hidden;
-  background-color: #f0f9f5;
+  background-color: var(--color-bg);
 }
 
-/* 👇 完全匹配你给的背景效果 */
 .bg-container {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 10% 90%, rgba(170, 200, 230, 0.35) 0%, transparent 55%),
-    radial-gradient(circle at 90% 10%, rgba(170, 230, 220, 0.35) 0%, transparent 55%);
+    radial-gradient(circle at 10% 90%, rgba(180, 210, 200, 0.25) 0%, transparent 55%),
+    radial-gradient(circle at 90% 10%, rgba(180, 210, 200, 0.25) 0%, transparent 55%);
   z-index: 0;
 }
 
-/* ========== 主页面样式 ========== */
 .main-page {
   position: relative;
   z-index: 1;
@@ -455,7 +452,6 @@ onUnmounted(() => {
   align-items: center;
 }
 
-/* 顶部标题 */
 .page-header {
   z-index: 2;
   margin-top: 120px;
@@ -480,7 +476,6 @@ onUnmounted(() => {
   letter-spacing: 0.5px;
 }
 
-/* 中间拍照区域 */
 .main-content {
   flex: 1;
   display: flex;
@@ -495,14 +490,13 @@ onUnmounted(() => {
   animation: float 3s ease-in-out infinite;
 }
 
-/* 拍照按钮 */
 .camera-btn {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  background: #169669;
+  background: var(--color-primary);
   border: none;
-  box-shadow: 0 10px 30px rgba(22, 150, 105, 0.3);
+  box-shadow: 0 10px 30px var(--color-primary-shadow);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -520,7 +514,6 @@ onUnmounted(() => {
   transform: scale(0.95);
 }
 
-/* 底部相册按钮 */
 .page-footer {
   z-index: 2;
   width: 100%;
@@ -538,7 +531,7 @@ onUnmounted(() => {
   border: none;
   border-radius: 50px;
   padding: 14px 40px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -546,23 +539,22 @@ onUnmounted(() => {
 .gallery-btn .btn-icon {
   width: 20px;
   height: 20px;
-  color: #169669;
+  color: var(--color-primary);
   margin-right: 10px;
 }
 
 .gallery-btn span {
   font-size: 17px;
   font-weight: 500;
-  color: #169669;
+  color: var(--color-primary);
 }
 
 .gallery-btn:hover {
   background: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
-/* ========== 拍摄界面样式 ========== */
 .camera-interface {
   position: relative;
   width: 100%;
@@ -573,7 +565,6 @@ onUnmounted(() => {
   z-index: 10;
 }
 
-/* 摄像头预览区域 (3/4) */
 .camera-preview {
   flex: 3;
   position: relative;
@@ -629,7 +620,6 @@ onUnmounted(() => {
   color: #fff;
 }
 
-/* 控制按钮区域 (1/4) */
 .camera-controls {
   flex: 1;
   background: linear-gradient(to bottom, #1a1a1a, #000);
@@ -676,7 +666,6 @@ onUnmounted(() => {
   transform: scale(0.9);
 }
 
-/* 相册按钮 */
 .gallery-control {
   opacity: 0.9;
 }
@@ -685,17 +674,16 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-/* 拍照按钮（带白边的绿色圆形） */
 .capture-btn {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: #169669;
+  background: var(--color-primary);
   border: 4px solid rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 20px rgba(22, 150, 105, 0.5);
+  box-shadow: 0 4px 20px var(--color-primary-shadow);
 }
 
 .capture-inner {
@@ -711,7 +699,6 @@ onUnmounted(() => {
   height: 56px;
 }
 
-/* 翻转按钮 */
 .switch-btn {
   opacity: 0.9;
 }
@@ -720,39 +707,21 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-/* 动画定义 */
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-15px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ========== 上传中样式 ========== */
 .uploading-overlay {
   position: absolute;
   inset: 0;
@@ -772,7 +741,7 @@ onUnmounted(() => {
   height: 50px;
   margin: 0 auto 20px;
   border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top-color: #169669;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -797,7 +766,6 @@ onUnmounted(() => {
   to { transform: rotate(360deg); }
 }
 
-/* ========== 图片预览样式 ========== */
 .preview-view {
   position: relative;
   z-index: 10;
@@ -846,13 +814,13 @@ onUnmounted(() => {
   width: 200px;
   height: 50px;
   border-radius: 50px;
-  background: #169669;
+  background: var(--color-primary);
   border: none;
   color: #fff;
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(22, 150, 105, 0.3);
+  box-shadow: 0 4px 16px var(--color-primary-shadow);
   transition: all 0.2s ease;
 }
 
@@ -860,7 +828,6 @@ onUnmounted(() => {
   transform: scale(0.95);
 }
 
-/* ========== 识别结果样式 ========== */
 .result-view {
   position: relative;
   z-index: 10;
@@ -868,7 +835,7 @@ onUnmounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: var(--color-bg-card);
   overflow: hidden;
   animation: resultFadeIn 0.4s ease-out;
 }
@@ -883,7 +850,7 @@ onUnmounted(() => {
   width: 100%;
   height: 40vh;
   flex-shrink: 0;
-  background: radial-gradient(ellipse at center, rgba(22,150,105,0.12) 0%, transparent 60%),
+  background: radial-gradient(ellipse at center, rgba(60,160,122,0.12) 0%, transparent 60%),
               #1a1a1a;
 }
 
@@ -918,7 +885,6 @@ onUnmounted(() => {
   backdrop-filter: blur(4px);
 }
 
-/* 文字描述区 */
 .result-text-desc {
   padding: 12px 24px 6px;
   text-align: center;
@@ -926,7 +892,7 @@ onUnmounted(() => {
 
 .desc-title {
   font-size: 22px;
-  color: #222;
+  color: var(--color-text-heading);
   font-weight: 500;
   margin-bottom: 6px;
   animation: slideUpText 0.5s 0.1s ease-out both;
@@ -938,20 +904,19 @@ onUnmounted(() => {
 }
 
 .desc-title.no-match {
-  color: #999;
+  color: var(--color-text-secondary);
 }
 
 .desc-sub {
   font-size: 14px;
-  color: #777;
+  color: var(--color-text);
   animation: slideUpText 0.5s 0.2s ease-out both;
 }
 
 .desc-sub.empty-sub {
-  color: #aaa;
+  color: var(--color-text-muted);
 }
 
-/* 横向滚动圆形卡片列表 */
 .result-card-scroll {
   flex: 1;
   overflow: hidden;
@@ -1010,18 +975,17 @@ onUnmounted(() => {
 
 .land-name {
   font-size: 16px;
-  color: #222;
+  color: var(--color-text-heading);
   font-weight: 500;
   margin-bottom: 4px;
 }
 
 .land-score {
   font-size: 14px;
-  color: #169669;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
-/* 底部返回按钮 */
 .result-bottom-btn {
   padding: 12px 30px calc(72px + env(safe-area-inset-bottom));
   flex-shrink: 0;
@@ -1031,12 +995,12 @@ onUnmounted(() => {
   width: 100%;
   height: 52px;
   border-radius: 52px;
-  background: #169669;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   font-size: 18px;
   font-weight: 600;
-  box-shadow: 0 5px 18px rgba(22,150,105,0.28);
+  box-shadow: 0 5px 18px var(--color-primary-shadow);
   cursor: pointer;
   transition: all 0.2s;
 }

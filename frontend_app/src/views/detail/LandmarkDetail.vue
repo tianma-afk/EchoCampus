@@ -461,7 +461,7 @@ const bubblePositions = computed(() => {
   z-index: 999;
   display: flex;
   flex-direction: column;
-  background: #f0f7f4;
+  background: var(--color-bg);
 }
 
 .detail-header {
@@ -525,7 +525,7 @@ const bubblePositions = computed(() => {
 
 .detail-title {
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
   color: #fff;
   margin: 0 0 8px;
 }
@@ -570,8 +570,8 @@ const bubblePositions = computed(() => {
 }
 
 .info-card {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
   padding: 16px;
 }
 
@@ -592,13 +592,13 @@ const bubblePositions = computed(() => {
 
 .campus-name {
   font-size: 15px;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
   font-weight: 600;
 }
 
 .university-name {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
 }
 
 .tags-bubbles {
@@ -612,7 +612,7 @@ const bubblePositions = computed(() => {
 .tag-bubble {
   position: absolute;
   border-radius: 50%;
-  color: #2d8a6e;
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 500;
   display: flex;
@@ -623,7 +623,7 @@ const bubblePositions = computed(() => {
   padding: 4px;
   overflow: hidden;
   word-break: break-all;
-  box-shadow: 0 2px 6px rgba(45, 138, 110, 0.15);
+  box-shadow: 0 2px 6px rgba(60, 160, 122, 0.15);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -648,7 +648,7 @@ const bubblePositions = computed(() => {
 }
 
 .star-icon.filled {
-  color: #f59e0b;
+  color: var(--color-star);
 }
 
 .star-icon.half {
@@ -662,7 +662,7 @@ const bubblePositions = computed(() => {
 .rating-value {
   font-size: 14px;
   font-weight: 600;
-  color: #f59e0b;
+  color: var(--color-star);
 }
 
 .info-list {
@@ -671,7 +671,7 @@ const bubblePositions = computed(() => {
   gap: 14px;
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .info-item {
@@ -684,7 +684,7 @@ const bubblePositions = computed(() => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #e8f5e9;
+  background: var(--color-primary-light);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -694,7 +694,7 @@ const bubblePositions = computed(() => {
 .info-icon svg {
   width: 18px;
   height: 18px;
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 
 .info-text {
@@ -705,12 +705,12 @@ const bubblePositions = computed(() => {
 
 .info-label {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
 }
 
 .info-value {
   font-size: 14px;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
   font-weight: 500;
 }
 
@@ -729,11 +729,11 @@ const bubblePositions = computed(() => {
 .stat-icon {
   width: 20px;
   height: 20px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
 }
 
 .stat-icon.heart {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 .stat-text {
@@ -744,48 +744,48 @@ const bubblePositions = computed(() => {
 
 .stat-label {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
 }
 
 .stat-value {
   font-size: 16px;
   font-weight: 600;
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 
 .stat-value.highlight {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 .stat-divider {
   width: 1px;
   height: 32px;
-  background: #f0f0f0;
+  background: var(--color-divider);
 }
 
 .description-card {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
   padding: 16px;
 }
 
 .card-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
   margin: 0 0 10px;
 }
 
 .description-text {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text);
   line-height: 1.6;
   margin: 0;
 }
 
 .floor-nav-card {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
   padding: 16px;
 }
 
@@ -798,10 +798,10 @@ const bubblePositions = computed(() => {
 
 .floor-count {
   font-size: 13px;
-  color: #2d8a6e;
-  background: #e8f5e9;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   padding: 2px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .floor-buttons {
@@ -820,8 +820,8 @@ const bubblePositions = computed(() => {
   height: 32px;
   border-radius: 16px;
   border: none;
-  background: #e8f5e9;
-  color: #6b7280;
+  background: var(--color-bg-input);
+  color: var(--color-text);
   font-size: 11px;
   font-weight: 600;
   padding: 0 12px;
@@ -832,13 +832,13 @@ const bubblePositions = computed(() => {
 }
 
 .floor-btn.active {
-  background: #2d8a6e;
+  background: var(--color-primary);
   color: #fff;
 }
 
 .floor-areas {
-  background: #f0f7f4;
-  border-radius: 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
   padding: 14px;
 }
 
@@ -849,7 +849,7 @@ const bubblePositions = computed(() => {
 .floor-area-label {
   font-size: 14px;
   font-weight: 600;
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 
 .area-tags {
@@ -860,15 +860,15 @@ const bubblePositions = computed(() => {
 
 .area-tag {
   font-size: 13px;
-  color: #1a1a1a;
-  background: #fff;
+  color: var(--color-text-heading);
+  background: var(--color-bg-card);
   padding: 6px 14px;
   border-radius: 16px;
 }
 
 .location-card {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
   padding: 16px;
 }
 
@@ -878,7 +878,7 @@ const bubblePositions = computed(() => {
   gap: 4px;
   border: none;
   background: none;
-  color: #2d8a6e;
+  color: var(--color-primary);
   font-size: 13px;
   cursor: pointer;
 }
@@ -891,7 +891,7 @@ const bubblePositions = computed(() => {
 .map-minimap-wrapper {
   position: relative;
   height: 160px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -907,8 +907,8 @@ const bubblePositions = computed(() => {
 .map-placeholder {
   position: relative;
   height: 160px;
-  background: #e8f5e9;
-  border-radius: 12px;
+  background: var(--color-bg-input);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -916,8 +916,8 @@ const bubblePositions = computed(() => {
   position: absolute;
   inset: 0;
   background-image:
-      linear-gradient(rgba(45, 138, 110, 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(45, 138, 110, 0.1) 1px, transparent 1px);
+      linear-gradient(rgba(60, 160, 122, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(60, 160, 122, 0.1) 1px, transparent 1px);
   background-size: 30px 30px;
 }
 
@@ -926,15 +926,15 @@ const bubblePositions = computed(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(45, 138, 110, 0.3);
+  background: rgba(60, 160, 122, 0.3);
   transform: translate(-50%, -50%);
 }
 
 .map-dot.center {
   width: 20px;
   height: 20px;
-  background: rgba(45, 138, 110, 0.2);
-  border: 2px solid #2d8a6e;
+  background: rgba(60, 160, 122, 0.2);
+  border: 2px solid var(--color-primary);
 }
 
 .map-dot.center::after {
@@ -946,7 +946,7 @@ const bubblePositions = computed(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2d8a6e;
+  background: var(--color-primary);
 }
 
 .map-pin {
@@ -956,7 +956,7 @@ const bubblePositions = computed(() => {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #2d8a6e;
+  background: var(--color-primary);
   color: #fff;
   padding: 6px 12px;
   border-radius: 16px;
@@ -970,14 +970,14 @@ const bubblePositions = computed(() => {
   gap: 12px;
   padding: 12px 16px;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
-  background: #fff;
-  border-top: 1px solid #e8f5e9;
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-border);
 }
 
 .action-btn {
   flex: 1;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: none;
   font-size: 15px;
   font-weight: 600;
@@ -995,22 +995,22 @@ const bubblePositions = computed(() => {
 }
 
 .action-btn.outline {
-  background: #fff;
-  color: #2d8a6e;
-  border: 1.5px solid #2d8a6e;
+  background: var(--color-bg-card);
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
 }
 
 .action-btn.outline:hover {
-  background: #e8f5e9;
+  background: var(--color-primary-light);
 }
 
 .action-btn.primary {
-  background: #2d8a6e;
+  background: var(--color-primary);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(45, 138, 110, 0.3);
+  box-shadow: 0 4px 12px var(--color-primary-shadow);
 }
 
 .action-btn.primary:hover {
-  background: #247a5e;
+  background: var(--color-primary-hover);
 }
 </style>
