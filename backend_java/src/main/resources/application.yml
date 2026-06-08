@@ -5,7 +5,7 @@ spring:
   application:
     name: EchoCampus-Backend
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:echo_campus}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:echo_campus}
     username: ${DB_USERNAME:echo_campus}
     password: ${DB_PASSWORD:echo_campus}
     driver-class-name: org.postgresql.Driver

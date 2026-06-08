@@ -34,7 +34,6 @@ const menuItems = [
     label: '反馈审核',
     icon: 'feedback',
     path: '/feedback',
-    badge: 3
   },
   {
     id: 'settings',

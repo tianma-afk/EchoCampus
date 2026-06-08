@@ -206,13 +206,13 @@ const recentCheckins: CheckinRecord[] = [
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f0f7f4;
+  background: var(--color-bg);
 }
 
 .profile-header {
   position: relative;
   flex-shrink: 0;
-  background: #2d8a6e;
+  background: linear-gradient(135deg, #3ca07a, #5a8f7b);
   overflow: hidden;
 }
 
@@ -247,7 +247,7 @@ const recentCheckins: CheckinRecord[] = [
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 600;
   color: #fff;
   flex-shrink: 0;
 }
@@ -260,7 +260,7 @@ const recentCheckins: CheckinRecord[] = [
 
 .user-name {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   color: #fff;
   margin: 0;
 }
@@ -279,7 +279,7 @@ const recentCheckins: CheckinRecord[] = [
   color: #fff;
   background: rgba(255, 255, 255, 0.2);
   padding: 2px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   width: fit-content;
 }
 
@@ -297,7 +297,7 @@ const recentCheckins: CheckinRecord[] = [
   display: flex;
   align-items: center;
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 14px 8px;
 }
 
@@ -311,7 +311,7 @@ const recentCheckins: CheckinRecord[] = [
 
 .stat-number {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: #fff;
 }
 
@@ -330,7 +330,7 @@ const recentCheckins: CheckinRecord[] = [
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 16px 80px;
+  padding: 16px 16px 84px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -350,8 +350,8 @@ const recentCheckins: CheckinRecord[] = [
   display: flex;
   align-items: center;
   gap: 14px;
-  background: #2d8a6e;
-  border-radius: 16px;
+  background: linear-gradient(135deg, #3ca07a, #5a8f7b);
+  border-radius: var(--radius-xl);
   padding: 16px;
   cursor: pointer;
 }
@@ -412,14 +412,14 @@ const recentCheckins: CheckinRecord[] = [
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
   margin: 0;
 }
 
 .view-all-btn {
   border: none;
   background: none;
-  color: #2d8a6e;
+  color: var(--color-primary);
   font-size: 13px;
   cursor: pointer;
 }
@@ -438,10 +438,10 @@ const recentCheckins: CheckinRecord[] = [
 .checkin-card {
   flex-shrink: 0;
   width: 120px;
-  background: #fff;
-  border-radius: 14px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 .checkin-image {
@@ -457,18 +457,18 @@ const recentCheckins: CheckinRecord[] = [
   color: #fff;
   background: rgba(255, 255, 255, 0.25);
   padding: 3px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .checkin-date {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
   padding: 8px 10px;
 }
 
 .menu-card {
-  background: #fff;
-  border-radius: 16px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
   overflow: hidden;
 }
 
@@ -484,7 +484,7 @@ const recentCheckins: CheckinRecord[] = [
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #e8f5e9;
+  background: var(--color-primary-light);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -494,33 +494,33 @@ const recentCheckins: CheckinRecord[] = [
 .menu-icon svg {
   width: 18px;
   height: 18px;
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 
 .menu-label {
   flex: 1;
   font-size: 14px;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
 }
 
 .menu-count {
   font-size: 13px;
-  color: #2d8a6e;
-  background: #e8f5e9;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   padding: 2px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .menu-arrow {
   width: 16px;
   height: 16px;
-  color: #d1d5db;
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
 .menu-divider {
   height: 1px;
-  background: #f0f0f0;
+  background: var(--color-divider);
   margin: 0 16px;
 }
 
@@ -532,13 +532,13 @@ const recentCheckins: CheckinRecord[] = [
   width: 100%;
   height: 48px;
   border: none;
-  border-radius: 16px;
-  background: #fff;
-  color: #ef4444;
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-card);
+  color: var(--color-danger);
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .logout-btn svg {

@@ -65,7 +65,11 @@ const router = createRouter({
       children: [
         {
           path: '',
-          component: () => import('../views/LandmarkManagement.vue')
+          component: () => import('../views/feedback/FeedbackList.vue')
+        },
+        {
+          path: ':id',
+          component: () => import('../views/feedback/FeedbackDetail.vue')
         }
       ]
     },

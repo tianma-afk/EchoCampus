@@ -454,14 +454,14 @@ const handleSortChange = () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f0f7f4;
+  background: var(--color-bg);
 }
 
 .repo-header-fixed {
   flex-shrink: 0;
   padding: 16px;
   padding-bottom: 12px;
-  background: #f0f7f4;
+  background: var(--color-bg);
   z-index: 1;
 }
 
@@ -474,8 +474,8 @@ const handleSortChange = () => {
 
 .repo-title {
   font-size: 24px;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-weight: 600;
+  color: var(--color-text-heading);
   margin: 0;
 }
 
@@ -489,7 +489,7 @@ const handleSortChange = () => {
   height: 36px;
   border-radius: 50%;
   border: none;
-  background: #e8f5e9;
+  background: var(--color-bg-input);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -498,13 +498,13 @@ const handleSortChange = () => {
 }
 
 .icon-btn:hover {
-  background: #d4edda;
+  background: var(--color-primary-light);
 }
 
 .icon-btn svg {
   width: 18px;
   height: 18px;
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 
 .search-bar {
@@ -529,13 +529,13 @@ const handleSortChange = () => {
 }
 
 .search-btn:hover .search-icon {
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 
 .search-icon {
   width: 18px;
   height: 18px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
 }
 
 .search-input {
@@ -543,16 +543,16 @@ const handleSortChange = () => {
   height: 44px;
   padding: 0 16px 0 42px;
   border: none;
-  border-radius: 12px;
-  background: #e8f5e9;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-input);
   font-size: 14px;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
   outline: none;
   box-sizing: border-box;
 }
 
 .search-input::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-secondary);
 }
 
 .category-tabs {
@@ -572,8 +572,8 @@ const handleSortChange = () => {
   padding: 8px 18px;
   border-radius: 20px;
   border: none;
-  background: #e8f5e9;
-  color: #6b7280;
+  background: var(--color-bg-input);
+  color: var(--color-text);
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
@@ -582,12 +582,12 @@ const handleSortChange = () => {
 }
 
 .category-tab.active {
-  background: #2d8a6e;
+  background: var(--color-primary);
   color: #fff;
 }
 
 .category-tab:hover:not(.active) {
-  background: #d4edda;
+  background: var(--color-primary-light);
 }
 
 .landmark-stats {
@@ -598,18 +598,18 @@ const handleSortChange = () => {
 
 .stats-text {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text);
 }
 
 .stats-text strong {
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 
 .sort-btn {
   padding: 4px 12px;
   border: none;
   background: transparent;
-  color: #6b7280;
+  color: var(--color-text);
   font-size: 13px;
   cursor: pointer;
 }
@@ -618,7 +618,7 @@ const handleSortChange = () => {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 16px 80px;
+  padding: 0 16px 84px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -636,23 +636,23 @@ const handleSortChange = () => {
 .landmark-card {
   display: flex;
   align-items: center;
-  background: #fff;
-  border-radius: 16px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-xl);
   padding: 16px;
   gap: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: box-shadow 0.2s;
 }
 
 .landmark-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .landmark-image {
   width: 80px;
   height: 80px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
@@ -694,16 +694,16 @@ const handleSortChange = () => {
 .landmark-name {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
   margin: 0;
 }
 
 .landmark-category {
   font-size: 12px;
-  color: #2d8a6e;
-  background: #e8f5e9;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   padding: 2px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   white-space: nowrap;
 }
 
@@ -725,7 +725,7 @@ const handleSortChange = () => {
 }
 
 .star-icon.filled {
-  color: #f59e0b;
+  color: var(--color-star);
 }
 
 .star-icon.half {
@@ -739,7 +739,7 @@ const handleSortChange = () => {
 .rating-value {
   font-size: 14px;
   font-weight: 600;
-  color: #f59e0b;
+  color: var(--color-star);
 }
 
 .landmark-meta {
@@ -753,7 +753,7 @@ const handleSortChange = () => {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
 }
 
 .meta-icon {
@@ -768,34 +768,33 @@ const handleSortChange = () => {
 
 .tag {
   font-size: 12px;
-  color: #6b7280;
-  background: #f3f4f6;
+  color: var(--color-text);
+  background: var(--color-bg-input);
   padding: 2px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .arrow-icon {
   width: 16px;
   height: 16px;
-  color: #d1d5db;
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
-/* 加载状态 */
 .loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: #6b7280;
+  color: var(--color-text);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #e8f5e9;
-  border-top-color: #2d8a6e;
+  border: 4px solid var(--color-bg-input);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 16px;
@@ -805,7 +804,6 @@ const handleSortChange = () => {
   to { transform: rotate(360deg); }
 }
 
-/* 错误提示 */
 .error-container {
   display: flex;
   flex-direction: column;
@@ -815,7 +813,7 @@ const handleSortChange = () => {
 }
 
 .error-message {
-  color: #ef4444;
+  color: var(--color-danger);
   font-size: 14px;
   margin-bottom: 16px;
   text-align: center;
@@ -823,26 +821,25 @@ const handleSortChange = () => {
 
 .retry-btn {
   padding: 10px 24px;
-  background: #2d8a6e;
+  background: var(--color-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 14px;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .retry-btn:hover {
-  background: #237a5e;
+  background: var(--color-primary-hover);
 }
 
-/* 空数据提示 */
 .empty-container {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
   font-size: 14px;
 }
 
@@ -856,15 +853,15 @@ const handleSortChange = () => {
   justify-content: center;
   gap: 8px;
   padding: 16px;
-  color: #6b7280;
+  color: var(--color-text);
   font-size: 13px;
 }
 
 .loading-spinner-small {
   width: 20px;
   height: 20px;
-  border: 3px solid #e8f5e9;
-  border-top-color: #2d8a6e;
+  border: 3px solid var(--color-bg-input);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -874,7 +871,7 @@ const handleSortChange = () => {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
   font-size: 13px;
 }
 </style>

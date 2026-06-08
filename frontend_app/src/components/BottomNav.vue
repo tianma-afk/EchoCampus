@@ -67,8 +67,8 @@ const switchTab = (key: string) => {
   justify-content: space-around;
   align-items: center;
   height: 64px;
-  background: #fff;
-  border-top: 1px solid #e8f5e9;
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-border);
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
@@ -91,18 +91,18 @@ const switchTab = (key: string) => {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   transition: background 0.2s;
 }
 
 .nav-item.active .nav-icon-wrapper {
-  background: #2d8a6e;
+  background: var(--color-primary);
 }
 
 .nav-icon {
   width: 20px;
   height: 20px;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   transition: color 0.2s;
 }
 
@@ -112,12 +112,12 @@ const switchTab = (key: string) => {
 
 .nav-label {
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .nav-item.active .nav-label {
-  color: #2d8a6e;
+  color: var(--color-primary);
 }
 </style>
