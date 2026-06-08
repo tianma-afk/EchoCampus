@@ -115,7 +115,6 @@ function initMap(lat: number, lng: number) {
     zoomControl: false,
   }).setView([lat, lng], DEFAULT_ZOOM)
 
-  L.control.zoom({ position: 'topright' }).addTo(map)
 
   L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
     subdomains: ['1', '2', '3', '4'],
@@ -804,10 +803,6 @@ onActivated(() => {
 
 .leaflet-bottom {
   bottom: 72px !important;
-}
-
-.leaflet-top.leaflet-right {
-  top: 175px;
 }
 
 .leaflet-bottom.leaflet-left {
