@@ -225,9 +225,14 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
     @Override
     public List<SearchResultVO> getSearchResult(UUID taskId) {
         TaskEntity task = taskMapper.selectById(taskId);
+        if(task.getTaskStatus().equals("FAILED")){
+            log.error("算法后台执行搜索任务失败: taskId={}", taskId);
+            throw new RuntimeException("算法后台执行搜索任务失败: taskId=" + taskId);
+        }
         if (task == null || task.getSearchResult() == null) {
             return Collections.emptyList();
         }
+
         try {
             return objectMapper.readValue(task.getSearchResult(),
                     new TypeReference<List<SearchResultVO>>() {});

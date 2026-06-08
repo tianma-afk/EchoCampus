@@ -62,6 +62,7 @@ class SearchService:
 
         except Exception as e:
             results = []
+            logger.error("图像搜索任务失败: "+ str(e))
             await self.search_callback(params.callbackUrl, "FAILED", results)
 
     async def search_callback(self, callback_url, status, results=None):

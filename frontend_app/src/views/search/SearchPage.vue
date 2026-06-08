@@ -154,20 +154,30 @@ const startPolling = (taskId: string) => {
     attempts++
     try {
       const res = await axios.get(`${SEARCH_API}/${taskId}/result`)
+      const code =res.data.code
       const results = res.data.data
 
-      if (results && results.length > 0) {
+      if (code === '00000') {
+        if (results && results.length > 0) {
+                clearInterval(pollTimer!)
+                pollTimer = null
+                recognitionResults.value = results
+                isRecognizing.value = false
+                showResult.value = true
+              } else if (attempts >= 30) {
+                clearInterval(pollTimer!)
+                pollTimer = null
+                isRecognizing.value = false
+                alert('识别超时，请重试')
+              }
+      }else{
         clearInterval(pollTimer!)
         pollTimer = null
-        recognitionResults.value = results
         isRecognizing.value = false
-        showResult.value = true
-      } else if (attempts >= 30) {
-        clearInterval(pollTimer!)
-        pollTimer = null
-        isRecognizing.value = false
-        alert('识别超时，请重试')
+        alert(res.data.message)
       }
+
+
     } catch {
       if (attempts >= 30) {
         clearInterval(pollTimer!)

@@ -1,6 +1,7 @@
 package com.echocampus.algorithm.controller;
 
 import com.echocampus.algorithm.service.AlgorithmUserService;
+import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.algorithm.vo.SearchResultVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -92,8 +93,12 @@ public class AlgorithmUserController {
     @Operation(summary = "查询图像搜索结果", description = "查询已处理完成的图像搜索识别结果")
     public Result<List<SearchResultVO>> getSearchResult(@PathVariable UUID taskId) {
         log.info("查询图像搜索结果: taskId={}", taskId);
-        List<SearchResultVO> results = algorithmUserService.getSearchResult(taskId);
-        return Result.success(results);
+        try{
+            List<SearchResultVO> results = algorithmUserService.getSearchResult(taskId);
+            return Result.success(results);
+        }catch (Exception e){
+            return Result.failure(ErrorCode.SYSTEM_ERROR);
+        }
     }
 
     /**
