@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
+import static com.echocampus.shared.exception.ErrorCode.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -31,9 +32,9 @@ public class AuthController {
             authService.sendCode(request);
             return Result.success("验证码已发送", Map.of("expires_in", 300));
         } catch (BusinessException e) {
-            return Result.failure(e.getCode(), e.getMessage());
+            return Result.failure(e.getErrorCode(), e.getMessage());
         } catch (RuntimeException e) {
-            return Result.failure(400, e.getMessage());
+            return Result.failure(SYSTEM_ERROR, e.getMessage());
         }
     }
 
@@ -44,7 +45,7 @@ public class AuthController {
             LoginVO result = authService.register(request);
             return Result.success(result);
         } catch (RuntimeException e) {
-            return Result.failure(400, e.getMessage());
+            return Result.failure(SYSTEM_ERROR, e.getMessage());//todo
         }
     }
 
@@ -57,9 +58,9 @@ public class AuthController {
         } catch (RuntimeException e) {
             String msg = e.getMessage();
             if (msg.contains("不存在") || msg.contains("错误")) {
-                return Result.failure(401, msg);
+                return Result.failure(SYSTEM_ERROR, msg);//todo
             }
-            return Result.failure(400, msg);
+            return Result.failure(SYSTEM_ERROR, msg);//todo
         }
     }
 }
