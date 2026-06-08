@@ -7,7 +7,7 @@ from utils.image_downloader import download_image_to_pil
 from core.gpu_lock import gpu_lock
 from core.dependencies import get_extractor
 from core import milvus_service
-from core.token_manager import load_image_tokens_async
+from core.dense_features_manager import load_image_dense_features_async
 from schemas.search import SearchParams
 
 global_semaphore = Semaphore(10)
@@ -26,17 +26,17 @@ class SearchService:
             img = await download_image_to_pil(params.imgUrl)
             extractor = get_extractor()
             async with gpu_lock:  # 确保同一时间只有一个任务在使用 GPU
-                vector, token = await asyncio.to_thread(extractor.extract_complete_features, img)
-            result = await milvus_service.service.search_similar_async(vector, params.topK)
+                global_desc, dense_features = await asyncio.to_thread(extractor.extract_complete_features, img)
+            result = await milvus_service.service.search_similar_async(global_desc, params.topK)
             
             if params.usePairSimilarity:
-                # 批量加载候选 tokens
+                # 批量加载候选 dense_features
                 candidate_ids = [hit["uuid"] for hit in result]
-                candidate_tokens = await asyncio.gather(*[load_image_tokens_async(img_id) for img_id in candidate_ids]) 
+                candidate_dense_features = await asyncio.gather(*[load_image_dense_features_async(img_id) for img_id in candidate_ids]) 
 
                 # 批量计算相似度（优化版）
                 async with gpu_lock:  # 确保同一时间只有一个任务在使用 GPU
-                    scores = await asyncio.to_thread(extractor.pair_similarity_batch_single_query, token, candidate_tokens)
+                    scores = await asyncio.to_thread(extractor.pair_similarity_batch_single_query, dense_features, candidate_dense_features)
 
                 results = []
                 for hit, score in zip(result, scores):  # Milvus client 返回 [[hit1, hit2, ...]]

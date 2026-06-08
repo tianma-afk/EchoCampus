@@ -2,7 +2,7 @@ from fastapi import APIRouter
 import asyncio
 
 from schemas.insert import InsertParams
-from services.vectorize_service import VectorizeService
+from services.insert_service import InsertService
 
 router = APIRouter(prefix="/insert", tags=["管理端向量化图片"])
 
@@ -21,7 +21,7 @@ async def insert_receive(params: InsertParams):
             }
     '''
 
-    asyncio.create_task(VectorizeService().insert_process_with_limit(params))
+    asyncio.create_task(InsertService().insert_process_with_limit(params))
     task_id = params.callbackUrl.split('/')[-1]
     return {
         "taskId": "alg-task-" + task_id

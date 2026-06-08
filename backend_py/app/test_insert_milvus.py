@@ -68,7 +68,7 @@ def main():
     logger.info("加载 Pair-VPR 模型 (vitB, fp16)...")
     extractor = PairVPRExtractor(model_type="vitB", use_fp16=True)
 
-    vectors = []
+    global_descs = []
     for lm, uid in zip(TEST_LANDMARKS, uuids):
         name = lm["name"]
         url = lm["url"]
@@ -80,15 +80,15 @@ def main():
         logger.info(f"  尺寸: {img.size}")
 
         logger.info(f"  提取特征...")
-        vector, tokens = extractor.extract_complete_features(img)
-        logger.info(f"  向量维度: {len(vector)}")
+        global_desc, tokens = extractor.extract_complete_features(img)
+        logger.info(f"  向量维度: {len(global_desc)}")
 
         token_manager.save_image_tokens(uid, tokens)
-        vectors.append(vector)
+        global_descs.append(global_desc)
         logger.info(f"  Token 已保存")
 
-    logger.info(f"批量写入容器 Milvus ({len(vectors)} 条)...")
-    milvus_service.service.insert_vectors(vectors, uuids)
+    logger.info(f"批量写入容器 Milvus ({len(global_descs)} 条)...")
+    milvus_service.service.insert_global_descs(global_descs, uuids)
 
     logger.info("=" * 60)
     logger.info("录入完成！UUID 对照表：")

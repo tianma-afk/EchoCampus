@@ -6,14 +6,14 @@ from loguru import logger
 from utils.image_downloader import download_image_to_pil
 from core.gpu_lock import gpu_lock
 from core.dependencies import get_extractor
-from core.token_manager import save_image_tokens_async
+from core.dense_features_manager import save_image_dense_features_async
 from core import milvus_service
 from schemas.insert import InsertParams
 
 global_semaphore = Semaphore(10)
 
 
-class VectorizeService:
+class InsertService:
     def __init__(self):
         pass
 
@@ -64,24 +64,24 @@ class VectorizeService:
                 break
             img, image_uuid = item
             async with gpu_lock:  # 确保同一时间只有一个任务在使用 GPU
-                vector, token = await asyncio.to_thread(extractor.extract_complete_features, img)
-            await info_queue.put((vector, token, image_uuid))
+                global_desc, dense_features = await asyncio.to_thread(extractor.extract_complete_features, img)
+            await info_queue.put((global_desc, dense_features, image_uuid))
         await info_queue.put((None, None, None))  # 处理完成的标志
 
     async def save_images_info(self, info_queue: asyncio.Queue):
-        vectors = []
+        global_descs = []
         uuids = []
         while True:
-            vector, token, image_uuid = await info_queue.get()
-            if vector is None and token is None and image_uuid is None:
+            global_desc, dense_features, image_uuid = await info_queue.get()
+            if global_desc is None and dense_features is None and image_uuid is None:
                 break
-            await save_image_tokens_async(image_uuid, token)  # 异步保存 tokens
-            vectors.append(vector)
+            await save_image_dense_features_async(image_uuid, dense_features)  # 异步保存 dense_features
+            global_descs.append(global_desc)
             uuids.append(image_uuid)
-            if len(vectors) >= 100:  # 每100个向量保存一次
-                await milvus_service.service.insert_vectors_async(vectors, uuids)
-                vectors = []
+            if len(global_descs) >= 100:  # 每100个向量保存一次
+                await milvus_service.service.insert_global_descs_async(global_descs, uuids)
+                global_descs = []
                 uuids = []
-        if len(vectors) > 0 and len(uuids) > 0:
-            await milvus_service.service.insert_vectors_async(vectors, uuids)  # 保存剩余的向量
+        if len(global_descs) > 0 and len(uuids) > 0:
+            await milvus_service.service.insert_global_descs_async(global_descs, uuids)  # 保存剩余的向量
         

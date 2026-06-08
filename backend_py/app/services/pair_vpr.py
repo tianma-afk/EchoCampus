@@ -94,7 +94,7 @@ class PairVPRExtractor:
         self.model.to(self.device)
         self.model.eval()
                 
-        # 🔥 关键：提取解码器组件（用于直接处理 tokens）
+        # 🔥 关键：提取解码器组件（用于直接处理 dense_features）
         self.decoder_embed = self.model.decoder_embed
         self.decoder_clstoken = self.model.decoder_clstoken
         self.decoder_pos_embed = self.model.dec_pos_embed
@@ -157,7 +157,7 @@ class PairVPRExtractor:
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
     
-    def extract_vector(self, image_path):
+    def extract_global_desc(self, image_path):
         """第一阶段：提取向量（给 Milvus）"""
         if not os.path.exists(image_path):
             return None
@@ -185,9 +185,9 @@ class PairVPRExtractor:
         
         with torch.no_grad():
             dense_features, global_desc = self.model(img_tensor, None, mode="global")
-            vector = global_desc.float().cpu().numpy().flatten().tolist()
-            tokens = dense_features.float().squeeze(0).cpu()
-        return vector, tokens
+            global_desc = global_desc.float().cpu().numpy().flatten().tolist()
+            dense_features = dense_features.float().squeeze(0).cpu()
+        return global_desc, dense_features
     
     def ensure_tensor(self,x):
         if isinstance(x, np.ndarray):
@@ -199,16 +199,16 @@ class PairVPRExtractor:
         return t.half() if self.use_fp16 else t.float()
 
     
-    def pair_similarity_from_cached_tokens(self, q_tokens, c_tokens):
+    def pair_similarity_from_cached_dense_features(self, q_dense_features, c_dense_features):
         """
-        q_tokens, c_tokens: 已经是 torch.Tensor 或 numpy.ndarray，形状为 [1, L, D] 或 [L, D]
+        q_dense_features, c_dense_features: 已经是 torch.Tensor 或 numpy.ndarray，形状为 [1, L, D] 或 [L, D]
         返回: float，相似度分数（raw score，越大越相似，行为上与官方 eval 保持一致）
         实现细节：对称得分 = model(q,c,'pairvpr') + model(c,q,'pairvpr')，始终返回 float（batch=1 的常见情况）。
         """
         # 转换为 torch.Tensor
         
-        q = self.ensure_tensor(q_tokens)
-        c = self.ensure_tensor(c_tokens)
+        q = self.ensure_tensor(q_dense_features)
+        c = self.ensure_tensor(c_dense_features)
 
         # 形状规范化
         if q.dim() == 2:
@@ -229,23 +229,23 @@ class PairVPRExtractor:
 
         return float(score.item()) if score.numel() == 1 else score.numpy().tolist()
 
-    def pair_similarity_batch(self, q_tokens_list, c_tokens_list):
+    def pair_similarity_batch(self, q_dense_features_list, c_dense_features_list):
         """
         向量化批量比对：尽量将多对 (q, c) 一次性堆成 [B, L, D] 调用 model，以减少 Python 循环与设备切换开销。
-        如果输入的 token 形状不一致（无法 stack），回退到逐对循环实现以保证兼容性。
+        如果输入的 dense_features 形状不一致（无法 stack），回退到逐对循环实现以保证兼容性。
 
-        q_tokens_list: list of Tensor/ndarray，每个形状 [1, L, D] 或 [L, D]
-        c_tokens_list: list of Tensor/ndarray，每个形状 [1, L, D] 或 [L, D]
+        q_dense_features_list: list of Tensor/ndarray，每个形状 [1, L, D] 或 [L, D]
+        c_dense_features_list: list of Tensor/ndarray，每个形状 [1, L, D] 或 [L, D]
 
         返回: list of float，每个是相应对的相似度
         """
 
-        if len(q_tokens_list) != len(c_tokens_list):
-            raise ValueError("q_tokens_list and c_tokens_list must have the same length")
+        if len(q_dense_features_list) != len(c_dense_features_list):
+            raise ValueError("q_dense_features_list and c_dense_features_list must have the same length")
 
         q_tensors = []
         c_tensors = []
-        for qt, ct in zip(q_tokens_list, c_tokens_list):
+        for qt, ct in zip(q_dense_features_list, c_dense_features_list):
             q = self.ensure_tensor(qt)
             c = self.ensure_tensor(ct)
 
@@ -254,15 +254,15 @@ class PairVPRExtractor:
                 if q.shape[0] == 1:
                     q = q.squeeze(0)
                 else:
-                    raise RuntimeError("cannot vectorize: q item has batch>1")
+                    raise RuntimeError("cannot global_descize: q item has batch>1")
             if c.dim() == 3:
                 if c.shape[0] == 1:
                     c = c.squeeze(0)
                 else:
-                    raise RuntimeError("cannot vectorize: c item has batch>1")
+                    raise RuntimeError("cannot global_descize: c item has batch>1")
 
             if q.dim() != 2 or c.dim() != 2:
-                raise RuntimeError("cannot vectorize: unexpected tensor dims")
+                raise RuntimeError("cannot global_descize: unexpected tensor dims")
 
             q_tensors.append(q)
             c_tensors.append(c)
@@ -283,5 +283,5 @@ class PairVPRExtractor:
                 return [float(score.item())]
             return score.numpy().tolist()
     
-    def pair_similarity_batch_single_query(self, q_tokens, c_tokens_list):
-        return self.pair_similarity_batch([q_tokens] * len(c_tokens_list), c_tokens_list)
+    def pair_similarity_batch_single_query(self, q_dense_features, c_dense_features_list):
+        return self.pair_similarity_batch([q_dense_features] * len(c_dense_features_list), c_dense_features_list)
