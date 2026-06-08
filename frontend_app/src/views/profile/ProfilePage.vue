@@ -168,17 +168,20 @@ const recentCheckins: CheckinRecord[] = [
 
 <style scoped>
 .profile-page {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   height: 100vh;
   background: var(--color-bg);
 }
 
 .profile-header {
-  position: relative;
-  flex-shrink: 0;
-  background: var(--color-bg);
-  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: rgba(250, 248, 245, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .header-content {
@@ -257,10 +260,11 @@ const recentCheckins: CheckinRecord[] = [
 }
 
 .profile-scroll {
-  flex: 1;
+  height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 16px 84px;
+  padding: 0 16px 84px;
+  padding-top: 200px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
