@@ -278,27 +278,6 @@ const handleSortChange = () => {
 <template>
   <div class="landmark-repo">
     <div class="repo-header-fixed">
-      <header class="repo-header">
-        <h1 class="repo-title">地标库</h1>
-        <div class="header-actions">
-          <button class="icon-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-          </button>
-          <button class="icon-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <line x1="4" y1="6" x2="20" y2="6" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="18" x2="20" y2="18" />
-            </svg>
-          </button>
-        </div>
-      </header>
-
       <div class="search-bar">
         <button class="search-btn" @click="handleKeywordSearch">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -459,52 +438,9 @@ const handleSortChange = () => {
 
 .repo-header-fixed {
   flex-shrink: 0;
-  padding: 16px;
-  padding-bottom: 12px;
+  padding: 24px 16px 12px;
   background: var(--color-bg);
   z-index: 1;
-}
-
-.repo-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.repo-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--color-text-heading);
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: var(--color-bg-input);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.icon-btn:hover {
-  background: var(--color-primary-light);
-}
-
-.icon-btn svg {
-  width: 18px;
-  height: 18px;
-  color: var(--color-primary);
 }
 
 .search-bar {

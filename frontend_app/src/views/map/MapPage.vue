@@ -12,6 +12,7 @@ interface LandmarkMarker {
   category: string
   rating: number
   openTime: string
+  checkins?: number
 }
 
 const API_BASE_URL = 'http://localhost:8080/api/v1'
@@ -46,6 +47,10 @@ const suggestions = ref<LandmarkMarker[]>([])
 const showSuggestions = ref(false)
 const loading = ref(false)
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const hotRankings = ref<LandmarkMarker[]>([])
+const isSearchFocused = ref(false)
+const showRanking = computed(() => isSearchFocused.value && !searchQuery.value.trim() && hotRankings.value.length > 0)
 
 const categories = ['全部', '教学楼', '图书馆', '体育场馆', '生活区', '活动场馆', '景观景点']
 const activeCategory = ref('全部')
@@ -179,8 +184,13 @@ function handleCategoryChange(cat: string) {
   activeCategory.value = cat
 }
 
+function onFocus() {
+  isSearchFocused.value = true
+}
+
 function onBlur() {
   setTimeout(() => {
+    isSearchFocused.value = false
     showSuggestions.value = false
   }, 200)
 }
@@ -208,6 +218,27 @@ async function loadLandmarks() {
   }
 }
 
+async function loadHotRankings() {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/landmarks`, {
+      params: { sortBy: 'hot', pageSize: 10 },
+    })
+    const records = res.data?.data?.records || []
+    hotRankings.value = records.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      lat: item.latitude,
+      lng: item.longitude,
+      category: item.category,
+      rating: item.rating,
+      openTime: item.openTime,
+      checkins: item.checkins || 0,
+    }))
+  } catch (e) {
+    console.error('加载热度榜失败:', e)
+  }
+}
+
 function calcCenter(): [number, number] {
   if (landmarks.value.length === 0) return DEFAULT_CENTER
   const sumLat = landmarks.value.reduce((s, l) => s + l.lat, 0)
@@ -216,7 +247,7 @@ function calcCenter(): [number, number] {
 }
 
 onMounted(async () => {
-  await loadLandmarks()
+  await Promise.all([loadLandmarks(), loadHotRankings()])
 
   const center = calcCenter()
   initMap(center[0], center[1])
@@ -288,9 +319,6 @@ onActivated(() => {
     <div ref="mapContainer" class="map-container"></div>
 
     <div class="search-bar">
-      <header class="map-header">
-        <h1 class="map-title">地图导览</h1>
-      </header>
       <div class="search-input-wrapper">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
@@ -302,9 +330,30 @@ onActivated(() => {
           type="text"
           placeholder="搜索地标..."
           @input="handleSearchInput"
+          @focus="onFocus"
           @blur="onBlur"
         />
       </div>
+      <ul v-if="showRanking" class="ranking-list">
+        <li
+          v-for="(lm, index) in hotRankings"
+          :key="lm.id"
+          class="ranking-item"
+          @mousedown.prevent="selectSuggestion(lm)"
+        >
+          <span class="rank-badge" :class="'rank-' + (index + 1)">
+            <template v-if="index === 0">&#129351;</template>
+            <template v-else-if="index === 1">&#129352;</template>
+            <template v-else-if="index === 2">&#129353;</template>
+            <template v-else>{{ index + 1 }}</template>
+          </span>
+          <div class="ranking-info">
+            <span class="ranking-name">{{ lm.name }}</span>
+            <span class="ranking-category">{{ lm.category }}</span>
+          </div>
+          <span class="ranking-count">{{ (lm.checkins || 0).toLocaleString() }} 次打卡</span>
+        </li>
+      </ul>
       <ul v-if="showSuggestions && suggestions.length > 0" class="suggestions-list">
         <li
           v-for="lm in suggestions"
@@ -386,21 +435,10 @@ onActivated(() => {
 
 .search-bar {
   position: absolute;
-  top: 16px;
+  top: 24px;
   left: 16px;
   right: 16px;
   z-index: 1000;
-}
-
-.map-header {
-  margin-bottom: 16px;
-}
-
-.map-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--color-text-heading);
-  margin: 0;
 }
 
 .search-input-wrapper {
@@ -467,6 +505,80 @@ onActivated(() => {
 .suggestion-category {
   font-size: 12px;
   color: var(--color-text-secondary);
+}
+
+.ranking-list {
+  margin: 8px 0 0;
+  padding: 8px 0;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  list-style: none;
+  overflow: hidden;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ranking-item:hover,
+.ranking-item:active {
+  background: var(--color-bg);
+}
+
+.rank-badge {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.rank-badge.rank-1,
+.rank-badge.rank-2,
+.rank-badge.rank-3 {
+  font-size: 20px;
+  width: 28px;
+  height: 28px;
+}
+
+.ranking-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ranking-name {
+  font-size: 15px;
+  color: var(--color-text-heading);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-category {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.ranking-count {
+  font-size: 13px;
+  color: var(--color-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .category-tabs {
