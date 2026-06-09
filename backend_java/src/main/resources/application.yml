@@ -51,3 +51,17 @@ callback:
   base-path: /api/v1/internal/callback
   # 回调超时时间（毫秒）
   timeout: ${CALLBACK_TIMEOUT:5000}
+
+algorithm:
+  client:
+    base-url: ${ALGORITHM_CLIENT_BASE_URL:http://localhost:8000}
+    insert:
+      failure-threshold: ${ALGORITHM_CLIENT_INSERT_FAILURE_THRESHOLD:10}
+      timeout-ms: ${ALGORITHM_CLIENT_INSERT_TIMEOUT_MS:60000}
+      half-open-max-requests: ${ALGORITHM_CLIENT_INSERT_HALF_OPEN_MAX_REQUESTS:3}
+      half-open-success-rate-threshold: ${ALGORITHM_CLIENT_INSERT_HALF_OPEN_SUCCESS_RATE_THRESHOLD:0.5}
+    search:
+      failure-threshold: ${ALGORITHM_CLIENT_SEARCH_FAILURE_THRESHOLD:5}
+      timeout-ms: ${ALGORITHM_CLIENT_SEARCH_TIMEOUT_MS:30000}
+      half-open-max-requests: ${ALGORITHM_CLIENT_SEARCH_HALF_OPEN_MAX_REQUESTS:5}
+      half-open-success-rate-threshold: ${ALGORITHM_CLIENT_SEARCH_HALF_OPEN_SUCCESS_RATE_THRESHOLD:0.5}

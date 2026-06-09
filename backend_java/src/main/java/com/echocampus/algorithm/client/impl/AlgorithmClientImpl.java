@@ -1,10 +1,12 @@
 package com.echocampus.algorithm.client.impl;
 
 import com.echocampus.algorithm.client.AlgorithmClient;
+import org.springframework.beans.factory.annotation.Value;
 import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.exception.TechnicalException;
 import com.echocampus.shared.util.CircuitBreaker;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -22,13 +24,21 @@ import java.net.http.HttpResponse;
 
 @Service
 public class AlgorithmClientImpl implements AlgorithmClient {
-    private static final CircuitBreaker insertCB = new CircuitBreaker(10, 60000, 3, 0.5f);
-    private static final CircuitBreaker serachCB = new CircuitBreaker(5, 30000, 5, 0.5f);
+    private final CircuitBreaker insertCB;
+    private final CircuitBreaker searchCB;
+    private final String baseUrl;
+
     public record ImageInfo(UUID uuid, String url) {}
     public record CreateInsertTaskRequest(List<ImageInfo> images, String callbackUrl) {}
     public record CreateSearchTaskRequest(String imgUrl, String callbackUrl,int topK, boolean usePairSimilarity) {}
 
-    static final String BASE_URL = "http://localhost:8000";
+    public AlgorithmClientImpl(@Qualifier("insertCircuitBreaker") CircuitBreaker insertCB,
+                               @Qualifier("searchCircuitBreaker") CircuitBreaker searchCB,
+                               @Value("${algorithm.client.base-url:http://localhost:8000}") String baseUrl) {
+        this.insertCB = insertCB;
+        this.searchCB = searchCB;
+        this.baseUrl = baseUrl;
+    }
 
     private void sameIdCheck(String callbackUrl, String taskId){
         String uuidFromCallback = callbackUrl.substring(callbackUrl.lastIndexOf("/") + 1);
@@ -51,7 +61,7 @@ public class AlgorithmClientImpl implements AlgorithmClient {
 
             String bodyJson = mapper.writeValueAsString(requestBody);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/insert"))
+                    .uri(URI.create(baseUrl + "/insert"))
                     .timeout(Duration.ofSeconds(5))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
@@ -75,13 +85,13 @@ public class AlgorithmClientImpl implements AlgorithmClient {
         try {
             String bodyJson = mapper.writeValueAsString(requestBody);
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/search"))
+                    .uri(URI.create(baseUrl + "/search"))
                     .timeout(Duration.ofSeconds(10))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
                     .build();
 
-            HttpResponse<String> response = serachCB.execute(request);
+            HttpResponse<String> response = searchCB.execute(request);
             String taskId = mapper.readTree(response.body()).get("taskId").asText();
 
             sameIdCheck(callbackUrl, taskId);
