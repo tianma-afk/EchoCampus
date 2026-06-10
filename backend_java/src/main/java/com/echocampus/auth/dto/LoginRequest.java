@@ -12,10 +12,8 @@ public class LoginRequest {
     private String email;
 
     @Schema(description = "密码", example = "123456")
-    @NotBlank(message = "密码不能为空")
     private String password;
 
     @Schema(description = "验证码（验证码登录时使用）", example = "123456")
-    @NotBlank(message = "验证码不能为空")
     private String code;
 }
