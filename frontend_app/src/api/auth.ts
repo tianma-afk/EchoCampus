@@ -41,3 +41,16 @@ export async function login(params: {
   const res = await axios.post(`${API_BASE}/login`, params)
   return res.data
 }
+
+export interface UserProfile {
+  id: string
+  nickname: string
+  email: string
+}
+
+export async function getProfile(token: string): Promise<ApiResponse<UserProfile>> {
+  const res = await axios.get('http://localhost:8080/api/v1/user/profile', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  return res.data
+}

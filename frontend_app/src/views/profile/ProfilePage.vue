@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ userNickname: string }>()
+defineProps<{ userNickname: string; userEmail: string }>()
 const emit = defineEmits<{ logout: [] }>()
 
 interface CheckinRecord {
@@ -24,7 +24,7 @@ const recentCheckins: CheckinRecord[] = [
           <div class="avatar">{{ userNickname.charAt(0).toUpperCase() }}</div>
           <div class="user-details">
             <h2 class="user-name">{{ userNickname }}</h2>
-            <p class="user-dept">EchoCampus 用户</p>
+            <p class="user-dept">{{ userEmail }}</p>
           </div>
         </div>
         <div class="stats-bar">
