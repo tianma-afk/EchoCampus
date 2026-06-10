@@ -1,4 +1,7 @@
 <script setup lang="ts">
+defineProps<{ userNickname: string }>()
+const emit = defineEmits<{ logout: [] }>()
+
 interface CheckinRecord {
   name: string
   color: string
@@ -18,11 +21,10 @@ const recentCheckins: CheckinRecord[] = [
       <div class="header-bg"></div>
       <div class="header-content">
         <div class="user-info">
-          <div class="avatar">张</div>
+          <div class="avatar">{{ userNickname.charAt(0).toUpperCase() }}</div>
           <div class="user-details">
-            <h2 class="user-name">张同学</h2>
-            <p class="user-dept">计算机学院 · 2023级</p>
-            <span class="admin-badge">管理员</span>
+            <h2 class="user-name">{{ userNickname }}</h2>
+            <p class="user-dept">EchoCampus 用户</p>
           </div>
         </div>
         <div class="stats-bar">
@@ -188,7 +190,7 @@ const recentCheckins: CheckinRecord[] = [
           </div>
         </div>
 
-        <button class="logout-btn">
+        <button class="logout-btn" @click="emit('logout')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
             <polyline points="16 17 21 12 16 7" />

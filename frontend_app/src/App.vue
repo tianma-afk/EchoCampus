@@ -1,14 +1,26 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
+import { useAuth } from './composables/useAuth'
 import SearchPage from './views/search/SearchPage.vue'
 import MapPage from './views/map/MapPage.vue'
 import LandmarkRepo from './views/repo/LandmarkRepo.vue'
 import LandmarkDetail from './views/detail/LandmarkDetail.vue'
 import ProfilePage from './views/profile/ProfilePage.vue'
+import LoginPage from './views/auth/LoginPage.vue'
 import BottomNav from './components/BottomNav.vue'
 
 const API_BASE_URL = 'http://localhost:8080/api/v1'
+
+const { token, nickname, isLoggedIn, logout } = useAuth()
+
+// 所有请求自动带上 token
+axios.interceptors.request.use((config) => {
+  if (token.value) {
+    config.headers.Authorization = `Bearer ${token.value}`
+  }
+  return config
+})
 
 interface LandmarkData {
   id: string
@@ -54,6 +66,10 @@ interface FocusMarker {
 
 const mapFocusTarget = ref<FocusMarker | null>(null)
 
+function handleLoginSuccess() {
+  // 登录成功后自动切换回主界面
+}
+
 const handleSelectLandmark = (landmark: LandmarkData) => {
   selectedLandmark.value = landmark
   showDetail.value = true
@@ -79,22 +95,34 @@ const handleBack = () => {
   showDetail.value = false
   selectedLandmark.value = null
 }
+
+const handleLogout = () => {
+  logout()
+  currentTab.value = 'scan'
+  showDetail.value = false
+}
 </script>
 
 <template>
-  <LandmarkDetail
-    v-if="showDetail && selectedLandmark"
-    :landmark="selectedLandmark"
-    @back="handleBack"
-    @navigate-map="handleNavigateToMap"
-  />
-  <div v-show="!showDetail">
-    <KeepAlive>
-      <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
-      <MapPage v-else-if="currentTab === 'map'" :focus-landmark="mapFocusTarget" @open-detail="handleOpenLandmarkDetail" />
-      <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
-      <ProfilePage v-else-if="currentTab === 'profile'" />
-    </KeepAlive>
-    <BottomNav v-model="currentTab" />
-  </div>
+  <!-- 未登录 -->
+  <LoginPage v-if="!isLoggedIn" @login-success="handleLoginSuccess" />
+
+  <!-- 已登录 -->
+  <template v-else>
+    <LandmarkDetail
+      v-if="showDetail && selectedLandmark"
+      :landmark="selectedLandmark"
+      @back="handleBack"
+      @navigate-map="handleNavigateToMap"
+    />
+    <div v-show="!showDetail">
+      <KeepAlive>
+        <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
+        <MapPage v-else-if="currentTab === 'map'" :focus-landmark="mapFocusTarget" @open-detail="handleOpenLandmarkDetail" />
+        <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
+        <ProfilePage v-else-if="currentTab === 'profile'" :user-nickname="nickname" @logout="handleLogout" />
+      </KeepAlive>
+      <BottomNav v-model="currentTab" />
+    </div>
+  </template>
 </template>

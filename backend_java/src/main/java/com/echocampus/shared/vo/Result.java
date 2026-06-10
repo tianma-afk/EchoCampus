@@ -44,9 +44,11 @@ public class Result<T> {
         return new Result<>(ErrorCode.SUCCESS.getCode(), ErrorCode.SUCCESS.getMessage(), data);
     }
 
-    public static <T> Result<T> success(String message, T data) {
-        return new Result<>("200", message, data);
+    public static <T> Result<T> success(ErrorCode errorCode ,String message, T data) {
+        return new Result<>(errorCode.getCode(), message, data);
     }
+
+
 
     public static <T> Result<T> failure(ErrorCode errorCode) {
         return new Result<>(errorCode.getCode(), errorCode.getMessage(), null);

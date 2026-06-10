@@ -10,10 +10,12 @@ import com.echocampus.shared.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import static com.echocampus.shared.exception.ErrorCode.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "用户认证", description = "提供登录、注册、验证码等功能")
@@ -28,39 +30,45 @@ public class AuthController {
     @PostMapping("/send-code")
     @Operation(summary = "发送邮箱验证码", description = "向指定邮箱发送验证码，用于注册或登录")
     public Result<Map<String, Object>> sendCode(@Valid @RequestBody SendCodeRequest request) {
+        log.info("[发送验证码] 请求邮箱: {}", request.getEmail());
         try {
             authService.sendCode(request);
-            return Result.success("验证码已发送", Map.of("expires_in", 300));
+            log.info("[发送验证码] 成功 -> {}", request.getEmail());
+            return Result.success(SUCCESS, "验证码已发送", Map.of("expires_in", 300));
         } catch (BusinessException e) {
+            log.warn("[发送验证码] 业务异常 -> {} | {}: {}", request.getEmail(), e.getCode(), e.getMessage());
             return Result.failure(e.getErrorCode(), e.getMessage());
         } catch (RuntimeException e) {
+            log.error("[发送验证码] 系统异常 -> {} | {}", request.getEmail(), e.getMessage(), e);
             return Result.failure(SYSTEM_ERROR, e.getMessage());
         }
     }
 
     @PostMapping("/register")
-    @Operation(summary = "用户注册", description = "通过邮箱验证码完成注册")
+    @Operation(summary = "用户注册/登录", description = "通过邮箱验证码完成注册或登录")
     public Result<LoginVO> register(@Valid @RequestBody RegisterRequest request) {
+        log.info("[注册/登录] 请求邮箱: {}", request.getEmail());
         try {
             LoginVO result = authService.register(request);
-            return Result.success(result);
+            log.info("[注册/登录] 成功 -> {} | token前8位: {}...", request.getEmail(), result.getAccessToken().substring(0, Math.min(8, result.getAccessToken().length())));
+            return Result.success(SUCCESS, "登录成功", result);
         } catch (RuntimeException e) {
-            return Result.failure(SYSTEM_ERROR, e.getMessage());//todo
+            log.warn("[注册/登录] 失败 -> {} | {}", request.getEmail(), e.getMessage());
+            return Result.failure(SYSTEM_ERROR, e.getMessage());
         }
     }
 
     @PostMapping("/login")
-    @Operation(summary = "用户登录", description = "通过邮箱和密码或验证码登录")
+    @Operation(summary = "密码登录", description = "通过邮箱和密码登录")
     public Result<LoginVO> login(@Valid @RequestBody LoginRequest request) {
+        log.info("[密码登录] 请求邮箱: {}", request.getEmail());
         try {
             LoginVO result = authService.login(request);
-            return Result.success(result);
+            log.info("[密码登录] 成功 -> {}", request.getEmail());
+            return Result.success(SUCCESS, "登录成功", result);
         } catch (RuntimeException e) {
-            String msg = e.getMessage();
-            if (msg.contains("不存在") || msg.contains("错误")) {
-                return Result.failure(SYSTEM_ERROR, msg);//todo
-            }
-            return Result.failure(SYSTEM_ERROR, msg);//todo
+            log.warn("[密码登录] 失败 -> {} | {}", request.getEmail(), e.getMessage());
+            return Result.failure(SYSTEM_ERROR, e.getMessage());
         }
     }
 }

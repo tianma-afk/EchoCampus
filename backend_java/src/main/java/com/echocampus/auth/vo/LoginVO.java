@@ -1,11 +1,10 @@
 package com.echocampus.auth.vo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.UUID;
 
 @Data
 @Builder
@@ -13,15 +12,14 @@ import java.util.UUID;
 @AllArgsConstructor
 public class LoginVO {
 
-    private UUID userId;
-
-    private String nickname;
-
-    private String email;
-
+    @JsonProperty("access_token")
     private String accessToken;
 
-    private String refreshToken;
+    @JsonProperty("token_type")
+    private String tokenType;
 
+    @JsonProperty("expires_in")
     private long expiresIn;
+
+    private String nickname;
 }

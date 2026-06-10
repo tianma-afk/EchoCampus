@@ -8,6 +8,8 @@ import com.echocampus.auth.service.AuthService;
 import com.echocampus.auth.vo.LoginVO;
 import com.echocampus.user.entity.UserEntity;
 import com.echocampus.user.mapper.UserMapper;
+import com.echocampus.shared.util.JwtUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -27,11 +29,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
 
     private final UserMapper userMapper;
     private final JavaMailSender mailSender;
+    private final JwtUtil jwtUtil;
     private final Map<String, CodeEntry> codeStore = new ConcurrentHashMap<>();
     private final Map<String, Long> lastSendTime = new ConcurrentHashMap<>();
     private final Map<String, Integer> dailySendCount = new ConcurrentHashMap<>();
@@ -40,136 +44,148 @@ public class AuthServiceImpl implements AuthService {
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final int SEND_INTERVAL_SECONDS = 60;
-    private static final int DAILY_LIMIT = 5;//每日限制5次
-    private static final int CODE_EXPIRE_SECONDS = 300;//验证码5分钟过期
+    private static final int DAILY_LIMIT = 5;
+    private static final int CODE_EXPIRE_SECONDS = 300;
 
     private record CodeEntry(String code, long createdAt) {}
 
-    public AuthServiceImpl(UserMapper userMapper, JavaMailSender mailSender) {
+    public AuthServiceImpl(UserMapper userMapper, JavaMailSender mailSender, JwtUtil jwtUtil) {
         this.userMapper = userMapper;
         this.mailSender = mailSender;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
     public void sendCode(SendCodeRequest request) {
-        // 1. 校验邮箱格式
+        log.info("[sendCode] 开始处理 -> email={}", request.getEmail());
+
         if (request.getEmail() == null || !EMAIL_PATTERN.matcher(request.getEmail()).matches()) {
-            throw new BusinessException(EMAIL_FORMAT_ERROR);//"邮箱格式无效"
+            log.warn("[sendCode] 邮箱格式无效 -> email={}", request.getEmail());
+            throw new BusinessException(EMAIL_FORMAT_ERROR);
         }
 
-        // 2. 检查发送频率（60秒限制）
         Long lastTime = lastSendTime.get(request.getEmail());
         long now = System.currentTimeMillis();
         if (lastTime != null && (now - lastTime) < SEND_INTERVAL_SECONDS * 1000L) {
-            throw new BusinessException(EMAIL_SEND_FREQUENTLY);// "发送频率过高，请稍后再试"
+            long remain = SEND_INTERVAL_SECONDS - (now - lastTime) / 1000;
+            log.warn("[sendCode] 发送太频繁 -> email={}, 剩余{}秒", request.getEmail(), remain);
+            throw new BusinessException(EMAIL_SEND_FREQUENTLY);
         }
 
-        // 3. 检查每日次数
         String today = LocalDate.now().toString();
         String storedDate = dailySendDate.get(request.getEmail());
         if (!today.equals(storedDate)) {
             dailySendDate.put(request.getEmail(), today);
             dailySendCount.put(request.getEmail(), 0);
+            log.info("[sendCode] 新的一天，重置计数 -> email={}", request.getEmail());
         }
         int count = dailySendCount.getOrDefault(request.getEmail(), 0);
         if (count >= DAILY_LIMIT) {
-            throw new BusinessException(EMAIL_SEND_THRESHOLD_EXCEEDED);//发送次数已达上限
+            log.warn("[sendCode] 超过每日上限 -> email={}, 今日已发={}", request.getEmail(), count);
+            throw new BusinessException(EMAIL_SEND_THRESHOLD_EXCEEDED);
         }
 
-        // 4. 生成验证码
         String code = String.format("%06d", new SecureRandom().nextInt(1000000));
         codeStore.put(request.getEmail(), new CodeEntry(code, System.currentTimeMillis()));
         lastSendTime.put(request.getEmail(), now);
         dailySendCount.put(request.getEmail(), count + 1);
+        log.info("[sendCode] 验证码已生成 -> email={}, code={}", request.getEmail(), code);
         sendMail(request.getEmail(), "EchoCampus 验证码", "您的验证码是：" + code + "，5分钟内有效。");
+        log.info("[sendCode] 邮件已发送 -> email={}, 今日第{}封", request.getEmail(), count + 1);
     }
 
     @Override
     public LoginVO register(RegisterRequest request) {
-        // 1. 校验验证码
+        log.info("[register] 开始处理 -> email={}", request.getEmail());
+
         CodeEntry entry = codeStore.get(request.getEmail());
         if (entry == null) {
-            throw new BusinessException(EMAIL_VERIFICATION_ERROR);// "请先获取验证码"
+            log.warn("[register] 未找到验证码 -> email={}", request.getEmail());
+            throw new BusinessException(EMAIL_VERIFICATION_ERROR);
         }
         if (System.currentTimeMillis() - entry.createdAt() > CODE_EXPIRE_SECONDS * 1000L) {
             codeStore.remove(request.getEmail());
-            throw new BusinessException(EMAIL_VERIFICATION_EXPIRED );//"验证码已过期"
+            log.warn("[register] 验证码已过期 -> email={}", request.getEmail());
+            throw new BusinessException(EMAIL_VERIFICATION_EXPIRED);
         }
         if (!entry.code().equals(request.getCode())) {
-            throw new BusinessException(EMAIL_VERIFICATION_ERROR);//"验证码错误"
+            log.warn("[register] 验证码不匹配 -> email={}, 期望={}, 收到={}", request.getEmail(), entry.code(), request.getCode());
+            throw new BusinessException(EMAIL_VERIFICATION_ERROR);
         }
 
-        // 2. 检查邮箱是否已注册
-        Long count = userMapper.selectCount(
+        UserEntity user = userMapper.selectOne(
                 new LambdaQueryWrapper<UserEntity>()
                         .eq(UserEntity::getEmail, request.getEmail()));
-        if (count > 0) {
-            throw new BusinessException(USER_ALREADY_EXISTS);//"该邮箱已注册"
+
+        if (user == null) {
+            log.info("[register] 新用户注册 -> email={}, nickname={}", request.getEmail(), request.getNickname());
+            if (request.getPassword() == null || request.getPassword().isBlank()) {
+                throw new BusinessException(VALIDATION_ERROR, "密码不能为空");
+            }
+            if (request.getNickname() == null || request.getNickname().isBlank()) {
+                throw new BusinessException(NICKNAME_IS_NULL);
+            }
+            if (request.getNickname().length() > 20) {
+                throw new BusinessException(NICKNAME_LENGTH_ERROR);
+            }
+            if (!request.getNickname().matches("^[a-zA-Z0-9_]+$")) {
+                throw new BusinessException(NICKNAME_ILLEGAL_CHARACTERS);
+            }
+
+            user = new UserEntity();
+            user.setId(UUID.randomUUID());
+            user.setEmail(request.getEmail());
+            user.setNickname(request.getNickname());
+            user.setPasswordHash(hashPassword(request.getPassword()));
+            user.setCreatedAt(OffsetDateTime.now());
+            userMapper.insert(user);
+            log.info("[register] 用户已创建 -> userId={}, email={}", user.getId(), user.getEmail());
+        } else {
+            log.info("[register] 已有用户登录 -> userId={}, email={}", user.getId(), request.getEmail());
         }
 
-        // 3. 检查昵称
-        if (request.getNickname() == null || request.getNickname().isBlank()) {
-            throw new BusinessException(NICKNAME_IS_NULL);// "昵称不能为空"
-        }
-
-        if (request.getNickname().length() > 20) {
-            throw new BusinessException(NICKNAME_LENGTH_ERROR);// "昵称长度不符合要求"
-        }
-
-        if (!request.getNickname().matches("^[a-zA-Z0-9_]+$")) {
-            throw new BusinessException(NICKNAME_ILLEGAL_CHARACTERS);//"昵称包含非法字符"
-        }
-
-        // 3. 创建用户
-        UserEntity user = new UserEntity();
-        user.setId(UUID.randomUUID());
-        user.setEmail(request.getEmail());
-        user.setNickname(request.getNickname());
-        user.setPasswordHash(hashPassword(request.getPassword()));
-        user.setCreatedAt(OffsetDateTime.now());
-        userMapper.insert(user);
-
-        // 4. 清除已使用的验证码
         codeStore.remove(request.getEmail());
 
-        // 5. 返回登录信息
+        String jwt = jwtUtil.generateToken(user.getId().toString());
+        log.info("[register] JWT已生成 -> userId={}, token前8位={}...", user.getId(), jwt.substring(0, 8));
         return LoginVO.builder()
-                .userId(user.getId())
+                .accessToken(jwt)
+                .tokenType("Bearer")
+                .expiresIn(jwtUtil.getExpiration())
                 .nickname(user.getNickname())
-                .email(user.getEmail())
-                .accessToken("token-" + user.getId())
-                .expiresIn(7200)
                 .build();
     }
 
     @Override
     public LoginVO login(LoginRequest request) {
-        // 1. 查用户
+        log.info("[login] 开始处理 -> email={}", request.getEmail());
+
         UserEntity user = userMapper.selectOne(
                 new LambdaQueryWrapper<UserEntity>()
                         .eq(UserEntity::getEmail, request.getEmail()));
         if (user == null) {
-            throw new BusinessException(USER_NOT_FOUND);//"邮箱未注册"
+            log.warn("[login] 用户不存在 -> email={}", request.getEmail());
+            throw new BusinessException(USER_NOT_FOUND);
         }
 
-        // 2. 校验密码
         String hashed = hashPassword(request.getPassword());
         if (!hashed.equals(user.getPasswordHash())) {
-            throw new BusinessException(USER_PASSWORD_ERROR);//"密码错误"
+            log.warn("[login] 密码错误 -> email={}", request.getEmail());
+            throw new BusinessException(USER_PASSWORD_ERROR);
         }
 
-        // 3. 返回登录信息
+        log.info("[login] 登录成功 -> userId={}, email={}", user.getId(), user.getEmail());
         return LoginVO.builder()
-                .userId(user.getId())
+                .accessToken(jwtUtil.generateToken(user.getId().toString()))
+                .tokenType("Bearer")
+                .expiresIn(jwtUtil.getExpiration())
                 .nickname(user.getNickname())
-                .email(user.getEmail())
-                .accessToken("token-" + user.getId())
-                .expiresIn(7200)
                 .build();
     }
 
     private void sendMail(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("3292513488@qq.com");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
