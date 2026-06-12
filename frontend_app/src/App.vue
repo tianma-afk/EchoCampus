@@ -12,7 +12,7 @@ import BottomNav from './components/BottomNav.vue'
 
 const API_BASE_URL = 'http://localhost:8080/api/v1'
 
-const { token, nickname, email, isLoggedIn, loading, tryRestoreSession, logout } = useAuth()
+const { token, nickname, email, remainingNicknameChanges, isLoggedIn, loading, tryRestoreSession, logout, updateNickname } = useAuth()
 
 onMounted(() => {
   tryRestoreSession()
@@ -100,10 +100,25 @@ const handleBack = () => {
   selectedLandmark.value = null
 }
 
+const profilePageRef = ref<InstanceType<typeof ProfilePage> | null>(null)
+
 const handleLogout = () => {
   logout()
   currentTab.value = 'scan'
   showDetail.value = false
+}
+
+async function handleUpdateNickname(newNickname: string) {
+  try {
+    const res = await updateNickname(newNickname)
+    if (res.code === '00000') {
+      profilePageRef.value?.onUpdateDone(true)
+    } else {
+      profilePageRef.value?.onUpdateDone(false, res.message)
+    }
+  } catch {
+    profilePageRef.value?.onUpdateDone(false, '网络错误，请重试')
+  }
 }
 </script>
 
@@ -134,7 +149,7 @@ const handleLogout = () => {
         <SearchPage v-if="currentTab === 'scan'" @open-detail="handleOpenLandmarkDetail" />
         <MapPage v-else-if="currentTab === 'map'" :focus-landmark="mapFocusTarget" @open-detail="handleOpenLandmarkDetail" />
         <LandmarkRepo v-else-if="currentTab === 'repo'" @select="handleSelectLandmark" />
-        <ProfilePage v-else-if="currentTab === 'profile'" :user-nickname="nickname" :user-email="email" @logout="handleLogout" />
+        <ProfilePage ref="profilePageRef" v-else-if="currentTab === 'profile'" :user-nickname="nickname" :user-email="email" :remaining-changes="remainingNicknameChanges" @logout="handleLogout" @update-nickname="handleUpdateNickname" />
       </KeepAlive>
       <BottomNav v-model="currentTab" />
     </div>

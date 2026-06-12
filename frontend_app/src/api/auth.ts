@@ -46,11 +46,17 @@ export interface UserProfile {
   id: string
   nickname: string
   email: string
+  remainingNicknameChanges: number
 }
 
 export async function getProfile(token: string): Promise<ApiResponse<UserProfile>> {
   const res = await axios.get('http://localhost:8080/api/v1/user/profile', {
     headers: { Authorization: `Bearer ${token}` }
   })
+  return res.data
+}
+
+export async function updateProfile(nickname: string): Promise<ApiResponse<UserProfile>> {
+  const res = await axios.put('http://localhost:8080/api/v1/user/profile', { nickname })
   return res.data
 }

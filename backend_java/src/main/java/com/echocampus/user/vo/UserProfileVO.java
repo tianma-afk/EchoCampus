@@ -13,4 +13,5 @@ public class UserProfileVO {
     private String id;
     private String nickname;
     private String email;
+    private Integer remainingNicknameChanges;
 }

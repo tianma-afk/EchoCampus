@@ -15,7 +15,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.echocampus.shared.exception.BusinessException;
-import static com.echocampus.shared.exception.ErrorCode.*;
+import com.echocampus.shared.exception.ErrorCode;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -61,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (request.getEmail() == null || !EMAIL_PATTERN.matcher(request.getEmail()).matches()) {
             log.warn("[sendCode] 邮箱格式无效 -> email={}", request.getEmail());
-            throw new BusinessException(EMAIL_FORMAT_ERROR);
+            throw new BusinessException(ErrorCode.EMAIL_FORMAT_ERROR);
         }
 
         Long lastTime = lastSendTime.get(request.getEmail());
@@ -69,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
         if (lastTime != null && (now - lastTime) < SEND_INTERVAL_SECONDS * 1000L) {
             long remain = SEND_INTERVAL_SECONDS - (now - lastTime) / 1000;
             log.warn("[sendCode] 发送太频繁 -> email={}, 剩余{}秒", request.getEmail(), remain);
-            throw new BusinessException(EMAIL_SEND_FREQUENTLY);
+            throw new BusinessException(ErrorCode.EMAIL_SEND_FREQUENTLY);
         }
 
         String today = LocalDate.now().toString();
@@ -82,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
         int count = dailySendCount.getOrDefault(request.getEmail(), 0);
         if (count >= DAILY_LIMIT) {
             log.warn("[sendCode] 超过每日上限 -> email={}, 今日已发={}", request.getEmail(), count);
-            throw new BusinessException(EMAIL_SEND_THRESHOLD_EXCEEDED);
+            throw new BusinessException(ErrorCode.EMAIL_SEND_THRESHOLD_EXCEEDED);
         }
 
         String code = String.format("%06d", new SecureRandom().nextInt(1000000));
@@ -101,16 +101,16 @@ public class AuthServiceImpl implements AuthService {
         CodeEntry entry = codeStore.get(request.getEmail());
         if (entry == null) {
             log.warn("[register] 未找到验证码 -> email={}", request.getEmail());
-            throw new BusinessException(EMAIL_VERIFICATION_ERROR);
+            throw new BusinessException(ErrorCode.EMAIL_VERIFICATION_ERROR);
         }
         if (System.currentTimeMillis() - entry.createdAt() > CODE_EXPIRE_SECONDS * 1000L) {
             codeStore.remove(request.getEmail());
             log.warn("[register] 验证码已过期 -> email={}", request.getEmail());
-            throw new BusinessException(EMAIL_VERIFICATION_EXPIRED);
+            throw new BusinessException(ErrorCode.EMAIL_VERIFICATION_EXPIRED);
         }
         if (!entry.code().equals(request.getCode())) {
             log.warn("[register] 验证码不匹配 -> email={}, 期望={}, 收到={}", request.getEmail(), entry.code(), request.getCode());
-            throw new BusinessException(EMAIL_VERIFICATION_ERROR);
+            throw new BusinessException(ErrorCode.EMAIL_VERIFICATION_ERROR);
         }
 
         UserEntity user = userMapper.selectOne(
@@ -120,16 +120,16 @@ public class AuthServiceImpl implements AuthService {
         if (user == null) {
             log.info("[register] 新用户注册 -> email={}, nickname={}", request.getEmail(), request.getNickname());
             if (request.getPassword() == null || request.getPassword().isBlank()) {
-                throw new BusinessException(VALIDATION_ERROR, "密码不能为空");
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR, "密码不能为空");
             }
             if (request.getNickname() == null || request.getNickname().isBlank()) {
-                throw new BusinessException(NICKNAME_IS_NULL);
+                throw new BusinessException(ErrorCode.NICKNAME_IS_NULL);
             }
             if (request.getNickname().length() > 20) {
-                throw new BusinessException(NICKNAME_LENGTH_ERROR);
+                throw new BusinessException(ErrorCode.NICKNAME_LENGTH_ERROR);
             }
             if (!request.getNickname().matches("^[a-zA-Z0-9_]+$")) {
-                throw new BusinessException(NICKNAME_ILLEGAL_CHARACTERS);
+                throw new BusinessException(ErrorCode.NICKNAME_ILLEGAL_CHARACTERS);
             }
 
             user = new UserEntity();
@@ -165,13 +165,13 @@ public class AuthServiceImpl implements AuthService {
                         .eq(UserEntity::getEmail, request.getEmail()));
         if (user == null) {
             log.warn("[login] 用户不存在 -> email={}", request.getEmail());
-            throw new BusinessException(USER_NOT_FOUND);
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
         String hashed = hashPassword(request.getPassword());
         if (!hashed.equals(user.getPasswordHash())) {
             log.warn("[login] 密码错误 -> email={}", request.getEmail());
-            throw new BusinessException(USER_PASSWORD_ERROR);
+            throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR);
         }
 
         log.info("[login] 登录成功 -> userId={}, email={}", user.getId(), user.getEmail());
