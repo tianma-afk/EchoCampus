@@ -358,7 +358,7 @@ onUnmounted(() => {
       <div v-if="recognitionResults.length > 0" class="result-card-scroll">
         <div class="card-list">
           <div class="landmark-card" v-for="(item, index) in recognitionResults" :key="item.coverUrl"
-               :class="{ 'in-view': visibleCards.has(index) }"
+               :class="{ 'in-view': visibleCards.has(index), 'card-first': index === 0, 'card-last': index === recognitionResults.length - 1 }"
                @click="handleCardClick(item)">
             <div class="circle-img-box">
               <img :src="item.coverUrl" alt="建筑封面" class="circle-img" @error="onCoverImgError" />
@@ -919,7 +919,7 @@ onUnmounted(() => {
 }
 
 .result-text-desc {
-  padding: 12px 24px 6px;
+  padding: 8px 24px 0;
   text-align: center;
 }
 
@@ -953,16 +953,18 @@ onUnmounted(() => {
 .result-card-scroll {
   flex: 1;
   overflow: hidden;
-  padding: 0 0 20px;
+  padding: 10px 0 20px;
+  min-height: 0;
 }
 
 .card-list {
   display: flex;
-  gap: 8px;
-  padding: 0 24px;
+  gap: calc((100vw - 70vw) / 2 - 25px);
+  padding: 0;
   overflow-x: auto;
+  overflow-y: visible;
   height: 100%;
-  align-items: center;
+  align-items: flex-start;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
 }
@@ -973,18 +975,28 @@ onUnmounted(() => {
 
 .landmark-card {
   flex-shrink: 0;
-  width: 220px;
+  width: 70vw;
+  max-width: 360px;
   text-align: center;
   scroll-snap-align: center;
   opacity: 0.5;
   transform: scale(0.85);
   transition: all 0.35s ease;
   cursor: default;
+  padding-top: 5px;
+}
+
+.landmark-card.card-first {
+  margin-left: calc((100vw - 70vw) / 2);
+}
+
+.landmark-card.card-last {
+  margin-right: calc((100vw - 70vw) / 2);
 }
 
 .landmark-card.in-view {
   opacity: 1;
-  transform: scale(1.05);
+  transform: scale(1);
 }
 
 .landmark-card:active {
@@ -992,12 +1004,12 @@ onUnmounted(() => {
 }
 
 .circle-img-box {
-  width: 130px;
-  height: 130px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-  margin: 0 auto 10px;
+  margin: 0 auto 8px;
 }
 
 .circle-img {
@@ -1007,20 +1019,20 @@ onUnmounted(() => {
 }
 
 .land-name {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--color-text-heading);
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .land-score {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--color-primary);
   font-weight: 600;
 }
 
 .result-bottom-btn {
-  padding: 12px 30px calc(72px + env(safe-area-inset-bottom));
+  padding: 12px 30px calc(80px + env(safe-area-inset-bottom));
   flex-shrink: 0;
 }
 

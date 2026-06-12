@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 
 const props = defineProps<{
@@ -26,6 +26,37 @@ const feedbackTypes = [
   { value: 'INFO_CHANGE', label: '信息变更' },
   { value: 'OTHER', label: '其他' },
 ]
+
+const dropdownOpen = ref(false)
+const dropdownRef = ref<HTMLElement | null>(null)
+
+const selectedLabel = computed(() => {
+  const found = feedbackTypes.find(ft => ft.value === feedbackType.value)
+  return found ? found.label : ''
+})
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+function selectOption(value: string) {
+  feedbackType.value = value
+  dropdownOpen.value = false
+}
+
+function handleClickOutside(e: Event) {
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+    dropdownOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 async function handleSubmit() {
   if (!content.value.trim()) {
@@ -66,11 +97,33 @@ async function handleSubmit() {
     <div class="feedback-form">
       <div class="form-group">
         <label class="form-label">反馈类型</label>
-        <select v-model="feedbackType" class="form-select">
-          <option v-for="ft in feedbackTypes" :key="ft.value" :value="ft.value">
-            {{ ft.label }}
-          </option>
-        </select>
+        <div class="custom-select" ref="dropdownRef">
+          <button
+            type="button"
+            class="custom-select-trigger form-select"
+            @click.stop="toggleDropdown"
+          >
+            <span>{{ selectedLabel }}</span>
+            <svg
+              class="custom-select-arrow"
+              :class="{ rotated: dropdownOpen }"
+              viewBox="0 0 12 12"
+            >
+              <path fill="currentColor" d="M2 4l4 4 4-4" />
+            </svg>
+          </button>
+          <div class="custom-select-dropdown" :class="{ open: dropdownOpen }">
+            <div
+              v-for="ft in feedbackTypes"
+              :key="ft.value"
+              class="custom-select-option"
+              :class="{ selected: feedbackType === ft.value }"
+              @click.stop="selectOption(ft.value)"
+            >
+              {{ ft.label }}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -121,16 +174,23 @@ async function handleSubmit() {
   background: #f3f4f6;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .feedback-header {
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .back-btn {
@@ -162,13 +222,17 @@ async function handleSubmit() {
 }
 
 .feedback-form {
-  padding: 20px 16px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px 16px calc(120px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
 .form-group {
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -182,6 +246,9 @@ async function handleSubmit() {
 
 .form-select,
 .form-input {
+  width: 100% !important;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 12px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -190,6 +257,9 @@ async function handleSubmit() {
   background: #fff;
   outline: none;
   transition: border-color 0.2s;
+  font-family: inherit;
+  -webkit-box-sizing: border-box;
+  display: block;
 }
 
 .form-select:focus,
@@ -202,7 +272,105 @@ async function handleSubmit() {
   color: #6b7280;
 }
 
+.custom-select {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.custom-select-trigger {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  border: none;
+  position: relative;
+}
+
+.custom-select-trigger.form-select {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 40px 12px 14px;
+  font-size: 15px;
+  background-color: #fff;
+  color: #1f2937;
+  width: 100%;
+}
+
+.custom-select-trigger.form-select:focus {
+  border-color: #059669;
+}
+
+.custom-select-arrow {
+  width: 12px;
+  height: 12px;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-shrink: 0;
+}
+
+.custom-select-arrow.rotated {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.custom-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.custom-select-dropdown.open {
+  max-height: 240px;
+  opacity: 1;
+  pointer-events: auto;
+  overflow-y: auto;
+}
+
+.custom-select-option {
+  padding: 12px 14px;
+  font-size: 15px;
+  color: #1f2937;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.custom-select-option:hover {
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+.custom-select-option.selected {
+  background-color: #ecfdf5;
+  color: #1f2937;
+}
+
+.custom-select-option.selected:hover {
+  background-color: #ecfdf5;
+  color: #1f2937;
+}
+
 .form-textarea {
+  width: 100%;
+  box-sizing: border-box;
   padding: 12px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -219,6 +387,9 @@ async function handleSubmit() {
 }
 
 .image-preview {
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid #e5e7eb;
