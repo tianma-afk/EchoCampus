@@ -21,9 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
-    private final Map<String, Integer> dailyNicknameChangeCount = new ConcurrentHashMap<>();
-    private final Map<String, String> dailyNicknameChangeDate = new ConcurrentHashMap<>();
+    private final Map<String, DailyCount> dailyNicknameChange = new ConcurrentHashMap<>();
     private static final int DAILY_NICKNAME_CHANGE_LIMIT = 2;
+
+    private record DailyCount(String date, int count) {}
 
     public UserServiceImpl(UserMapper userMapper) {
         this.userMapper = userMapper;
@@ -46,13 +47,11 @@ public class UserServiceImpl implements UserService {
     }
 
     private int getRemainingChanges(String userId) {
-        String today = LocalDate.now().toString();
-        String storedDate = dailyNicknameChangeDate.get(userId);
-        if (!today.equals(storedDate)) {
+        DailyCount dc = dailyNicknameChange.get(userId);
+        if (dc == null || !LocalDate.now().toString().equals(dc.date())) {
             return DAILY_NICKNAME_CHANGE_LIMIT;
         }
-        int count = dailyNicknameChangeCount.getOrDefault(userId, 0);
-        return Math.max(0, DAILY_NICKNAME_CHANGE_LIMIT - count);
+        return Math.max(0, DAILY_NICKNAME_CHANGE_LIMIT - dc.count());
     }
 
     @Override
@@ -63,16 +62,17 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
+
         String today = LocalDate.now().toString();
-        String storedDate = dailyNicknameChangeDate.get(userId);
-        if (!today.equals(storedDate)) {
-            dailyNicknameChangeDate.put(userId, today);
-            dailyNicknameChangeCount.put(userId, 0);
-        }
-        int count = dailyNicknameChangeCount.getOrDefault(userId, 0);
-        if (count >= DAILY_NICKNAME_CHANGE_LIMIT) {
-            throw new BusinessException(ErrorCode.NICKNAME_CHANGE_LIMIT);
-        }
+        DailyCount newDc = dailyNicknameChange.compute(userId, (key, current) -> {
+            if (current == null || !today.equals(current.date())) {
+                return new DailyCount(today, 1);
+            }
+            if (current.count() >= DAILY_NICKNAME_CHANGE_LIMIT) {
+                throw new BusinessException(ErrorCode.NICKNAME_CHANGE_LIMIT);
+            }
+            return new DailyCount(today, current.count() + 1);
+        });
 
         String nickname = request.getNickname();
         if (nickname == null || nickname.isBlank()) {
@@ -86,12 +86,11 @@ public class UserServiceImpl implements UserService {
         }
         user.setNickname(nickname);
         userMapper.updateById(user);
-        dailyNicknameChangeCount.put(userId, count + 1);
         return UserProfileVO.builder()
                 .id(user.getId().toString())
                 .nickname(user.getNickname())
                 .email(user.getEmail())
-                .remainingNicknameChanges(Math.max(0, DAILY_NICKNAME_CHANGE_LIMIT - (count + 1)))
+                .remainingNicknameChanges(Math.max(0, DAILY_NICKNAME_CHANGE_LIMIT - newDc.count()))
                 .build();
     }
 }
