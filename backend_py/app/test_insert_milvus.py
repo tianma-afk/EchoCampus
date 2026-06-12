@@ -12,7 +12,8 @@ from loguru import logger
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import core.logger  # noqa: F401 — 初始化 loguru 配置
-from core import milvus_service, token_manager
+from core import milvus_service
+from core.dense_features_manager import save_image_dense_features
 from services.pair_vpr import PairVPRExtractor
 
 TEST_LANDMARKS = [
@@ -65,6 +66,10 @@ def main():
     logger.info("初始化 Milvus 容器连接...")
     milvus_service.milvus_init()
 
+    # 清空旧数据并重新创建集合（避免 UUID 主键冲突）
+    milvus_service.service.reset_collection()
+    logger.info("已清空旧集合并重新创建")
+
     logger.info("加载 Pair-VPR 模型 (vitB, fp16)...")
     extractor = PairVPRExtractor(model_type="vitB", use_fp16=True)
 
@@ -80,15 +85,15 @@ def main():
         logger.info(f"  尺寸: {img.size}")
 
         logger.info(f"  提取特征...")
-        global_desc, tokens = extractor.extract_complete_features(img)
+        global_desc, dense_features = extractor.extract_complete_features(img)
         logger.info(f"  向量维度: {len(global_desc)}")
 
-        token_manager.save_image_tokens(uid, tokens)
+        save_image_dense_features(uid, dense_features)
         global_descs.append(global_desc)
-        logger.info(f"  Token 已保存")
+        logger.info(f"  特征已保存到 data/dense_features/")
 
     logger.info(f"批量写入容器 Milvus ({len(global_descs)} 条)...")
-    milvus_service.service.insert_global_descs(global_descs, uuids)
+    milvus_service.service.insert_vectors(global_descs, uuids)
 
     logger.info("=" * 60)
     logger.info("录入完成！UUID 对照表：")

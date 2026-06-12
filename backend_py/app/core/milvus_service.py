@@ -85,6 +85,14 @@ class MilvusService:
         )
         return [{"uuid": r["uuid"], "score": r["distance"]} for r in results[0]]
 
+    def reset_collection(self):
+        """清空并重新创建集合（测试专用）"""
+        if self.client.has_collection(COLLECTION_NAME):
+            self.client.drop_collection(COLLECTION_NAME)
+        self._setup_collection()
+        self._setup_index()
+        self.load_collection()
+
     # ========== 异步 ==========
 
     async def insert_vector_async(self, vector, uuid: str):
