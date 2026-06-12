@@ -109,6 +109,10 @@ onMounted(() => {
             <span class="info-label">提交时间</span>
             <span class="info-value">{{ new Date(feedback.createdAt).toLocaleString('zh-CN') }}</span>
           </div>
+          <div class="info-item" v-if="feedback.correctLandmarkName">
+            <span class="info-label">校正地标</span>
+            <span class="info-value">{{ feedback.correctLandmarkName }}</span>
+          </div>
           <div class="info-item" v-if="feedback.adminId">
             <span class="info-label">处理人</span>
             <span class="info-value mono-text">{{ feedback.adminId }}</span>
@@ -117,6 +121,10 @@ onMounted(() => {
             <span class="info-label">处理时间</span>
             <span class="info-value">{{ new Date(feedback.resolveTime).toLocaleString('zh-CN') }}</span>
           </div>
+        </div>
+        <div class="info-content" v-if="feedback.uploadUrl">
+          <span class="info-label">反馈图片</span>
+          <img :src="feedback.uploadUrl" class="feedback-image" />
         </div>
         <div class="info-content">
           <span class="info-label">反馈正文</span>
@@ -305,6 +313,14 @@ onMounted(() => {
   background: #f9fafb;
   padding: 12px 16px;
   border-radius: 8px;
+}
+
+.feedback-image {
+  max-width: 240px;
+  max-height: 180px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-top: 4px;
 }
 
 .status-tag {

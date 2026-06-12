@@ -24,4 +24,6 @@ public class FeedbackAdminVO {
     private OffsetDateTime resolveTime;
     private String resolveNote;
     private OffsetDateTime createdAt;
+    private String uploadUrl;
+    private String correctLandmarkName;
 }

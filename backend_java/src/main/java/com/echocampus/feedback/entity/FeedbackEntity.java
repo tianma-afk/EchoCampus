@@ -32,5 +32,9 @@ public class FeedbackEntity {
 
     private OffsetDateTime createdAt;
 
+    private String uploadUrl;
+
+    private String correctLandmarkName;
+
     private OffsetDateTime updatedAt;
 }
