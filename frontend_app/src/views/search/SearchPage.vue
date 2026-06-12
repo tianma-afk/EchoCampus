@@ -115,8 +115,19 @@ const handleImageSelected = async (file: File | Blob) => {
     const res = await axios.post(`${UPLOAD_API}/presigned-url`)
     const { uploadUrl, bucket, objectName } = res.data.data
 
-    await axios.put(uploadUrl, file, {
-      headers: { 'Content-Type': 'image/jpeg' }
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('PUT', uploadUrl)
+      xhr.setRequestHeader('Content-Type', 'image/jpeg')
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve()
+        } else {
+          reject(new Error('MinIO PUT failed (HTTP ' + xhr.status + ')'))
+        }
+      }
+      xhr.onerror = () => reject(new Error('网络错误'))
+      xhr.send(file)
     })
 
     previewImageUrl.value = `${MINIO_BASE_URL}/${bucket}/${objectName}`

@@ -79,9 +79,9 @@ class InsertService:
             global_descs.append(global_desc)
             uuids.append(image_uuid)
             if len(global_descs) >= 100:  # 每100个向量保存一次
-                await milvus_service.service.insert_global_descs_async(global_descs, uuids)
+                await milvus_service.service.insert_vectors_async(global_descs, uuids)
                 global_descs = []
                 uuids = []
         if len(global_descs) > 0 and len(uuids) > 0:
-            await milvus_service.service.insert_global_descs_async(global_descs, uuids)  # 保存剩余的向量
+            await milvus_service.service.insert_vectors_async(global_descs, uuids)  # 保存剩余的向量
         
