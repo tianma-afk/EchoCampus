@@ -61,6 +61,8 @@ public class FeedbackAdminServiceImpl implements FeedbackAdminService {
                 .resolveTime(e.getResolveTime())
                 .resolveNote(e.getResolveNote())
                 .createdAt(e.getCreatedAt())
+                .uploadUrl(e.getUploadUrl())
+                .correctLandmarkName(e.getCorrectLandmarkName())
                 .build()).toList();
 
         Page<FeedbackAdminVO> voPage = new Page<>(page, pageSize, entityPage.getTotal());
@@ -93,6 +95,8 @@ public class FeedbackAdminServiceImpl implements FeedbackAdminService {
                 .resolveTime(entity.getResolveTime())
                 .resolveNote(entity.getResolveNote())
                 .createdAt(entity.getCreatedAt())
+                .uploadUrl(entity.getUploadUrl())
+                .correctLandmarkName(entity.getCorrectLandmarkName())
                 .build();
     }
 

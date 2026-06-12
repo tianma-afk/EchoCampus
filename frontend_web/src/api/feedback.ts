@@ -12,6 +12,8 @@ export interface FeedbackAdminVO {
   resolveTime: string | null
   resolveNote: string | null
   createdAt: string
+  uploadUrl: string | null
+  correctLandmarkName: string | null
 }
 
 export interface FeedbackResolveRequest {

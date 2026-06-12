@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
+import FeedbackPage from './FeedbackPage.vue'
 
 const emit = defineEmits<{
   openDetail: [landmarkId: string]
@@ -26,6 +27,7 @@ const isRecognizing = ref(false)
 const recognizingTaskId = ref('')
 const recognitionResults = ref<Array<{landmarkId: string, landmarkName: string, similarity: number, coverUrl: string}>>([])
 const showResult = ref(false)
+const showFeedback = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const handleCameraClick = () => {
@@ -371,8 +373,18 @@ onUnmounted(() => {
 
       <div class="result-bottom-btn">
         <button class="back-btn" @click="showResult = false">重新拍摄</button>
+        <button v-if="topResult" class="feedback-btn" @click="showFeedback = true">纠正反馈</button>
       </div>
     </div>
+
+    <FeedbackPage
+      v-if="showFeedback && topResult"
+      :landmark-id="topResult.landmarkId"
+      :landmark-name="topResult.landmarkName"
+      :image-url="resultShowImageUrl"
+      @done="showFeedback = false"
+      @back="showFeedback = false"
+    />
 
     <!-- 拍摄界面 -->
     <div v-else-if="showCamera" class="camera-interface">
@@ -1028,5 +1040,24 @@ onUnmounted(() => {
 
 .back-btn:active {
   transform: scale(0.97);
+}
+
+.feedback-btn {
+  width: 100%;
+  height: 52px;
+  border-radius: 52px;
+  background: #fff;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.feedback-btn:active {
+  transform: scale(0.97);
+  background: #f0fdf4;
 }
 </style>
