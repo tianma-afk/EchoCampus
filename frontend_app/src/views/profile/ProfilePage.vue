@@ -1,6 +1,64 @@
 <script setup lang="ts">
-defineProps<{ userNickname: string; userEmail: string }>()
-const emit = defineEmits<{ logout: [] }>()
+import { ref } from 'vue'
+import { getProfile } from '../../api/auth'
+
+const props = defineProps<{ userNickname: string; userEmail: string; remainingChanges: number }>()
+const emit = defineEmits<{ logout: []; 'update-nickname': [value: string] }>()
+
+const showEditModal = ref(false)
+const editNickname = ref('')
+const editError = ref('')
+const editLoading = ref(false)
+const freshRemainingChanges = ref(props.remainingChanges)
+
+async function openEdit() {
+  editNickname.value = props.userNickname || ''
+  editError.value = ''
+  showEditModal.value = true
+  try {
+    const res = await getProfile(localStorage.getItem('auth_token') || '')
+    if (res.code === '00000') {
+      if (res.data.remainingNicknameChanges != null) {
+        freshRemainingChanges.value = res.data.remainingNicknameChanges
+      }
+    }
+  } catch { /* 获取失败就用 props 兜底值 */ }
+}
+
+function closeEdit() {
+  showEditModal.value = false
+  editError.value = ''
+}
+
+async function handleSave() {
+  const v = editNickname.value.trim()
+  if (!v) {
+    editError.value = '昵称不能为空'
+    return
+  }
+  if (v.length > 20) {
+    editError.value = '昵称长度1-20字符'
+    return
+  }
+  if (!/^[一-龥a-zA-Z0-9_\-]+$/.test(v)) {
+    editError.value = '昵称包含非法字符'
+    return
+  }
+  editLoading.value = true
+  editError.value = ''
+  emit('update-nickname', v)
+}
+
+function onUpdateDone(success: boolean, message?: string) {
+  editLoading.value = false
+  if (success) {
+    showEditModal.value = false
+  } else {
+    editError.value = message || '修改失败'
+  }
+}
+
+defineExpose({ onUpdateDone })
 
 interface CheckinRecord {
   name: string
@@ -20,7 +78,7 @@ const recentCheckins: CheckinRecord[] = [
     <div class="profile-header">
       <div class="header-content">
         <div class="user-info">
-          <div class="avatar">{{ userNickname.charAt(0).toUpperCase() }}</div>
+          <div class="avatar" @click="openEdit">{{ userNickname.charAt(0).toUpperCase() }}</div>
           <div class="user-details">
             <h2 class="user-name">{{ userNickname }}</h2>
             <p class="user-dept">{{ userEmail }}</p>
@@ -157,6 +215,39 @@ const recentCheckins: CheckinRecord[] = [
           </div>
         </div>
 
+        <!-- 编辑资料弹窗 -->
+        <div v-if="showEditModal" class="modal-overlay" @click.self="closeEdit">
+          <div class="modal-card">
+            <h3 class="modal-title">编辑资料</h3>
+            <div class="modal-avatar">{{ userNickname.charAt(0).toUpperCase() }}</div>
+            <div class="modal-fields">
+              <div class="modal-field">
+                <label class="modal-label">昵称</label>
+                <input
+                  v-model="editNickname"
+                  class="modal-input"
+                  placeholder="请输入新昵称（1-20字符）"
+                  maxlength="20"
+                  :disabled="editLoading"
+                  @keyup.enter="handleSave"
+                />
+              </div>
+              <div class="modal-field">
+                <label class="modal-label">邮箱</label>
+                <div class="modal-readonly">{{ userEmail }}</div>
+              </div>
+            </div>
+            <p v-if="editError" class="modal-error">{{ editError }}</p>
+            <p class="modal-hint">今日还可修改 {{ freshRemainingChanges }} 次</p>
+            <div class="modal-actions">
+              <button class="modal-btn cancel" :disabled="editLoading" @click="closeEdit">取消</button>
+              <button class="modal-btn confirm" :disabled="editLoading" @click="handleSave">
+                {{ editLoading ? '保存中...' : '保存' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <button class="logout-btn" @click="emit('logout')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
@@ -213,6 +304,7 @@ const recentCheckins: CheckinRecord[] = [
   font-weight: 600;
   color: var(--color-primary);
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .user-details {
@@ -431,5 +523,144 @@ const recentCheckins: CheckinRecord[] = [
 .logout-btn svg {
   width: 18px;
   height: 18px;
+}
+
+/* 编辑资料弹窗 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 340px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-heading);
+  margin: 0;
+}
+
+.modal-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.modal-fields {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  padding-left: 4px;
+}
+
+.modal-input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--color-divider);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 15px;
+  color: var(--color-text-heading);
+  outline: none;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.modal-input:focus {
+  border-color: var(--color-primary);
+}
+
+.modal-readonly {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--color-divider);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 15px;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.modal-error {
+  font-size: 13px;
+  color: var(--color-danger);
+  margin: 0;
+}
+
+.modal-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-btn.cancel {
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+}
+
+.modal-btn.confirm {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
