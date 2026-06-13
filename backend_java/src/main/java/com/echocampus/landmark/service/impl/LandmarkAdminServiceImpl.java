@@ -26,6 +26,7 @@ import com.echocampus.landmark.vo.LandmarkAdminVO;
 import com.echocampus.landmark.vo.LandmarkDetailVO;
 import com.echocampus.landmark.vo.LandmarkImageVO;
 import io.minio.http.Method;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     private final LandmarkMapper landmarkMapper;
@@ -262,6 +264,12 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
         if (request.getRecommendRate() != null) entity.setRecommendRate(request.getRecommendRate());
         landmarkMapper.updateById(entity);
 
+        try {
+            redisTemplate.delete("landmark:vo:" + id);
+            log.info("[地标缓存] 更新地标 {} 后失效 landmark:vo:{}", id, id);
+        } catch (Exception ignored) {
+        }
+
         if (request.getFloorList() != null) {
             floorMapper.delete(new LambdaQueryWrapper<FloorEntity>().eq(FloorEntity::getLandmarkId, id));
             for (FloorCreateDTO dto : request.getFloorList()) {
@@ -311,10 +319,13 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
         // delete landmark
         landmarkMapper.deleteById(id);
 
-        // cleanup Redis ZSET
+        // cleanup Redis ZSET and VO cache
         try {
             redisTemplate.opsForZSet().remove("landmark:hot:ranking", id.toString());
-        } catch (Exception ignored) {
+            redisTemplate.delete("landmark:vo:" + id);
+            log.info("[地标缓存] 删除地标 {} 后清理 ZSET + VO 缓存", id);
+        } catch (Exception e) {
+            log.warn("[地标缓存] 删除地标 {} 时清理缓存失败", id, e);
         }
     }
 

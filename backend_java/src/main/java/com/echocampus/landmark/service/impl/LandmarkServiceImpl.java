@@ -23,6 +23,7 @@ import com.echocampus.shared.util.ImageUrlBuilder;
 import com.echocampus.landmark.vo.FloorVO;
 import com.echocampus.landmark.vo.LandmarkDetailVO;
 import com.echocampus.landmark.vo.LandmarkVO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -30,6 +31,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,6 +39,10 @@ import java.util.stream.Collectors;
 public class LandmarkServiceImpl implements LandmarkService {
 
     private static final String HOT_RANKING_KEY = "landmark:hot:ranking";
+    private static final String VO_KEY_PREFIX = "landmark:vo:";
+    private static final long VO_TTL = 5;
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final LandmarkMapper landmarkMapper;
     private final CategoryMapper categoryMapper;
@@ -226,40 +232,95 @@ public class LandmarkServiceImpl implements LandmarkService {
         long start = (long) (page - 1) * pageSize;
         long end = start + pageSize - 1;
 
-        Set<String> memberIds;
+        Set<ZSetOperations.TypedTuple<String>> typedTuples;
         long total;
         try {
             total = redisTemplate.opsForZSet().zCard(HOT_RANKING_KEY);
-            memberIds = redisTemplate.opsForZSet().reverseRange(HOT_RANKING_KEY, start, end);
+            typedTuples = redisTemplate.opsForZSet().reverseRangeWithScores(HOT_RANKING_KEY, start, end);
         } catch (DataAccessException e) {
             log.warn("[热门排行榜] Redis 不可用, 回退到 PostgreSQL 排序", e);
             return fallbackHotList(request);
         }
 
-        if (memberIds == null || memberIds.isEmpty()) {
+        if (typedTuples == null || typedTuples.isEmpty()) {
             initHotRankingFromDb();
             try {
                 total = redisTemplate.opsForZSet().zCard(HOT_RANKING_KEY);
-                memberIds = redisTemplate.opsForZSet().reverseRange(HOT_RANKING_KEY, start, end);
+                typedTuples = redisTemplate.opsForZSet().reverseRangeWithScores(HOT_RANKING_KEY, start, end);
             } catch (DataAccessException e) {
                 log.warn("[热门排行榜] Redis 初始化后仍不可用, 回退到 PostgreSQL", e);
                 return fallbackHotList(request);
             }
-            if (memberIds == null || memberIds.isEmpty()) {
+            if (typedTuples == null || typedTuples.isEmpty()) {
                 return fallbackHotList(request);
             }
         }
 
-        List<UUID> ids = memberIds.stream().map(UUID::fromString).toList();
-        List<LandmarkEntity> entities = landmarkMapper.selectBatchIds(ids);
-        Map<UUID, LandmarkEntity> entityMap = entities.stream()
-                .collect(Collectors.toMap(LandmarkEntity::getId, e -> e, (a, b) -> a));
-        List<LandmarkEntity> orderedEntities = ids.stream()
-                .map(entityMap::get)
-                .filter(Objects::nonNull)
-                .toList();
+        List<UUID> orderedIds = new ArrayList<>();
+        Map<String, Integer> scoreMap = new HashMap<>();
+        for (ZSetOperations.TypedTuple<String> tuple : typedTuples) {
+            String memberId = tuple.getValue();
+            if (memberId != null) {
+                orderedIds.add(UUID.fromString(memberId));
+                scoreMap.put(memberId, tuple.getScore().intValue());
+            }
+        }
 
-        return buildVoPage(orderedEntities, page, pageSize, total);
+        List<String> cacheKeys = orderedIds.stream()
+                .map(id -> VO_KEY_PREFIX + id)
+                .collect(Collectors.toList());
+        List<String> cachedJsonList = redisTemplate.opsForValue().multiGet(cacheKeys);
+
+        List<UUID> missIds = new ArrayList<>();
+        Map<UUID, LandmarkVO> hitMap = new HashMap<>();
+        for (int i = 0; i < orderedIds.size(); i++) {
+            UUID id = orderedIds.get(i);
+            String json = (cachedJsonList != null && i < cachedJsonList.size()) ? cachedJsonList.get(i) : null;
+            if (json != null) {
+                try {
+                    LandmarkVO vo = OBJECT_MAPPER.readValue(json, LandmarkVO.class);
+                    vo.setCheckins(scoreMap.get(id.toString()));
+                    vo.setCoverImg(null);
+                    hitMap.put(id, vo);
+                } catch (Exception e) {
+                    missIds.add(id);
+                }
+            } else {
+                missIds.add(id);
+            }
+        }
+
+        int hitCount = orderedIds.size() - missIds.size();
+        log.info("[热门排行榜] ZSET size={}, cache hits={}, misses={}, page={}",
+                orderedIds.size(), hitCount, missIds.size(), page);
+
+        if (!missIds.isEmpty()) {
+            log.info("[热门排行榜] 从 PG 加载 {} 个地标详情并回填缓存", missIds.size());
+            List<LandmarkEntity> missEntities = landmarkMapper.selectBatchIds(missIds);
+            List<LandmarkVO> missVos = buildHotVoList(missEntities);
+            for (LandmarkVO vo : missVos) {
+                vo.setCheckins(scoreMap.get(vo.getId().toString()));
+                vo.setCoverImg(null);
+                hitMap.put(vo.getId(), vo);
+                try {
+                    redisTemplate.opsForValue().set(
+                            VO_KEY_PREFIX + vo.getId(),
+                            OBJECT_MAPPER.writeValueAsString(vo),
+                            VO_TTL, TimeUnit.MINUTES);
+                } catch (Exception ignored) {
+                }
+            }
+            log.info("[热门排行榜] 回填缓存完成, 共 {} 个地标", missVos.size());
+        }
+
+        List<LandmarkVO> voList = orderedIds.stream()
+                .map(hitMap::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        Page<LandmarkVO> voPage = new Page<>(page, pageSize, total);
+        voPage.setRecords(voList);
+        return voPage;
     }
 
     private void initHotRankingFromDb() {
@@ -346,6 +407,30 @@ public class LandmarkServiceImpl implements LandmarkService {
         Page<LandmarkVO> voPage = new Page<>(page, pageSize, total);
         voPage.setRecords(voList);
         return voPage;
+    }
+
+    private List<LandmarkVO> buildHotVoList(List<LandmarkEntity> entities) {
+        List<UUID> categoryIds = entities.stream()
+                .map(LandmarkEntity::getCategoryId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<UUID, String> categoryNameMap = categoryIds.isEmpty() ? Map.of()
+                : categoryMapper.selectBatchIds(categoryIds).stream()
+                        .collect(Collectors.toMap(CategoryEntity::getId, CategoryEntity::getName));
+
+        return entities.stream()
+                .map(entity -> LandmarkVO.builder()
+                        .id(entity.getId())
+                        .name(entity.getName())
+                        .rating(entity.getRating())
+                        .checkins(entity.getCheckInCount())
+                        .openTime(entity.getOpenTime())
+                        .category(categoryNameMap.getOrDefault(entity.getCategoryId(), "未分类"))
+                        .tags(entity.getTags())
+                        .latitude(entity.getLatitude())
+                        .longitude(entity.getLongitude())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private String buildCoverUrl(LandmarkEntity entity, Map<UUID, ImageEntity> coverImageMap,
