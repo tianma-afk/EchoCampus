@@ -65,15 +65,19 @@ async function handleSubmit() {
   }
   submitting.value = true
   try {
-    await axios.post(`${API_BASE_URL}/user/feedbacks/`, {
+    const res = await axios.post(`${API_BASE_URL}/user/feedbacks/`, {
       landmarkId: props.landmarkId,
       feedbackType: feedbackType.value,
       content: content.value.trim(),
       correctLandmarkName: correctLandmarkName.value.trim() || undefined,
       uploadUrl: props.imageUrl,
     })
-    alert('感谢您的反馈，我们会尽快处理')
-    emit('done')
+    if (res.data.code === '00000') {
+      alert('感谢您的反馈，我们会尽快处理')
+      emit('done')
+    } else {
+      alert(res.data.message || '提交失败，请重试')
+    }
   } catch (e) {
     alert('提交失败，请重试')
   } finally {

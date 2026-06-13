@@ -35,8 +35,8 @@ public enum ErrorCode {
     UNIVERSITY_NAME_CONFLICT("L0005", "大学名称已存在"),
     IMAGE_NOT_FOUND("L0006", "图片不存在"),
 
-    // ===== 算法模块 (A) =====
-
+    // ===== 反馈模块 (F) =====
+    FEEDBACK_SUBMIT_TOO_FREQUENT("F0001", "提交过于频繁，请5分钟后再试"),
 
     // ===== 技术异常 (T) =====
     ALGORITHM_SERVICE_ERROR("T0001", "算法服务异常"),
