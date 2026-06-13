@@ -1,16 +1,22 @@
 package com.echocampus.user.entity;
 
-import java.util.UUID;
-
-import lombok.Data;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @TableName("checkin")
-public class Checkin {
+public class CheckinEntity {
+
     @TableId
     private UUID id;
 
-    private UUID user_id;
+    private UUID userId;
+
+    private UUID landmarkId;
+
+    private LocalDateTime createdAt;
 }

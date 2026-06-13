@@ -21,6 +21,9 @@ services:
 #      SPRING_RABBITMQ_PORT: 5672
 #      SPRING_RABBITMQ_USERNAME: echo_campus
 #      SPRING_RABBITMQ_PASSWORD: echo_campus
+#      REDIS_HOST: redis
+#      REDIS_PORT: 6379
+#      REDIS_PASSWORD: echo_campus
 #    depends_on:
 #      postgres:
 #        condition: service_healthy
@@ -28,6 +31,8 @@ services:
 #        condition: service_started
 #      rabbitmq:
 #        condition: service_started
+#      redis:
+#        condition: service_healthy
 
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
@@ -113,6 +118,21 @@ services:
       - "5672:5672"     # 消息通信端口
     volumes:
       - /usr/local/docker/rabbitmq:/var/lib/rabbitmq
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - /data/redis/data:/data
+    command: redis-server --appendonly yes --requirepass echo_campus
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "echo_campus", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: library/postgres:16

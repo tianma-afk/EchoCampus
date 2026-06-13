@@ -25,6 +25,7 @@ public enum ErrorCode {
     EMAIL_TRY_TOO_MANY_TIMES("U1013", "验证码尝试次数过多"),
     NICKNAME_ILLEGAL_CHARACTERS("U1014", "昵称包含非法字符"),
     NICKNAME_CHANGE_LIMIT("U1015", "昵称修改次数已达上限"),
+    CHECKIN_ALREADY("U1016", "今日已打卡"),
 
     // ===== 地标/校区/大学模块 (L) =====
     LANDMARK_NOT_FOUND("L0001", "地标不存在"),
@@ -34,8 +35,8 @@ public enum ErrorCode {
     UNIVERSITY_NAME_CONFLICT("L0005", "大学名称已存在"),
     IMAGE_NOT_FOUND("L0006", "图片不存在"),
 
-    // ===== 算法模块 (A) =====
-
+    // ===== 反馈模块 (F) =====
+    FEEDBACK_SUBMIT_TOO_FREQUENT("F0001", "提交过于频繁，请5分钟后再试"),
 
     // ===== 技术异常 (T) =====
     ALGORITHM_SERVICE_ERROR("T0001", "算法服务异常"),
