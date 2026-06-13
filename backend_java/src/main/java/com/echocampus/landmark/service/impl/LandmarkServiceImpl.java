@@ -40,7 +40,9 @@ public class LandmarkServiceImpl implements LandmarkService {
 
     private static final String HOT_RANKING_KEY = "landmark:hot:ranking";
     private static final String VO_KEY_PREFIX = "landmark:vo:";
+    private static final String VO_LOCK_PREFIX = "landmark:vo:lock:";
     private static final long VO_TTL = 5;
+    private static final long VO_LOCK_TTL = 3;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -295,22 +297,67 @@ public class LandmarkServiceImpl implements LandmarkService {
                 orderedIds.size(), hitCount, missIds.size(), page);
 
         if (!missIds.isEmpty()) {
-            log.info("[热门排行榜] 从 PG 加载 {} 个地标详情并回填缓存", missIds.size());
-            List<LandmarkEntity> missEntities = landmarkMapper.selectBatchIds(missIds);
-            List<LandmarkVO> missVos = buildHotVoList(missEntities);
-            for (LandmarkVO vo : missVos) {
-                vo.setCheckins(scoreMap.get(vo.getId().toString()));
-                vo.setCoverImg(null);
-                hitMap.put(vo.getId(), vo);
-                try {
-                    redisTemplate.opsForValue().set(
-                            VO_KEY_PREFIX + vo.getId(),
-                            OBJECT_MAPPER.writeValueAsString(vo),
-                            VO_TTL, TimeUnit.MINUTES);
-                } catch (Exception ignored) {
+            // 缓存击穿防护：对每个未命中 ID 尝试获取分布式锁，仅持有锁的线程查 PG
+            List<UUID> rebuildIds = new ArrayList<>();
+            List<UUID> waitIds = new ArrayList<>();
+            for (UUID id : missIds) {
+                String lockKey = VO_LOCK_PREFIX + id;
+                Boolean locked = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", VO_LOCK_TTL, TimeUnit.SECONDS);
+                if (Boolean.TRUE.equals(locked)) {
+                    rebuildIds.add(id);
+                } else {
+                    waitIds.add(id);
                 }
             }
-            log.info("[热门排行榜] 回填缓存完成, 共 {} 个地标", missVos.size());
+
+            if (!rebuildIds.isEmpty()) {
+                log.info("[热门排行榜] 获得锁, 从 PG 加载 {} 个地标详情并回填缓存", rebuildIds.size());
+                List<LandmarkEntity> missEntities = landmarkMapper.selectBatchIds(rebuildIds);
+                List<LandmarkVO> missVos = buildHotVoList(missEntities);
+                for (LandmarkVO vo : missVos) {
+                    vo.setCheckins(scoreMap.get(vo.getId().toString()));
+                    vo.setCoverImg(null);
+                    hitMap.put(vo.getId(), vo);
+                    try {
+                        redisTemplate.opsForValue().set(
+                                VO_KEY_PREFIX + vo.getId(),
+                                OBJECT_MAPPER.writeValueAsString(vo),
+                                VO_TTL, TimeUnit.MINUTES);
+                    } catch (Exception ignored) {
+                    }
+                }
+                log.info("[热门排行榜] 回填缓存完成, 共 {} 个地标", missVos.size());
+            }
+
+            // 未获得锁的 ID：等待 100ms 后重试 MGET
+            if (!waitIds.isEmpty()) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
+                List<String> retryKeys = waitIds.stream()
+                        .map(id -> VO_KEY_PREFIX + id)
+                        .collect(Collectors.toList());
+                List<String> retryJsons = redisTemplate.opsForValue().multiGet(retryKeys);
+                for (int i = 0; i < waitIds.size(); i++) {
+                    UUID id = waitIds.get(i);
+                    String json = (retryJsons != null && i < retryJsons.size()) ? retryJsons.get(i) : null;
+                    if (json != null) {
+                        try {
+                            LandmarkVO vo = OBJECT_MAPPER.readValue(json, LandmarkVO.class);
+                            vo.setCheckins(scoreMap.get(id.toString()));
+                            vo.setCoverImg(null);
+                            hitMap.put(id, vo);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+                if (!waitIds.isEmpty()) {
+                    log.info("[热门排行榜] 等待后重试 MGET, waitIds={}, 命中={}",
+                            waitIds, waitIds.stream().filter(hitMap::containsKey).count());
+                }
+            }
         }
 
         List<LandmarkVO> voList = orderedIds.stream()
