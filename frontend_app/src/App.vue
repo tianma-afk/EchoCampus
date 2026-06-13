@@ -100,6 +100,17 @@ const handleBack = () => {
   selectedLandmark.value = null
 }
 
+const handleCheckinSuccess = async (landmarkId: string) => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/landmarks/${landmarkId}`)
+    if (res.data.code === '00000') {
+      selectedLandmark.value = res.data.data
+    }
+  } catch (err) {
+    console.error('刷新地标详情失败:', err)
+  }
+}
+
 const profilePageRef = ref<InstanceType<typeof ProfilePage> | null>(null)
 
 const handleLogout = () => {
@@ -143,6 +154,7 @@ async function handleUpdateNickname(newNickname: string) {
       :landmark="selectedLandmark"
       @back="handleBack"
       @navigate-map="handleNavigateToMap"
+      @checkin-success="handleCheckinSuccess"
     />
     <div v-show="!showDetail">
       <KeepAlive>

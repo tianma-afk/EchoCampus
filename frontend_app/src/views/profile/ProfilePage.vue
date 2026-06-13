@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { getProfile } from '../../api/auth'
+import { getCheckinHistory, type CheckinRecord } from '../../api/checkin'
+import CheckinHistoryPage from './CheckinHistoryPage.vue'
 
 const props = defineProps<{ userNickname: string; userEmail: string; remainingChanges: number }>()
 const emit = defineEmits<{ logout: []; 'update-nickname': [value: string] }>()
@@ -60,17 +62,34 @@ function onUpdateDone(success: boolean, message?: string) {
 
 defineExpose({ onUpdateDone })
 
-interface CheckinRecord {
-  name: string
-  color: string
-  date: string
+const showCheckinHistory = ref(false)
+
+const checkinRecords = ref<CheckinRecord[]>([])
+const checkinTotal = ref(0)
+const checkinLoading = ref(true)
+
+const cardColors = ['#4a8c7a', '#d47a4a', '#7b5ea7', '#3a7ca5', '#c0392b', '#27ae60', '#8e44ad', '#d35400']
+
+function getCardColor(index: number) {
+  return cardColors[index % cardColors.length]
 }
 
-const recentCheckins: CheckinRecord[] = [
-  { name: '图书馆', color: '#4a8c7a', date: '2024-06-10' },
-  { name: '枫林广场', color: '#d47a4a', date: '2024-06-08' },
-  { name: '体育馆', color: '#7b5ea7', date: '2024-06-05' },
-]
+async function loadCheckinHistory() {
+  checkinLoading.value = true
+  try {
+    const res = await getCheckinHistory(1, 10)
+    if (res.code === '00000') {
+      checkinRecords.value = res.data.records
+      checkinTotal.value = res.data.total
+    }
+  } catch {
+    console.error('获取打卡历史失败')
+  } finally {
+    checkinLoading.value = false
+  }
+}
+
+onMounted(loadCheckinHistory)
 </script>
 
 <template>
@@ -86,7 +105,7 @@ const recentCheckins: CheckinRecord[] = [
         </div>
         <div class="stats-bar">
           <div class="stat-item">
-            <div class="stat-number">12</div>
+            <div class="stat-number">{{ checkinTotal }}</div>
             <div class="stat-label">打卡</div>
           </div>
           <div class="stat-divider"></div>
@@ -108,18 +127,24 @@ const recentCheckins: CheckinRecord[] = [
         <div class="section">
           <div class="section-header">
             <h3 class="section-title">最近打卡</h3>
-            <button class="view-all-btn">查看全部</button>
+            <button class="view-all-btn" @click="showCheckinHistory = true">查看全部</button>
           </div>
-          <div class="checkin-cards">
+          <div v-if="checkinLoading" class="checkin-cards">
+            <div class="checkin-card loading">加载中...</div>
+          </div>
+          <div v-else-if="checkinRecords.length === 0" class="checkin-cards">
+            <div class="checkin-card empty">暂无打卡记录</div>
+          </div>
+          <div v-else class="checkin-cards">
             <div
-              v-for="record in recentCheckins"
-              :key="record.name"
+              v-for="(record, index) in checkinRecords"
+              :key="record.id"
               class="checkin-card"
             >
-              <div class="checkin-image" :style="{ background: record.color }">
-                <span class="checkin-name">{{ record.name }}</span>
+              <div class="checkin-image" :style="{ background: getCardColor(index) }">
+                <span class="checkin-name">{{ record.landmarkName }}</span>
               </div>
-              <div class="checkin-date">{{ record.date }}</div>
+              <div class="checkin-date">{{ record.createdAt?.substring(0, 10) }}</div>
             </div>
           </div>
         </div>
@@ -141,7 +166,7 @@ const recentCheckins: CheckinRecord[] = [
               </svg>
             </div>
             <div class="menu-divider"></div>
-            <div class="menu-item">
+            <div class="menu-item" @click="showCheckinHistory = true">
               <div class="menu-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
@@ -149,7 +174,7 @@ const recentCheckins: CheckinRecord[] = [
                 </svg>
               </div>
               <span class="menu-label">我的打卡记录</span>
-              <span class="menu-count">12</span>
+              <span class="menu-count">{{ checkinTotal }}</span>
               <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -259,6 +284,8 @@ const recentCheckins: CheckinRecord[] = [
       </div>
     </div>
   </div>
+
+  <CheckinHistoryPage v-if="showCheckinHistory" @back="showCheckinHistory = false" />
 </template>
 
 <style scoped>
@@ -443,6 +470,16 @@ const recentCheckins: CheckinRecord[] = [
   font-size: 12px;
   color: var(--color-text-secondary);
   padding: 8px 10px;
+}
+
+.checkin-card.loading,
+.checkin-card.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  color: var(--color-text-muted);
+  font-size: 13px;
 }
 
 .menu-card {

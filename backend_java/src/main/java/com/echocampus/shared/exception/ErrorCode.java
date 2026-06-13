@@ -25,6 +25,7 @@ public enum ErrorCode {
     EMAIL_TRY_TOO_MANY_TIMES("U1013", "验证码尝试次数过多"),
     NICKNAME_ILLEGAL_CHARACTERS("U1014", "昵称包含非法字符"),
     NICKNAME_CHANGE_LIMIT("U1015", "昵称修改次数已达上限"),
+    CHECKIN_ALREADY("U1016", "今日已打卡"),
 
     // ===== 地标/校区/大学模块 (L) =====
     LANDMARK_NOT_FOUND("L0001", "地标不存在"),

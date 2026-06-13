@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { doCheckin } from '../../api/checkin'
 
 interface LandmarkDetail {
   id?: number
@@ -48,6 +49,7 @@ const emit = defineEmits<{
     rating: number
     openTime: string
   }]
+  'checkin-success': [landmarkId: string]
 }>()
 
 const minimapContainer = ref<HTMLDivElement>()
@@ -67,6 +69,29 @@ const renderStars = (rating: number) => {
 
 const selectFloor = (floorNumber: number) => {
   selectedFloorNumber.value = floorNumber
+}
+
+const checkinMsg = ref('')
+const checkinMsgType = ref<'success' | 'error'>('success')
+
+async function handleCheckin() {
+  const landmarkId = String(props.landmark.id ?? '')
+  if (!landmarkId) return
+  try {
+    const res = await doCheckin(landmarkId)
+    if (res.code === '00000') {
+      checkinMsg.value = '打卡成功'
+      checkinMsgType.value = 'success'
+      emit('checkin-success', landmarkId)
+    } else {
+      checkinMsg.value = res.message || '打卡失败'
+      checkinMsgType.value = 'error'
+    }
+  } catch {
+    checkinMsg.value = '网络错误，请重试'
+    checkinMsgType.value = 'error'
+  }
+  setTimeout(() => { checkinMsg.value = '' }, 2500)
 }
 
 onMounted(() => {
@@ -441,12 +466,16 @@ const bubblePositions = computed(() => {
         </svg>
         导航前往
       </button>
-      <button class="action-btn primary">
+      <button class="action-btn primary" @click="handleCheckin">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12" />
         </svg>
         打卡签到
       </button>
+    </div>
+
+    <div v-if="checkinMsg" class="checkin-toast" :class="checkinMsgType">
+      {{ checkinMsg }}
     </div>
   </div>
 </template>
@@ -1012,5 +1041,38 @@ const bubblePositions = computed(() => {
 
 .action-btn.primary:hover {
   background: var(--color-primary-hover);
+}
+
+.checkin-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  z-index: 9999;
+  pointer-events: none;
+  animation: toast-fade 2.5s ease-in-out forwards;
+}
+
+.checkin-toast.success {
+  background: #d4edda;
+  color: #155724;
+  box-shadow: 0 4px 16px rgba(21, 87, 36, 0.2);
+}
+
+.checkin-toast.error {
+  background: #f8d7da;
+  color: #721c24;
+  box-shadow: 0 4px 16px rgba(114, 28, 36, 0.2);
+}
+
+@keyframes toast-fade {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
 }
 </style>

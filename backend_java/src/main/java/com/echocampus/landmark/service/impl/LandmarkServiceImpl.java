@@ -1,6 +1,5 @@
 package com.echocampus.landmark.service.impl;
 
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,15 +23,21 @@ import com.echocampus.shared.util.ImageUrlBuilder;
 import com.echocampus.landmark.vo.FloorVO;
 import com.echocampus.landmark.vo.LandmarkDetailVO;
 import com.echocampus.landmark.vo.LandmarkVO;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class LandmarkServiceImpl implements LandmarkService {
+
+    private static final String HOT_RANKING_KEY = "landmark:hot:ranking";
+
     private final LandmarkMapper landmarkMapper;
     private final CategoryMapper categoryMapper;
     private final FloorMapper floorMapper;
@@ -40,11 +45,13 @@ public class LandmarkServiceImpl implements LandmarkService {
     private final UniversityMapper universityMapper;
     private final ImageMapper imageMapper;
     private final ImageUrlBuilder imageUrlBuilder;
+    private final StringRedisTemplate redisTemplate;
 
     public LandmarkServiceImpl(LandmarkMapper landmarkMapper, CategoryMapper categoryMapper,
                                FloorMapper floorMapper, CampusMapper campusMapper,
                                UniversityMapper universityMapper, ImageMapper imageMapper,
-                               ImageUrlBuilder imageUrlBuilder) {
+                               ImageUrlBuilder imageUrlBuilder,
+                               StringRedisTemplate redisTemplate) {
         this.landmarkMapper = landmarkMapper;
         this.categoryMapper = categoryMapper;
         this.floorMapper = floorMapper;
@@ -52,6 +59,7 @@ public class LandmarkServiceImpl implements LandmarkService {
         this.universityMapper = universityMapper;
         this.imageMapper = imageMapper;
         this.imageUrlBuilder = imageUrlBuilder;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -75,6 +83,9 @@ public class LandmarkServiceImpl implements LandmarkService {
 
 		// 排序
 		String sortBy = request.getSortBy();
+		if ("hot".equals(sortBy) && request.getCategory() == null && StringUtils.isBlank(request.getSearchQuery())) {
+            return getHotLandmarkList(request);
+        }
 		if ("rate".equals(sortBy)) {
 			wrapper.orderByDesc(LandmarkEntity::getRating);
 		} else if ("hot".equals(sortBy)) {
@@ -207,6 +218,134 @@ public class LandmarkServiceImpl implements LandmarkService {
                 .recommendRate(landmark.getRecommendRate())
                 .floorList(floorList)
                 .build();
+    }
+
+    private Page<LandmarkVO> getHotLandmarkList(LandmarkListRequest request) {
+        int page = request.getPage();
+        int pageSize = request.getPageSize();
+        long start = (long) (page - 1) * pageSize;
+        long end = start + pageSize - 1;
+
+        Set<String> memberIds;
+        long total;
+        try {
+            total = redisTemplate.opsForZSet().zCard(HOT_RANKING_KEY);
+            memberIds = redisTemplate.opsForZSet().reverseRange(HOT_RANKING_KEY, start, end);
+        } catch (DataAccessException e) {
+            log.warn("[热门排行榜] Redis 不可用, 回退到 PostgreSQL 排序", e);
+            return fallbackHotList(request);
+        }
+
+        if (memberIds == null || memberIds.isEmpty()) {
+            initHotRankingFromDb();
+            try {
+                total = redisTemplate.opsForZSet().zCard(HOT_RANKING_KEY);
+                memberIds = redisTemplate.opsForZSet().reverseRange(HOT_RANKING_KEY, start, end);
+            } catch (DataAccessException e) {
+                log.warn("[热门排行榜] Redis 初始化后仍不可用, 回退到 PostgreSQL", e);
+                return fallbackHotList(request);
+            }
+            if (memberIds == null || memberIds.isEmpty()) {
+                return fallbackHotList(request);
+            }
+        }
+
+        List<UUID> ids = memberIds.stream().map(UUID::fromString).toList();
+        List<LandmarkEntity> entities = landmarkMapper.selectBatchIds(ids);
+        Map<UUID, LandmarkEntity> entityMap = entities.stream()
+                .collect(Collectors.toMap(LandmarkEntity::getId, e -> e, (a, b) -> a));
+        List<LandmarkEntity> orderedEntities = ids.stream()
+                .map(entityMap::get)
+                .filter(Objects::nonNull)
+                .toList();
+
+        return buildVoPage(orderedEntities, page, pageSize, total);
+    }
+
+    private void initHotRankingFromDb() {
+        log.info("[热门排行榜] 初始化 Redis ZSET, 从 PostgreSQL 加载数据");
+        try {
+            var wrapper = new LambdaQueryWrapper<LandmarkEntity>()
+                    .select(LandmarkEntity::getId, LandmarkEntity::getCheckInCount);
+            List<LandmarkEntity> all = landmarkMapper.selectList(wrapper);
+            if (all.isEmpty()) return;
+
+            Set<ZSetOperations.TypedTuple<String>> tuples = all.stream()
+                    .map(e -> ZSetOperations.TypedTuple.of(
+                            e.getId().toString(),
+                            e.getCheckInCount() != null ? e.getCheckInCount().doubleValue() : 0.0))
+                    .collect(Collectors.toSet());
+            redisTemplate.opsForZSet().add(HOT_RANKING_KEY, tuples);
+            log.info("[热门排行榜] 初始化完成, 共加载 {} 个地标", all.size());
+        } catch (Exception e) {
+            log.error("[热门排行榜] 初始化失败", e);
+        }
+    }
+
+    private Page<LandmarkVO> fallbackHotList(LandmarkListRequest request) {
+        LambdaQueryWrapper<LandmarkEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(LandmarkEntity::getCheckInCount);
+        Page<LandmarkEntity> page = new Page<>(request.getPage(), request.getPageSize());
+        Page<LandmarkEntity> resultPage = landmarkMapper.selectPage(page, wrapper);
+        return buildVoPage(resultPage.getRecords(), resultPage.getCurrent(),
+                resultPage.getSize(), resultPage.getTotal());
+    }
+
+    private Page<LandmarkVO> buildVoPage(List<LandmarkEntity> entities, long page, long pageSize, long total) {
+        List<UUID> categoryIds = entities.stream()
+                .map(LandmarkEntity::getCategoryId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<UUID, String> categoryNameMap = categoryIds.isEmpty() ? Map.of()
+                : categoryMapper.selectBatchIds(categoryIds).stream()
+                        .collect(Collectors.toMap(CategoryEntity::getId, CategoryEntity::getName));
+
+        List<UUID> coverImageIds = entities.stream()
+                .map(LandmarkEntity::getCoverImageId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<UUID, ImageEntity> coverImageMap = coverImageIds.isEmpty() ? Map.of()
+                : imageMapper.selectBatchIds(coverImageIds).stream()
+                        .collect(Collectors.toMap(ImageEntity::getId, img -> img));
+
+        List<UUID> campusIds = entities.stream()
+                .map(LandmarkEntity::getCampusId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<UUID, CampusEntity> campusMap = campusIds.isEmpty() ? Map.of()
+                : campusMapper.selectBatchIds(campusIds).stream()
+                        .collect(Collectors.toMap(CampusEntity::getId, c -> c));
+        Map<UUID, UniversityEntity> universityMap;
+        if (!campusMap.isEmpty()) {
+            List<UUID> universityIds = campusMap.values().stream()
+                    .map(CampusEntity::getUniversityId)
+                    .distinct()
+                    .collect(Collectors.toList());
+            universityMap = universityMapper.selectBatchIds(universityIds).stream()
+                    .collect(Collectors.toMap(UniversityEntity::getId, u -> u));
+        } else {
+            universityMap = Map.of();
+        }
+
+        List<LandmarkVO> voList = entities.stream()
+                .map(entity -> LandmarkVO.builder()
+                        .id(entity.getId())
+                        .name(entity.getName())
+                        .rating(entity.getRating())
+                        .checkins(entity.getCheckInCount())
+                        .openTime(entity.getOpenTime())
+                        .category(categoryNameMap.getOrDefault(entity.getCategoryId(), "未分类"))
+                        .tags(entity.getTags())
+                        .coverImg(buildCoverUrl(entity, coverImageMap, campusMap, universityMap))
+                        .latitude(entity.getLatitude())
+                        .longitude(entity.getLongitude())
+                        .build())
+                .collect(Collectors.toList());
+
+        Page<LandmarkVO> voPage = new Page<>(page, pageSize, total);
+        voPage.setRecords(voList);
+        return voPage;
     }
 
     private String buildCoverUrl(LandmarkEntity entity, Map<UUID, ImageEntity> coverImageMap,
