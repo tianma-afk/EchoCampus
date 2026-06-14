@@ -232,52 +232,50 @@ onMounted(() => {
       <div class="section-card">
         <div class="section-header">
           <h2 class="section-title">校区列表</h2>
-          <button class="add-btn" @click="openCreateCampus">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+          <el-button type="success" size="small" @click="openCreateCampus">
+            <el-icon><Plus /></el-icon>
             新增校区
-          </button>
+          </el-button>
         </div>
 
-        <table class="data-table" v-if="!campusLoading && campuses.length > 0">
-          <thead>
-            <tr>
-              <th>校区名称</th>
-              <th class="col-actions">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="cam in campuses" :key="cam.id">
-              <td class="campus-name">{{ cam.name }}</td>
-              <td class="col-actions">
-                <button class="action-btn edit-btn" @click="openEditCampus(cam)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                  编辑
-                </button>
-                <button class="action-btn delete-btn" @click="handleDeleteCampus(cam)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                  删除
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <el-table
+          :data="campuses"
+          v-loading="campusLoading"
+        >
+          <template #empty>
+            <el-empty description="暂无校区">
+              <el-button type="success" @click="openCreateCampus">新增校区</el-button>
+            </el-empty>
+          </template>
 
-        <div v-else-if="campusLoading" class="empty-state">加载中...</div>
-        <div v-else class="empty-state">暂无校区，点击"新增校区"开始添加</div>
+          <el-table-column label="校区名称" min-width="400">
+            <template #default="{ row }">
+              <span class="campus-name">{{ row.name }}</span>
+            </template>
+          </el-table-column>
 
-        <div class="pagination" v-if="campusTotal > campusPageSize">
-          <button class="page-btn" :disabled="campusPage <= 1" @click="campusPage--; fetchCampuses()">上一页</button>
-          <span class="page-info">{{ campusPage }} / {{ Math.ceil(campusTotal / campusPageSize) }}</span>
-          <button class="page-btn" :disabled="campusPage >= Math.ceil(campusTotal / campusPageSize)" @click="campusPage++; fetchCampuses()">下一页</button>
+          <el-table-column label="操作" width="200" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" @click="openEditCampus(row)">
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
+              <el-button size="small" type="danger" @click="handleDeleteCampus(row)">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <div class="table-footer" v-if="campusTotal > campusPageSize">
+          <el-pagination
+            v-model:current-page="campusPage"
+            :page-size="campusPageSize"
+            :total="campusTotal"
+            layout="prev, pager, next"
+            @current-change="fetchCampuses"
+          />
         </div>
       </div>
     </template>
@@ -505,139 +503,42 @@ onMounted(() => {
   margin: 0;
 }
 
-.add-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: #059669;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.add-btn:hover {
-  background: #047857;
-}
-
-.add-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th {
-  text-align: left;
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #9ca3af;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 14px;
-  color: #374151;
-}
-
 .campus-name {
   font-weight: 500;
   color: #1f2937;
 }
 
-.col-actions {
-  width: 200px;
-  text-align: right;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: #fff;
-  margin-left: 8px;
-}
-
-.action-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.edit-btn {
-  color: #6b7280;
-}
-
-.edit-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
-}
-
-.delete-btn {
-  color: #ef4444;
-}
-
-.delete-btn:hover {
-  background: #fef2f2;
-  border-color: #ef4444;
-}
-
-.empty-state {
-  padding: 48px 16px;
-  text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
-}
-
-.pagination {
+.table-footer {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 12px;
   padding: 16px;
   border-top: 1px solid #f3f4f6;
 }
 
-.page-btn {
-  padding: 6px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #fff;
-  color: #374151;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
+/* el-table style overrides */
+:deep(.el-table th.el-table__cell) {
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
 }
 
-.page-btn:hover:not(:disabled) {
-  border-color: #10b981;
+:deep(.el-table .el-table__cell) {
+  padding: 12px 16px;
+}
+
+:deep(.el-table__body tr:hover > td.el-table__cell) {
+  background-color: #f9fafb;
+}
+
+/* el-pagination style overrides */
+:deep(.el-pagination .el-pager li.is-active) {
+  background-color: #059669;
+}
+
+:deep(.el-pagination .el-pager li:hover) {
   color: #10b981;
-}
-
-.page-btn:disabled {
-  color: #d1d5db;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 13px;
-  color: #6b7280;
 }
 
 /* Modal */

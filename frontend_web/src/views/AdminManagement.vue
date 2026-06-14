@@ -144,79 +144,89 @@ onMounted(() => {
         <span class="page-count">共 {{ total }} 个管理员</span>
       </div>
       <div class="page-actions">
-        <button class="add-btn" @click="openCreate">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+        <el-button type="success" @click="openCreate">
+          <el-icon><Plus /></el-icon>
           新增管理员
-        </button>
+        </el-button>
       </div>
     </div>
 
     <div class="filter-bar">
-      <input
+      <el-input
         v-model="keyword"
-        type="text"
-        class="search-input"
         placeholder="搜索用户名或邮箱..."
+        clearable
+        style="width: 260px"
         @keyup.enter="handleSearch"
+        @clear="handleSearch"
       />
-      <button class="search-btn" @click="handleSearch">搜索</button>
+      <el-button @click="handleSearch">搜索</el-button>
     </div>
 
     <div class="table-card">
-      <table class="data-table" v-if="!loading && admins.length > 0">
-        <thead>
-          <tr>
-            <th>用户名</th>
-            <th>邮箱</th>
-            <th>超级管理员</th>
-            <th>创建时间</th>
-            <th class="col-actions">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="admin in admins" :key="admin.id">
-            <td class="admin-name">{{ admin.username }}</td>
-            <td class="email-cell">{{ admin.email }}</td>
-            <td>
-              <span class="super-tag" :class="admin.is_super ? 'super-yes' : 'super-no'">
-                {{ admin.is_super ? '是' : '否' }}
-              </span>
-            </td>
-            <td class="time-cell">{{ new Date(admin.created_at).toLocaleDateString('zh-CN') }}</td>
-            <td class="col-actions">
-              <button class="action-btn edit-btn" @click="openEdit(admin)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                编辑
-              </button>
-              <button
-                v-if="!admin.is_super"
-                class="action-btn delete-btn"
-                @click="handleDelete(admin)"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-                删除
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <el-table
+        :data="admins"
+        v-loading="loading"
+      >
+        <template #empty>
+          <el-empty description="暂无管理员数据">
+            <el-button type="success" @click="openCreate">新增管理员</el-button>
+          </el-empty>
+        </template>
 
-      <div v-else-if="loading" class="empty-state">加载中...</div>
-      <div v-else class="empty-state">暂无管理员数据，点击"新增管理员"开始添加</div>
+        <el-table-column label="用户名" min-width="140">
+          <template #default="{ row }">
+            <span class="admin-name">{{ row.username }}</span>
+          </template>
+        </el-table-column>
 
-      <div class="pagination" v-if="total > pageSize">
-        <button class="page-btn" :disabled="page <= 1" @click="page--; fetchAdmins()">上一页</button>
-        <span class="page-info">{{ page }} / {{ Math.ceil(total / pageSize) }}</span>
-        <button class="page-btn" :disabled="page >= Math.ceil(total / pageSize)" @click="page++; fetchAdmins()">下一页</button>
+        <el-table-column label="邮箱" min-width="200">
+          <template #default="{ row }">
+            <span class="email-cell">{{ row.email }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="超级管理员" width="120" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.is_super ? 'danger' : 'info'" size="small">
+              {{ row.is_super ? '是' : '否' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="创建时间" width="140">
+          <template #default="{ row }">
+            <span class="time-cell">{{ new Date(row.created_at).toLocaleDateString('zh-CN') }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" @click="openEdit(row)">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+            <el-button
+              v-if="!row.is_super"
+              size="small"
+              type="danger"
+              @click="handleDelete(row)"
+            >
+              <el-icon><Delete /></el-icon>
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="table-footer" v-if="total > pageSize">
+        <el-pagination
+          v-model:current-page="page"
+          :page-size="pageSize"
+          :total="total"
+          layout="prev, pager, next"
+          @current-change="fetchAdmins"
+        />
       </div>
     </div>
 
@@ -293,75 +303,10 @@ onMounted(() => {
   color: #9ca3af;
 }
 
-.page-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.add-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: #059669;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.add-btn:hover {
-  background: #047857;
-}
-
-.add-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
 .filter-bar {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
-}
-
-.search-input {
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #374151;
-  outline: none;
-  width: 260px;
-  transition: border-color 0.2s;
-}
-
-.search-input:focus {
-  border-color: #10b981;
-}
-
-.search-input::placeholder {
-  color: #d1d5db;
-}
-
-.search-btn {
-  padding: 8px 16px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.search-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
 }
 
 .table-card {
@@ -369,33 +314,6 @@ onMounted(() => {
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th {
-  text-align: left;
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 14px;
-  color: #374151;
-}
-
-.data-table tbody tr:hover {
-  background: #f9fafb;
 }
 
 .admin-name {
@@ -413,106 +331,42 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.super-tag {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.super-tag.super-yes {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.super-tag.super-no {
-  background: #f3f4f6;
-  color: #9ca3af;
-}
-
-.col-actions {
-  width: 190px;
-  text-align: right;
-}
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: #fff;
-  margin-left: 8px;
-}
-
-.action-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-.edit-btn {
-  color: #6b7280;
-}
-
-.edit-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
-}
-
-.delete-btn {
-  color: #ef4444;
-}
-
-.delete-btn:hover {
-  background: #fef2f2;
-  border-color: #ef4444;
-}
-
-.empty-state {
-  padding: 48px 16px;
-  text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
-}
-
-.pagination {
+.table-footer {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 12px;
   padding: 16px;
   border-top: 1px solid #f3f4f6;
 }
 
-.page-btn {
-  padding: 6px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #fff;
-  color: #374151;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
+/* el-table style overrides */
+:deep(.el-table th.el-table__cell) {
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.page-btn:hover:not(:disabled) {
-  border-color: #10b981;
+:deep(.el-table .el-table__cell) {
+  padding: 12px 16px;
+}
+
+:deep(.el-table__body tr:hover > td.el-table__cell) {
+  background-color: #f9fafb;
+}
+
+:deep(.el-table__body tr) {
+  transition: background 0.15s;
+}
+
+/* el-pagination style overrides */
+:deep(.el-pagination .el-pager li.is-active) {
+  background-color: #059669;
+}
+
+:deep(.el-pagination .el-pager li:hover) {
   color: #10b981;
-}
-
-.page-btn:disabled {
-  color: #d1d5db;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 13px;
-  color: #6b7280;
 }
 
 /* Modal */

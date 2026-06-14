@@ -19,6 +19,12 @@ const loading = ref(false)
 const filterStatus = ref('')
 const filterType = ref('')
 
+const statusTagType: Record<string, string> = {
+  PENDING: 'warning',
+  RESOLVED: 'success',
+  REJECTED: 'danger',
+}
+
 async function fetchList() {
   loading.value = true
   try {
@@ -67,60 +73,93 @@ onMounted(() => {
     <div class="filter-bar">
       <div class="filter-group">
         <label>状态</label>
-        <select v-model="filterStatus" @change="applyFilters">
-          <option value="">全部</option>
-          <option value="PENDING">待处理</option>
-          <option value="RESOLVED">已解决</option>
-          <option value="REJECTED">已驳回</option>
-        </select>
+        <el-select
+          v-model="filterStatus"
+          placeholder="全部"
+          clearable
+          style="width: 140px"
+          @change="applyFilters"
+        >
+          <el-option label="待处理" value="PENDING" />
+          <el-option label="已解决" value="RESOLVED" />
+          <el-option label="已驳回" value="REJECTED" />
+        </el-select>
       </div>
       <div class="filter-group">
         <label>类型</label>
-        <select v-model="filterType" @change="applyFilters">
-          <option value="">全部</option>
-          <option value="INFO_ERROR">信息错误</option>
-          <option value="CONTENT_ILLEGAL">违禁内容</option>
-          <option value="INFO_CHANGE">信息变更</option>
-          <option value="OTHER">其他</option>
-        </select>
+        <el-select
+          v-model="filterType"
+          placeholder="全部"
+          clearable
+          style="width: 140px"
+          @change="applyFilters"
+        >
+          <el-option label="信息错误" value="INFO_ERROR" />
+          <el-option label="违禁内容" value="CONTENT_ILLEGAL" />
+          <el-option label="信息变更" value="INFO_CHANGE" />
+          <el-option label="其他" value="OTHER" />
+        </el-select>
       </div>
     </div>
 
     <div class="table-card">
-      <table class="data-table" v-if="!loading && feedbacks.length > 0">
-        <thead>
-          <tr>
-            <th>地标名称</th>
-            <th>反馈类型</th>
-            <th>内容摘要</th>
-            <th>状态</th>
-            <th>提交时间</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="fb in feedbacks" :key="fb.id" @click="goToDetail(fb.id)" class="clickable-row">
-            <td class="landmark-name">{{ fb.landmarkName }}</td>
-            <td>
-              <span class="type-tag">{{ FEEDBACK_TYPE_MAP[fb.feedbackType] || fb.feedbackType }}</span>
-            </td>
-            <td class="content-cell">{{ truncateContent(fb.content, 30) }}</td>
-            <td>
-              <span class="status-tag" :class="fb.status.toLowerCase()">
-                {{ FEEDBACK_STATUS_MAP[fb.status] || fb.status }}
-              </span>
-            </td>
-            <td class="time-cell">{{ new Date(fb.createdAt).toLocaleDateString('zh-CN') }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <el-table
+        :data="feedbacks"
+        v-loading="loading"
+        highlight-current-row
+        @row-click="(row) => goToDetail(row.id)"
+      >
+        <template #empty>
+          <el-empty description="暂无反馈数据" />
+        </template>
 
-      <div v-else-if="loading" class="empty-state">加载中...</div>
-      <div v-else class="empty-state">暂无反馈数据</div>
+        <el-table-column label="地标名称" min-width="160">
+          <template #default="{ row }">
+            <span class="landmark-name">{{ row.landmarkName }}</span>
+          </template>
+        </el-table-column>
 
-      <div class="pagination" v-if="total > pageSize">
-        <button class="page-btn" :disabled="page <= 1" @click="page--; fetchList()">上一页</button>
-        <span class="page-info">{{ page }} / {{ Math.ceil(total / pageSize) }}</span>
-        <button class="page-btn" :disabled="page >= Math.ceil(total / pageSize)" @click="page++; fetchList()">下一页</button>
+        <el-table-column label="反馈类型" width="120">
+          <template #default="{ row }">
+            <el-tag size="small" type="info" effect="plain">
+              {{ FEEDBACK_TYPE_MAP[row.feedbackType] || row.feedbackType }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="内容摘要" min-width="200">
+          <template #default="{ row }">
+            <span class="content-cell">{{ truncateContent(row.content, 30) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag
+              :type="statusTagType[row.status] ?? 'info'"
+              size="small"
+              effect="plain"
+            >
+              {{ FEEDBACK_STATUS_MAP[row.status] || row.status }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="提交时间" width="130">
+          <template #default="{ row }">
+            <span class="time-cell">{{ new Date(row.createdAt).toLocaleDateString('zh-CN') }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="table-footer" v-if="total > pageSize">
+        <el-pagination
+          v-model:current-page="page"
+          :page-size="pageSize"
+          :total="total"
+          layout="prev, pager, next"
+          @current-change="fetchList"
+        />
       </div>
     </div>
   </div>
@@ -174,59 +213,11 @@ onMounted(() => {
   color: #374151;
 }
 
-.filter-group select {
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #374151;
-  background: #fff;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.filter-group select:focus {
-  border-color: #10b981;
-}
-
 .table-card {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th {
-  text-align: left;
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 14px;
-  color: #374151;
-}
-
-.clickable-row {
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.clickable-row:hover {
-  background: #f9fafb;
 }
 
 .landmark-name {
@@ -239,6 +230,7 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: block;
 }
 
 .time-cell {
@@ -247,78 +239,41 @@ onMounted(() => {
   font-size: 13px;
 }
 
-.type-tag {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  background: #f3f4f6;
-  color: #374151;
-}
-
-.status-tag {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-tag.pending {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-tag.resolved {
-  background: #d1fae5;
-  color: #059669;
-}
-
-.status-tag.rejected {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.empty-state {
-  padding: 48px 16px;
-  text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
-}
-
-.pagination {
+.table-footer {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 12px;
   padding: 16px;
   border-top: 1px solid #f3f4f6;
 }
 
-.page-btn {
-  padding: 6px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #fff;
-  color: #374151;
-  font-size: 13px;
+/* el-table style overrides */
+:deep(.el-table th.el-table__cell) {
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+:deep(.el-table .el-table__cell) {
+  padding: 12px 16px;
+}
+
+:deep(.el-table__body tr:hover > td.el-table__cell) {
+  background-color: #f9fafb;
+}
+
+:deep(.el-table__body tr) {
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s;
 }
 
-.page-btn:hover:not(:disabled) {
-  border-color: #10b981;
+/* el-pagination style overrides */
+:deep(.el-pagination .el-pager li.is-active) {
+  background-color: #059669;
+}
+
+:deep(.el-pagination .el-pager li:hover) {
   color: #10b981;
-}
-
-.page-btn:disabled {
-  color: #d1d5db;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 13px;
-  color: #6b7280;
 }
 </style>
