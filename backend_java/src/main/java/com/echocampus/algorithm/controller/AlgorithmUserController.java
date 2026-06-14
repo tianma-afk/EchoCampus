@@ -1,6 +1,8 @@
 package com.echocampus.algorithm.controller;
 
 import com.echocampus.algorithm.service.AlgorithmUserService;
+import com.echocampus.shared.annotation.RequireRole;
+import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.algorithm.vo.SearchResultVO;
@@ -21,6 +23,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/user/algorithm")
 @RequiredArgsConstructor
+@RequireRole(RoleEnum.USER)
 @Tag(name = "移动端算法任务", description = "提供图像搜索等算法相关功能")
 public class AlgorithmUserController {
 

@@ -6,12 +6,9 @@ import com.echocampus.admin.entity.AdminEntity;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 import com.echocampus.admin.mapper.AdminMapper;
+import com.echocampus.shared.util.PasswordUtil;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
-import java.util.HexFormat;
 import java.util.UUID;
 
 @Component
@@ -35,7 +32,7 @@ public class AdminInitializer {
         adminMapper.insert(new AdminEntity()
                 .setId(UUID.randomUUID())
                 .setUsername(adminProperties.getUsername())
-                .setPasswordHash(hashPassword(adminProperties.getPassword()))
+                .setPasswordHash(PasswordUtil.hashPassword(adminProperties.getPassword()))
                 .setEmail(adminProperties.getEmail())
                 .setIsSuper(true)
                 .setCreatedAt(OffsetDateTime.now())
@@ -46,15 +43,5 @@ public class AdminInitializer {
         LambdaQueryWrapper<AdminEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(AdminEntity::getIsSuper, true);
         return adminMapper.selectCount(wrapper) > 0;
-    }
-
-    private String hashPassword(String password) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("密码加密失败", e);
-        }
     }
 }

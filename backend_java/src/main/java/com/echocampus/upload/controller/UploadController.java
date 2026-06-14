@@ -1,5 +1,7 @@
 package com.echocampus.upload.controller;
 
+import com.echocampus.shared.annotation.RequireRole;
+import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.upload.service.UploadService;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.upload.vo.UploadPresignedUrlVO;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/upload")
+@RequireRole(RoleEnum.USER)
 @Tag(name = "文件上传", description = "提供图片上传预签名URL")
 public class UploadController {
 

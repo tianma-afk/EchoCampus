@@ -13,6 +13,7 @@ export interface Page<T> {
 }
 
 const BASE_URL = '/api/v1'
+const TOKEN_KEY = 'echocampus_token'
 
 interface RequestOptions {
   method?: string
@@ -22,6 +23,12 @@ interface RequestOptions {
 async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body } = options
   const headers: Record<string, string> = {}
+
+  const token = localStorage.getItem(TOKEN_KEY)
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   if (body) {
     headers['Content-Type'] = 'application/json'
   }
@@ -31,6 +38,14 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
     headers,
     body: body ? JSON.stringify(body) : undefined,
   })
+
+  if (response.status === 401) {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem('echocampus_username')
+    localStorage.removeItem('echocampus_role')
+    window.location.href = '/login'
+    throw new Error('Unauthorized')
+  }
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`)

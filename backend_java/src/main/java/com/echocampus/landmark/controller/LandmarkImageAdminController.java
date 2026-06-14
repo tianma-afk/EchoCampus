@@ -9,6 +9,7 @@ import com.echocampus.landmark.dto.SetCoverRequest;
 import com.echocampus.landmark.service.LandmarkImageAdminService;
 import com.echocampus.landmark.vo.BatchDeleteImagesResponse;
 import com.echocampus.landmark.vo.ImagePageVO;
+import com.echocampus.shared.annotation.RequireRole;
 import com.echocampus.shared.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/landmarks/{landmarkId}")
+@RequireRole
 @Tag(name = "管理员地标图片", description = "提供地标图片的上传和管理功能")
 public class LandmarkImageAdminController {
     private static final Logger log = LoggerFactory.getLogger(LandmarkImageAdminController.class);

@@ -3,6 +3,7 @@ package com.echocampus.university.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.echocampus.university.dto.UniversityCreateRequest;
 import com.echocampus.university.dto.UniversityUpdateRequest;
+import com.echocampus.shared.annotation.RequireRole;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.university.vo.UniversityVO;
 import com.echocampus.university.service.UniversityAdminService;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/universities")
+@RequireRole
 @Tag(name = "管理员大学", description = "提供大学的增删改查功能")
 public class UniversityAdminController {
     private final UniversityAdminService universityAdminService;
