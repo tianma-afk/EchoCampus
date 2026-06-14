@@ -517,6 +517,8 @@ onActivated(() => {
           </svg>
         </button>
       </div>
+    </div>
+
     <!-- 导航面板 -->
     <div v-show="navIsRouting || navIsNavigating || navHasError || navHasArrived" class="nav-panel">
       <div class="nav-top">
@@ -550,7 +552,6 @@ onActivated(() => {
       <div class="nav-bottom">
         <button class="nav-btn" @click="onRecenter">&#x1F4CD; 我的位置</button>
       </div>
-    </div>
     </div>
   </div>
 </template>
