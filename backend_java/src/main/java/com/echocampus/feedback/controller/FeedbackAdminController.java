@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.echocampus.feedback.dto.FeedbackResolveRequest;
 import com.echocampus.feedback.service.FeedbackAdminService;
 import com.echocampus.feedback.vo.FeedbackAdminVO;
+import com.echocampus.shared.annotation.RequireRole;
+import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.shared.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/feedbacks")
+@RequireRole(RoleEnum.ADMIN)
 @Tag(name = "管理端反馈", description = "提供反馈的查看与处理功能")
 public class FeedbackAdminController {
     private final FeedbackAdminService feedbackAdminService;

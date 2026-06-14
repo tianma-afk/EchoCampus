@@ -5,6 +5,7 @@ import com.echocampus.landmark.dto.LandmarkCreateRequest;
 import com.echocampus.landmark.dto.LandmarkUpdateRequest;
 import com.echocampus.landmark.vo.LandmarkAdminVO;
 import com.echocampus.landmark.vo.LandmarkDetailVO;
+import com.echocampus.shared.annotation.RequireRole;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.landmark.service.LandmarkAdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/landmarks")
+@RequireRole
 @Tag(name = "管理员地标", description = "提供校园地标的增删改查功能")
 public class LandmarkAdminController {
     private final LandmarkAdminService landmarkAdminService;

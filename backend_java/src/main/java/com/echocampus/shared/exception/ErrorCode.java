@@ -9,6 +9,13 @@ public enum ErrorCode {
     NOT_FOUND("G0002", "资源不存在"),
     CONFLICT("G0003", "资源冲突"),
 
+    // ===== 管理员模块 (A) =====
+    AUTH_TOKEN_INVALID("A0001", "未登录或登录已过期"),
+    AUTH_PERMISSION_DENIED("A0002", "权限不足"),
+    ADMIN_NOT_FOUND("A0003", "管理员不存在"),
+    ADMIN_LOGIN_ERROR("A0004", "用户名或邮箱或密码错误"),
+    
+
     // ===== 用户模块 (U) =====
     USER_NOT_FOUND("U1001", "用户不存在"),
     USER_ALREADY_EXISTS("U1002", "用户已存在"),

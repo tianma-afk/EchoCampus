@@ -12,11 +12,11 @@ const vectorizing = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | undefined
 let refreshTimer: ReturnType<typeof setInterval> | undefined
 
-const statusColor: Record<string, string> = {
-  READY: '#9ca3af',
-  PROCESSING: '#3b82f6',
-  SUCCESS: '#10b981',
-  FAILED: '#ef4444',
+const statusType: Record<string, string> = {
+  READY: 'info',
+  PROCESSING: '',
+  SUCCESS: 'success',
+  FAILED: 'danger',
 }
 
 const statusLabel: Record<string, string> = {
@@ -41,12 +41,15 @@ function formatTime(t: string | null) {
 }
 
 async function fetchList() {
+  loading.value = true
   try {
     const res = await getTaskList(page.value, pageSize.value)
     tasks.value = res.data.records
     total.value = res.data.total
   } catch {
     tasks.value = []
+  } finally {
+    loading.value = false
   }
 }
 
@@ -122,55 +125,79 @@ onUnmounted(() => {
         <span class="page-count">共 {{ total }} 个任务</span>
       </div>
       <div class="page-actions">
-        <button
-          :disabled="vectorizing"
-          class="vectorize-btn"
+        <el-button
+          type="primary"
+          :loading="vectorizing"
           @click="handleVectorize"
         >
           <el-icon :size="16"><VideoPlay /></el-icon>
           {{ vectorizing ? '提交中...' : '向量化所有图片' }}
-        </button>
+        </el-button>
       </div>
     </div>
 
     <div class="table-card">
-      <table class="data-table" v-if="!loading && tasks.length > 0">
-        <thead>
-          <tr>
-            <th>任务ID</th>
-            <th>类型</th>
-            <th>算法任务ID</th>
-            <th>状态</th>
-            <th>创建时间</th>
-            <th>更新时间</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="task in tasks" :key="task.id">
-            <td class="mono" :title="task.id">{{ shortId(task.id) }}</td>
-            <td>{{ typeLabel[task.taskType] ?? task.taskType }}</td>
-            <td class="mono">{{ task.algTaskId ?? '-' }}</td>
-            <td>
-              <span
-                class="status-tag"
-                :style="{ backgroundColor: (statusColor[task.taskStatus] ?? '#9ca3af') + '20', color: statusColor[task.taskStatus] ?? '#9ca3af' }"
-              >
-                {{ statusLabel[task.taskStatus] ?? task.taskStatus }}
-              </span>
-            </td>
-            <td class="time-cell">{{ formatTime(task.createdAt) }}</td>
-            <td class="time-cell">{{ formatTime(task.updatedAt) }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <el-table
+        :data="tasks"
+        v-loading="loading"
+      >
+        <template #empty>
+          <el-empty description="暂无任务">
+            <el-button type="primary" @click="handleVectorize">向量化所有图片</el-button>
+          </el-empty>
+        </template>
 
-      <div v-else-if="loading" class="empty-state">加载中...</div>
-      <div v-else class="empty-state">暂无任务，点击"向量化所有图片"开始</div>
+        <el-table-column label="任务ID" width="160">
+          <template #default="{ row }">
+            <span class="mono" :title="row.id">{{ shortId(row.id) }}</span>
+          </template>
+        </el-table-column>
 
-      <div class="pagination" v-if="total > pageSize">
-        <button class="page-btn" :disabled="page <= 1" @click="page--; fetchList()">上一页</button>
-        <span class="page-info">{{ page }} / {{ Math.ceil(total / pageSize) }}</span>
-        <button class="page-btn" :disabled="page >= Math.ceil(total / pageSize)" @click="page++; fetchList()">下一页</button>
+        <el-table-column label="类型" width="100">
+          <template #default="{ row }">
+            {{ typeLabel[row.taskType] ?? row.taskType }}
+          </template>
+        </el-table-column>
+
+        <el-table-column label="算法任务ID" width="140">
+          <template #default="{ row }">
+            <span class="mono">{{ row.algTaskId ?? '-' }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag
+              :type="statusType[row.taskStatus] ?? 'info'"
+              size="small"
+              effect="plain"
+            >
+              {{ statusLabel[row.taskStatus] ?? row.taskStatus }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="创建时间" width="170">
+          <template #default="{ row }">
+            <span class="time-cell">{{ formatTime(row.createdAt) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="更新时间" width="170">
+          <template #default="{ row }">
+            <span class="time-cell">{{ formatTime(row.updatedAt) }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="table-footer" v-if="total > pageSize">
+        <el-pagination
+          v-model:current-page="page"
+          :page-size="pageSize"
+          :total="total"
+          layout="prev, pager, next"
+          @current-change="fetchList"
+        />
       </div>
     </div>
   </div>
@@ -212,35 +239,6 @@ onUnmounted(() => {
   gap: 12px;
 }
 
-.vectorize-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.vectorize-btn:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.vectorize-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.vectorize-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
 .table-card {
   background: #fff;
   border-radius: 12px;
@@ -248,48 +246,9 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table thead {
-  background: #f9fafb;
-}
-
-.data-table th {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table td {
-  padding: 14px 16px;
-  font-size: 14px;
-  color: #374151;
-  border-bottom: 1px solid #f3f4f6;
-}
-
-.data-table tbody tr:hover {
-  background: #f9fafb;
-}
-
 .mono {
   font-family: 'Courier New', monospace;
   font-size: 13px;
-}
-
-.status-tag {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .time-cell {
@@ -298,44 +257,41 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 48px 0;
-  color: #9ca3af;
-  font-size: 14px;
-}
-
-.pagination {
+.table-footer {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 16px;
   padding: 16px;
+  border-top: 1px solid #f3f4f6;
 }
 
-.page-btn {
-  padding: 8px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 13px;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.page-btn:hover:not(:disabled) {
-  border-color: #10b981;
-  color: #10b981;
-}
-
-.page-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 13px;
+/* el-table style overrides */
+:deep(.el-table th.el-table__cell) {
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 600;
   color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+:deep(.el-table .el-table__cell) {
+  padding: 12px 16px;
+}
+
+:deep(.el-table__body tr:hover > td.el-table__cell) {
+  background-color: #f9fafb;
+}
+
+:deep(.el-table__body tr) {
+  transition: background 0.15s;
+}
+
+/* el-pagination style overrides */
+:deep(.el-pagination .el-pager li.is-active) {
+  background-color: #059669;
+}
+
+:deep(.el-pagination .el-pager li:hover) {
+  color: #10b981;
 }
 </style>

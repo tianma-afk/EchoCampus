@@ -3,6 +3,8 @@ package com.echocampus.algorithm.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.echocampus.algorithm.entity.TaskEntity;
 import com.echocampus.algorithm.service.AlgorithmAdminService;
+import com.echocampus.shared.annotation.RequireRole;
+import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.shared.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/images")
+@RequireRole(RoleEnum.ADMIN)
 @Tag(name = "管理员图像", description = "提供图片算法功能")
 public class AlgorithmAdminController {
 

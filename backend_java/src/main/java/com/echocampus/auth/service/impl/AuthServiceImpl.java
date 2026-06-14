@@ -6,9 +6,11 @@ import com.echocampus.auth.dto.RegisterRequest;
 import com.echocampus.auth.dto.SendCodeRequest;
 import com.echocampus.auth.service.AuthService;
 import com.echocampus.auth.vo.LoginVO;
+import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.user.entity.UserEntity;
 import com.echocampus.user.mapper.UserMapper;
 import com.echocampus.shared.util.JwtUtil;
+import com.echocampus.shared.util.PasswordUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,13 +19,9 @@ import org.springframework.stereotype.Service;
 import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.exception.ErrorCode;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.HexFormat;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -136,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
             user.setId(UUID.randomUUID());
             user.setEmail(request.getEmail());
             user.setNickname(request.getNickname());
-            user.setPasswordHash(hashPassword(request.getPassword()));
+            user.setPasswordHash(PasswordUtil.hashPassword(request.getPassword()));
             user.setCreatedAt(OffsetDateTime.now());
             userMapper.insert(user);
             log.info("[register] 用户已创建 -> userId={}, email={}", user.getId(), user.getEmail());
@@ -146,13 +144,14 @@ public class AuthServiceImpl implements AuthService {
 
         codeStore.remove(request.getEmail());
 
-        String jwt = jwtUtil.generateToken(user.getId().toString());
+        String jwt = jwtUtil.generateToken(user.getId().toString(), RoleEnum.USER);
         log.info("[register] JWT已生成 -> userId={}, token前8位={}...", user.getId(), jwt.substring(0, 8));
         return LoginVO.builder()
                 .accessToken(jwt)
                 .tokenType("Bearer")
                 .expiresIn(jwtUtil.getExpiration())
                 .nickname(user.getNickname())
+                .role(RoleEnum.USER.getValue())
                 .build();
     }
 
@@ -168,7 +167,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
-        String hashed = hashPassword(request.getPassword());
+        String hashed = PasswordUtil.hashPassword(request.getPassword());
         if (!hashed.equals(user.getPasswordHash())) {
             log.warn("[login] 密码错误 -> email={}", request.getEmail());
             throw new BusinessException(ErrorCode.USER_PASSWORD_ERROR);
@@ -176,10 +175,11 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("[login] 登录成功 -> userId={}, email={}", user.getId(), user.getEmail());
         return LoginVO.builder()
-                .accessToken(jwtUtil.generateToken(user.getId().toString()))
+                .accessToken(jwtUtil.generateToken(user.getId().toString(), RoleEnum.USER))
                 .tokenType("Bearer")
                 .expiresIn(jwtUtil.getExpiration())
                 .nickname(user.getNickname())
+                .role(RoleEnum.USER.getValue())
                 .build();
     }
 
@@ -190,15 +190,5 @@ public class AuthServiceImpl implements AuthService {
         message.setSubject(subject);
         message.setText(text);
         mailSender.send(message);
-    }
-
-    private String hashPassword(String password) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("密码加密失败", e);
-        }
     }
 }

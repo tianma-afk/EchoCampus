@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.echocampus.campus.dto.CampusCreateRequest;
 import com.echocampus.campus.dto.CampusUpdateRequest;
 import com.echocampus.campus.vo.CampusVO;
+import com.echocampus.shared.annotation.RequireRole;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.campus.service.CampusAdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/admin/campuses")
+@RequireRole
 @Tag(name = "管理员学院", description = "提供学院的增删改查功能")
 public class CampusAdminController {
     private final CampusAdminService campusAdminService;

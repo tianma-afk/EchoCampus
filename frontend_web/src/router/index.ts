@@ -5,9 +5,13 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/login',
+      component: () => import('../views/Login.vue'),
+    },
+    {
       path: '/',
       component: Layout,
-      redirect: '/landmark'
+      redirect: '/landmark',
     },
     {
       path: '/landmark',
@@ -15,25 +19,25 @@ const router = createRouter({
       children: [
         {
           path: '',
-          component: () => import('../views/LandmarkManagement.vue')
+          component: () => import('../views/LandmarkManagement.vue'),
         },
         {
           path: 'create',
-          component: () => import('../views/CreateLandmark.vue')
+          component: () => import('../views/CreateLandmark.vue'),
         },
         {
           path: ':id',
-          component: () => import('../views/LandmarkDetail.vue')
+          component: () => import('../views/LandmarkDetail.vue'),
         },
         {
           path: ':id/edit',
-          component: () => import('../views/EditLandmark.vue')
+          component: () => import('../views/EditLandmark.vue'),
         },
         {
           path: ':id/images',
-          component: () => import('../views/ManageImages.vue')
-        }
-      ]
+          component: () => import('../views/ManageImages.vue'),
+        },
+      ],
     },
     {
       path: '/universities',
@@ -41,13 +45,13 @@ const router = createRouter({
       children: [
         {
           path: '',
-          component: () => import('../views/university/UniversityManagement.vue')
+          component: () => import('../views/university/UniversityManagement.vue'),
         },
         {
           path: ':id',
-          component: () => import('../views/university/UniversityDetail.vue')
-        }
-      ]
+          component: () => import('../views/university/UniversityDetail.vue'),
+        },
+      ],
     },
     {
       path: '/home',
@@ -55,9 +59,9 @@ const router = createRouter({
       children: [
         {
           path: '',
-          component: () => import('../views/LandmarkManagement.vue')
-        }
-      ]
+          component: () => import('../views/Home.vue'),
+        },
+      ],
     },
     {
       path: '/feedback',
@@ -65,13 +69,13 @@ const router = createRouter({
       children: [
         {
           path: '',
-          component: () => import('../views/feedback/FeedbackList.vue')
+          component: () => import('../views/feedback/FeedbackList.vue'),
         },
         {
           path: ':id',
-          component: () => import('../views/feedback/FeedbackDetail.vue')
-        }
-      ]
+          component: () => import('../views/feedback/FeedbackDetail.vue'),
+        },
+      ],
     },
     {
       path: '/tasks',
@@ -79,21 +83,41 @@ const router = createRouter({
       children: [
         {
           path: '',
-          component: () => import('../views/TaskManagement.vue')
-        }
-      ]
+          component: () => import('../views/TaskManagement.vue'),
+        },
+      ],
     },
     {
-      path: '/settings',
+      path: '/admins',
       component: Layout,
       children: [
         {
           path: '',
-          component: () => import('../views/LandmarkManagement.vue')
-        }
-      ]
-    }
+          component: () => import('../views/AdminManagement.vue'),
+        },
+      ],
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      component: Layout,
+      children: [
+        {
+          path: '',
+          component: () => import('../views/NotFound.vue'),
+        },
+      ],
+    },
   ],
+})
+
+router.beforeEach((to) => {
+  const token = localStorage.getItem('echocampus_token')
+  if (!token && to.path !== '/login') {
+    return '/login'
+  }
+  if (token && to.path === '/login') {
+    return '/landmark'
+  }
 })
 
 export default router

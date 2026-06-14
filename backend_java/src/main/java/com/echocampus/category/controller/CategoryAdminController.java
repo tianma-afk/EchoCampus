@@ -3,6 +3,7 @@ package com.echocampus.category.controller;
 import com.echocampus.category.entity.CategoryEntity;
 import com.echocampus.category.mapper.CategoryMapper;
 import com.echocampus.category.vo.CategoryVO;
+import com.echocampus.shared.annotation.RequireRole;
 import com.echocampus.shared.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/admin/categories")
+@RequireRole
 @Tag(name = "管理员分类", description = "提供分类的查询功能")
 public class CategoryAdminController {
     private final CategoryMapper categoryMapper;

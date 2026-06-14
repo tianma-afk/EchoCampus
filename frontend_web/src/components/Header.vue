@@ -1,4 +1,22 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useAuthStore } from '../stores/auth'
+
+const auth = useAuthStore()
+
+const roleLabel = computed(() => {
+  if (auth.role === 'SUPER_ADMIN') return '超级管理员'
+  if (auth.role === 'ADMIN') return '管理员'
+  return ''
+})
+
+const roleTagType = computed(() => {
+  return auth.role === 'SUPER_ADMIN' ? 'danger' : 'warning'
+})
+
+const avatarChar = computed(() => {
+  return auth.username ? auth.username.charAt(0) : '管'
+})
 </script>
 
 <template>
@@ -21,10 +39,12 @@
 
       <div class="user-info">
         <div class="user-text">
-          <span class="user-name">管理员</span>
-          <span class="user-role">超级管理员</span>
+          <span class="user-name">{{ auth.username }}</span>
+          <span class="user-role">
+            <el-tag :type="roleTagType" size="small">{{ roleLabel }}</el-tag>
+          </span>
         </div>
-        <div class="user-avatar">管</div>
+        <div class="user-avatar">{{ avatarChar }}</div>
       </div>
     </div>
   </header>
@@ -118,7 +138,6 @@
 
 .user-role {
   font-size: 11px;
-  color: #9ca3af;
 }
 
 .user-avatar {

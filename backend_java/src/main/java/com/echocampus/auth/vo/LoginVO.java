@@ -22,4 +22,6 @@ public class LoginVO {
     private long expiresIn;
 
     private String nickname;
+
+    private String role;
 }
