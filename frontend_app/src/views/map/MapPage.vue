@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted, onActivated, watch, nextTick } f
 import axios from 'axios'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useNavigation } from '../../composables/useNavigation'
+import { useSpeech } from '../../composables/useSpeech'
 
 interface LandmarkMarker {
   id: string
@@ -74,6 +76,27 @@ const starData = computed(() => {
   }
 })
 
+const nav = useNavigation()
+const navIsNavigating = nav.isNavigating
+const navIsRouting = nav.isRouting
+const navHasError = nav.navError
+const navHasArrived = nav.hasArrived
+const navRouteDeviation = nav.routeDeviation
+const navDest = nav.destination
+const navCurInstr = nav.currentInstruction
+const navNextInstr = nav.nextInstruction
+const navRemDist = nav.remainingDistance
+const navRemTime = nav.remainingTime
+const { speak } = useSpeech()
+
+function exitNavigation() {
+  nav.stopNavigation()
+  clearNavLayers()
+}
+let routePolyline: L.Polyline | null = null
+let userMarker: L.CircleMarker | null = null
+let endMarker: L.Marker | null = null
+
 const mapContainer = ref<HTMLDivElement>()
 
 function createLabelIcon(name: string, active: boolean): L.DivIcon {
@@ -105,7 +128,30 @@ function closeCard() {
 function startNavigation() {
   if (!selectedLandmark.value) return
   const { lat, lng, name } = selectedLandmark.value
-  window.open(`https://uri.amap.com/navigation?to=${lng},${lat},${name}`)
+  nav.startNavigation({ lat, lng, name })
+}
+
+function clearNavLayers() {
+  if (!map) return
+  if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null }
+  if (userMarker) { map.removeLayer(userMarker); userMarker = null }
+  if (endMarker) { map.removeLayer(endMarker); endMarker = null }
+}
+
+function onRecenter() {
+  const pos = nav.userPosition.value
+  if (!map || !pos) return
+  map.flyTo([pos.lat, pos.lng], 17)
+}
+
+function fmtDist(m: number): string {
+  if (m >= 1000) return `${(m / 1000).toFixed(1)}公里`
+  return `${Math.round(m)}米`
+}
+function fmtTime(s: number): string {
+  if (s < 60) return `${Math.round(s)}秒`
+  const m = Math.round(s / 60)
+  return `${m}分钟`
 }
 
 function initMap(lat: number, lng: number) {
@@ -245,13 +291,7 @@ function calcCenter(): [number, number] {
   return [sumLat / landmarks.value.length, sumLng / landmarks.value.length]
 }
 
-onMounted(async () => {
-  await Promise.all([loadLandmarks(), loadHotRankings()])
-
-  const center = calcCenter()
-  initMap(center[0], center[1])
-  isFirstActivation.value = false
-
+function showUserLocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -268,9 +308,21 @@ onMounted(async () => {
       { timeout: 5000 }
     )
   }
+}
+
+onMounted(async () => {
+  await Promise.all([loadLandmarks(), loadHotRankings()])
+
+  const center = calcCenter()
+  initMap(center[0], center[1])
+  isFirstActivation.value = false
+
+  showUserLocation()
 })
 
 onUnmounted(() => {
+  nav.stopNavigation()
+  clearNavLayers()
   if (map) {
     map.remove()
     map = null
@@ -279,6 +331,57 @@ onUnmounted(() => {
 
 watch(filteredLandmarks, () => {
   refreshMarkers()
+})
+
+watch(() => nav.isNavigating.value, (navigating) => {
+  if (!map) return
+  clearNavLayers()
+  const coords = nav.routeCoords.value
+  if (navigating && coords.length > 0) {
+    routePolyline = L.polyline(coords, {
+      color: '#3388ff',
+      weight: 5,
+      opacity: 0.8,
+    }).addTo(map)
+
+    if (coords.length > 0) {
+      const end = coords[coords.length - 1]
+      endMarker = L.marker(end, {
+        icon: L.divIcon({
+          html: `<div style="background:#e74c3c;color:#fff;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;">${nav.destination.value?.name || ''}</div>`,
+          className: '',
+          iconSize: [80, 28],
+          iconAnchor: [40, 28],
+        }),
+      }).addTo(map)
+    }
+    map.fitBounds(routePolyline.getBounds(), { padding: [50, 50] })
+  }
+})
+
+watch(() => nav.currentStepIndex.value, (idx, oldIdx) => {
+  const steps = nav.steps.value
+  if (idx !== oldIdx && idx >= 0 && idx < steps.length) {
+    speak(steps[idx].instruction)
+  }
+})
+
+watch(() => nav.hasArrived.value, (arrived) => {
+  if (arrived) speak('您已到达目的地附近')
+})
+
+watch(() => nav.userPosition.value, (pos) => {
+  if (!map || !pos || !nav.isNavigating.value) return
+  if (!userMarker) {
+    userMarker = L.circleMarker([pos.lat, pos.lng], {
+      radius: 8,
+      color: '#3388ff',
+      fillColor: '#3388ff',
+      fillOpacity: 0.6,
+    }).addTo(map)
+  } else {
+    userMarker.setLatLng([pos.lat, pos.lng])
+  }
 })
 
 onActivated(() => {
@@ -317,7 +420,7 @@ onActivated(() => {
   <div class="map-page">
     <div ref="mapContainer" class="map-container"></div>
 
-    <div class="search-bar">
+    <div v-if="!navIsNavigating" class="search-bar">
       <div class="search-input-wrapper">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8" />
@@ -380,7 +483,7 @@ onActivated(() => {
       </div>
     </div>
 
-    <div v-if="selectedLandmark" class="landmark-popup">
+    <div v-if="selectedLandmark && !navIsNavigating" class="landmark-popup">
       <div class="pop-header">
         <div class="pop-icon"></div>
         <div class="pop-title-area">
@@ -413,6 +516,41 @@ onActivated(() => {
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
+      </div>
+    </div>
+
+    <!-- 导航面板 -->
+    <div v-show="navIsRouting || navIsNavigating || navHasError || navHasArrived" class="nav-panel">
+      <div class="nav-top">
+        <button class="nav-exit" @click="exitNavigation">&#8592; 退出</button>
+        <span class="nav-dest">{{ navDest?.name || '' }}</span>
+        <span class="nav-eta">{{ fmtTime(navRemTime) }}</span>
+      </div>
+      <div class="nav-body">
+        <div class="nav-distance">{{ fmtDist(navRemDist) }}</div>
+
+        <div v-if="navIsRouting" class="nav-loading">路线计算中...</div>
+
+        <div v-else-if="navHasArrived" class="nav-arrived">已到达目的地</div>
+
+        <div v-else-if="navHasError" class="nav-error">
+          {{ navHasError }}
+          <button class="nav-replan-btn" @click="exitNavigation">关闭</button>
+        </div>
+
+        <template v-else>
+          <div class="nav-instruction">{{ navCurInstr }}</div>
+          <div v-if="navNextInstr" class="nav-next">
+            下一步：{{ navNextInstr }}
+          </div>
+          <div v-if="navRouteDeviation" class="nav-deviation">
+            已偏离路线
+            <button class="nav-replan-btn" @click="nav.replan()">重新规划</button>
+          </div>
+        </template>
+      </div>
+      <div class="nav-bottom">
+        <button class="nav-btn" @click="onRecenter">&#x1F4CD; 我的位置</button>
       </div>
     </div>
   </div>
@@ -768,6 +906,114 @@ onActivated(() => {
 
 .btn-detail:active {
   background: var(--color-primary-hover);
+}
+
+.nav-panel {
+  position: fixed;
+  bottom: 84px;
+  left: 12px;
+  right: 12px;
+  background: var(--color-bg-card);
+  border-radius: 16px;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+  z-index: 3000;
+  overflow: hidden;
+}
+.nav-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-primary);
+  color: #fff;
+}
+.nav-exit {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.nav-dest {
+  flex: 1;
+  font-weight: 600;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-eta {
+  font-size: 13px;
+  opacity: 0.9;
+}
+.nav-body {
+  padding: 16px;
+}
+.nav-distance {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin-bottom: 8px;
+}
+.nav-loading,
+.nav-arrived {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+.nav-arrived {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.nav-instruction {
+  font-size: 16px;
+  color: var(--color-text-heading);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.nav-next {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.nav-deviation {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e74c3c;
+  font-size: 14px;
+}
+.nav-error {
+  font-size: 14px;
+  color: #e74c3c;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-replan-btn {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.nav-bottom {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 14px;
+}
+.nav-btn {
+  flex: 1;
+  padding: 10px 0;
+  border: 1.5px solid var(--color-primary);
+  border-radius: 24px;
+  background: var(--color-bg-card);
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
 }
 </style>
 
