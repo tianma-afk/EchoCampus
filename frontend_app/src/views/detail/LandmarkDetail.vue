@@ -460,7 +460,7 @@ const bubblePositions = computed(() => {
     </div>
 
     <div class="detail-footer">
-      <button class="action-btn outline">
+      <button class="action-btn outline" @click="handleViewLargeMap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="3 11 22 2 13 21 11 13 3 11" />
         </svg>
