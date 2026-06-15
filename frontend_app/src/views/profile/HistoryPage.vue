@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { getCheckinHistory, type CheckinRecord } from '../../api/checkin'
 import { getFavorites, type FavoriteRecord } from '../../api/favorite'
 import { getUserRatings, type RatingRecord } from '../../api/rating'
+import { getRecognitions, type RecognitionRecord } from '../../api/recognition'
 
 const props = defineProps<{ defaultTab?: number }>()
 const emit = defineEmits<{ back: [] }>()
@@ -101,6 +102,32 @@ function loadMoreRatings() {
   loadRatings(false)
 }
 
+// ---- 识别 ----
+const recognitionRecords = ref<RecognitionRecord[]>([])
+const recognitionLoading = ref(true)
+const recognitionPage = ref(1)
+const recognitionTotal = ref(0)
+
+async function loadRecognitions(reset = false) {
+  if (reset) { recognitionPage.value = 1; recognitionRecords.value = [] }
+  recognitionLoading.value = true
+  try {
+    const res = await getRecognitions(recognitionPage.value, 10)
+    if (res.code === '00000') {
+      if (reset) recognitionRecords.value = res.data.records
+      else recognitionRecords.value.push(...res.data.records)
+      recognitionTotal.value = res.data.total
+    }
+  } catch { /* ignore */ }
+  recognitionLoading.value = false
+}
+
+function loadMoreRecognitions() {
+  if (recognitionRecords.value.length >= recognitionTotal.value) return
+  recognitionPage.value++
+  loadRecognitions(false)
+}
+
 const loadedTabs = ref(new Set<number>())
 
 function ensureTabLoaded(tab: number) {
@@ -109,6 +136,7 @@ function ensureTabLoaded(tab: number) {
   if (tab === 0) loadCheckins(true)
   else if (tab === 1) loadFavorites(true)
   else if (tab === 2) loadRatings(true)
+  else if (tab === 3) loadRecognitions(true)
 }
 
 watch(activeTab, (val) => ensureTabLoaded(val), { immediate: true })
@@ -242,7 +270,27 @@ function renderStars(rating: number) {
 
       <!-- 识别 -->
       <div v-show="activeTab === 3" class="list-panel">
-        <div class="list-empty">暂无识别记录</div>
+        <div v-if="recognitionLoading" class="list-empty">加载中...</div>
+        <div v-else-if="recognitionRecords.length === 0" class="list-empty">暂无识别记录</div>
+        <div v-else class="card-list">
+          <div v-for="r in recognitionRecords" :key="r.id" class="record-card wide">
+            <div class="card-img" :style="{ background: r.imageUrl ? `url(${r.imageUrl}) center/cover` : 'var(--color-bg-input)' }">
+            </div>
+            <div class="card-info">
+              <div class="card-title-row">
+                <span class="card-landmark-name">{{ r.landmarkName || '未识别出地标' }}</span>
+                <span v-if="r.similarity != null" class="card-category">{{ (r.similarity * 100).toFixed(1) }}%</span>
+              </div>
+              <div v-if="r.coverImageUrl" class="card-rating-row">
+                <span class="user-rating-label">匹配地标：</span>
+              </div>
+              <span class="card-date">{{ r.createdAt?.substring(0, 10) }}</span>
+            </div>
+          </div>
+          <div v-if="recognitionRecords.length < recognitionTotal" class="load-more">
+            <button class="load-more-btn" @click="loadMoreRecognitions">加载更多</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>

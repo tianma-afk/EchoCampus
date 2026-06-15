@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { getProfile } from '../../api/auth'
 import { getCheckinHistory, type CheckinRecord } from '../../api/checkin'
 import { getFavorites } from '../../api/favorite'
+import { getRecognitions } from '../../api/recognition'
 import CheckinHistoryPage from './CheckinHistoryPage.vue'
 import HistoryPage from './HistoryPage.vue'
 
@@ -89,6 +90,17 @@ async function loadFavoriteCount() {
   } catch { /* ignore */ }
 }
 
+const recognitionTotal = ref(0)
+
+async function loadRecognitionCount() {
+  try {
+    const res = await getRecognitions(1, 1)
+    if (res.code === '00000') {
+      recognitionTotal.value = res.data.total
+    }
+  } catch { /* ignore */ }
+}
+
 async function loadCheckinHistory() {
   checkinLoading.value = true
   try {
@@ -104,7 +116,7 @@ async function loadCheckinHistory() {
   }
 }
 
-onMounted(() => { loadCheckinHistory(); loadFavoriteCount() })
+onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCount() })
 </script>
 
 <template>
@@ -125,7 +137,7 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount() })
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <div class="stat-number">36</div>
+            <div class="stat-number">{{ recognitionTotal }}</div>
             <div class="stat-label">识别</div>
           </div>
           <div class="stat-divider"></div>
@@ -167,15 +179,15 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount() })
         <div class="section">
           <h3 class="section-title">功能</h3>
           <div class="menu-card">
-            <div class="menu-item">
+            <div class="menu-item" @click="historyDefaultTab = 3; showHistory = true">
               <div class="menu-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
                   <circle cx="12" cy="13" r="4" />
                 </svg>
               </div>
-              <span class="menu-label">我的识别记录</span>
-              <span class="menu-count">36</span>
+              <span class="menu-label">我的识别</span>
+              <span class="menu-count">{{ recognitionTotal }}</span>
               <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -188,7 +200,7 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount() })
                   <circle cx="12" cy="10" r="3" />
                 </svg>
               </div>
-              <span class="menu-label">我的打卡记录</span>
+              <span class="menu-label">我的打卡</span>
               <span class="menu-count">{{ checkinTotal }}</span>
               <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
