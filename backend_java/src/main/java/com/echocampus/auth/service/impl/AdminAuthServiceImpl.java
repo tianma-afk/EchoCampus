@@ -59,6 +59,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
                 .expiresIn(jwtUtil.getExpiration())
                 .nickname(admin.getUsername())
                 .role(role.getValue())
+                .adminId(admin.getId().toString())
                 .build();
     }
 }

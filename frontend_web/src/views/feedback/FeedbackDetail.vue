@@ -18,7 +18,6 @@ const loading = ref(false)
 
 const resolveStatus = ref('RESOLVED')
 const resolveNote = ref('')
-const adminId = ref('')
 const submitting = ref(false)
 const error = ref('')
 
@@ -35,15 +34,10 @@ async function fetchDetail() {
 }
 
 async function handleResolve() {
-  if (!adminId.value.trim()) {
-    error.value = '请输入管理员ID'
-    return
-  }
   submitting.value = true
   error.value = ''
   try {
     const res = await resolveFeedback(feedbackId, {
-      adminId: adminId.value.trim(),
       status: resolveStatus.value,
       resolveNote: resolveNote.value.trim() || undefined,
     })
@@ -55,7 +49,6 @@ async function handleResolve() {
     await fetchDetail()
     resolveStatus.value = 'RESOLVED'
     resolveNote.value = ''
-    adminId.value = ''
   } catch (e) {
     error.value = e instanceof Error ? e.message : '操作失败'
   } finally {
@@ -144,15 +137,6 @@ onMounted(() => {
             <option value="RESOLVED">已解决</option>
             <option value="REJECTED">已驳回</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label>管理员ID</label>
-          <input
-            v-model="adminId"
-            type="text"
-            class="form-input"
-            placeholder="请输入管理员UUID"
-          />
         </div>
         <div class="form-group">
           <label>处理备注</label>

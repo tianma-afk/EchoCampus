@@ -21,6 +21,7 @@ public class FeedbackAdminVO {
     private String content;
     private String status;
     private UUID adminId;
+    private String adminName;
     private OffsetDateTime resolveTime;
     private String resolveNote;
     private OffsetDateTime createdAt;

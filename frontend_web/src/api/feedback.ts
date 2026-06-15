@@ -9,6 +9,7 @@ export interface FeedbackAdminVO {
   content: string
   status: string
   adminId: string | null
+  adminName: string | null
   resolveTime: string | null
   resolveNote: string | null
   createdAt: string
@@ -17,7 +18,6 @@ export interface FeedbackAdminVO {
 }
 
 export interface FeedbackResolveRequest {
-  adminId: string
   status: string
   resolveNote?: string
 }

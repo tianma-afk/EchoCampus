@@ -10,6 +10,7 @@ interface LoginVO {
   expires_in: number
   nickname: string
   role: string
+  admin_id: string
 }
 
 const router = useRouter()
@@ -29,7 +30,7 @@ async function handleLogin() {
       password: password.value,
     })
     if (res.code === '00000') {
-      auth.login(res.data.access_token, res.data.nickname, res.data.role)
+      auth.login(res.data.access_token, res.data.nickname, res.data.role, res.data.admin_id)
       router.replace('/landmark')
     } else {
       errorMsg.value = res.message || '登录失败'
