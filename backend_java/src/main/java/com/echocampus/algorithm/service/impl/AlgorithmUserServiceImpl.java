@@ -18,13 +18,18 @@ import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.util.CallBackUrlBuilder;
 import com.echocampus.shared.util.ImageUrlBuilder;
 import com.echocampus.algorithm.vo.SearchResultVO;
+import com.echocampus.user.entity.RecognitionRecord;
+import com.echocampus.user.entity.UserImage;
+import com.echocampus.user.mapper.RecognitionRecordMapper;
+import com.echocampus.user.mapper.UserImageMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -38,7 +43,6 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AlgorithmUserServiceImpl implements AlgorithmUserService {
 
     private final AlgorithmClient algorithmClient;
@@ -48,8 +52,28 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
     private final LandmarkMapper landmarkMapper;
     private final CampusMapper campusMapper;
     private final ImageUrlBuilder imageUrlBuilder;
+    private final UserImageMapper userImageMapper;
+    private final RecognitionRecordMapper recognitionRecordMapper;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String UPLOAD_BUCKET = "campus";
+
+    public AlgorithmUserServiceImpl(AlgorithmClient algorithmClient, CallBackUrlBuilder callBackUrlBuilder,
+                                    TaskMapper taskMapper, ImageMapper imageMapper,
+                                    LandmarkMapper landmarkMapper, CampusMapper campusMapper,
+                                    ImageUrlBuilder imageUrlBuilder,
+                                    UserImageMapper userImageMapper,
+                                    RecognitionRecordMapper recognitionRecordMapper) {
+        this.algorithmClient = algorithmClient;
+        this.callBackUrlBuilder = callBackUrlBuilder;
+        this.taskMapper = taskMapper;
+        this.imageMapper = imageMapper;
+        this.landmarkMapper = landmarkMapper;
+        this.campusMapper = campusMapper;
+        this.imageUrlBuilder = imageUrlBuilder;
+        this.userImageMapper = userImageMapper;
+        this.recognitionRecordMapper = recognitionRecordMapper;
+    }
 
     /**
      * 创建图像搜索任务
@@ -67,45 +91,58 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
      * @return 任务 ID（Java 端生成的 UUID，用于前端查询任务状态）
      */
     @Override
-    public UUID createSearchTask(String imageUrl) {
-        // 参数校验
+    @Transactional(rollbackFor = Exception.class)
+    public UUID createSearchTask(UUID userId, String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "图片 URL 不能为空");
         }
 
-        log.info("开始创建图像搜索任务: imageUrl={}", imageUrl);
+        log.info("开始创建图像搜索任务: userId={}, imageUrl={}", userId, imageUrl);
 
-        // 步骤 1：创建任务记录到数据库
+        // 步骤 1：提取对象名和文件扩展名，保存用户图片记录
+        String objectName = extractObjectName(imageUrl);
+        String fileExt = extractFileExt(objectName);
+
+        UserImage userImage = new UserImage();
+        userImage.setId(UUID.randomUUID());
+        userImage.setUserId(userId);
+        userImage.setObjectName(objectName);
+        userImage.setFileExt(fileExt);
+        userImage.setCreatedAt(OffsetDateTime.now());
+        userImageMapper.insert(userImage);
+        log.info("用户图片记录创建: imageId={}, objectName={}", userImage.getId(), objectName);
+
+        // 步骤 2：创建任务记录
         TaskEntity task = new TaskEntity();
         task.setId(UUID.randomUUID());
-        task.setTaskType(TaskTypeEnum.SEARCH.getValue());  // 任务类型：SEARCH
-        task.setTaskStatus(TaskStatusEnum.READY.getValue()); // 初始状态：READY
+        task.setTaskType(TaskTypeEnum.SEARCH.getValue());
+        task.setTaskStatus(TaskStatusEnum.READY.getValue());
         taskMapper.insert(task);
         UUID taskId = task.getId();
-
         log.info("任务记录创建成功: taskId={}, taskType=SEARCH, status=READY", taskId);
 
-        // 步骤 2：构造回调 URL
-        // 格式：http://localhost:8080/api/v1/internal/callback/search/{taskId}
+        // 步骤 3：创建识别记录
+        RecognitionRecord record = new RecognitionRecord();
+        record.setId(UUID.randomUUID());
+        record.setUserId(userId);
+        record.setImageId(userImage.getId());
+        record.setTaskId(taskId);
+        record.setCreatedAt(OffsetDateTime.now());
+        recognitionRecordMapper.insert(record);
+        log.info("识别记录创建: recordId={}, taskId={}", record.getId(), taskId);
+
+        // 步骤 4：构造回调 URL
         String callbackUrl = callBackUrlBuilder.build(taskId.toString(), TaskTypeEnum.SEARCH);
         log.info("构造回调 URL: {}", callbackUrl);
 
-        // 步骤 3：发送任务给 Python 算法服务（暂不实现真正通信）
-        // 请求体示例：
-        // {
-        //   "imageUrl": "http://localhost:9000/campus/images/2025/05/30/a1b2c3d4.jpg",
-        //   "topK": 10,
-        //   "callbackUrl": "http://localhost:8080/api/v1/internal/callback/search/550e8400-e29b-41d4-a716-446655440000"
-        // }
+        // 步骤 5：发送任务给 Python 算法服务
         String algTaskId = algorithmClient.submitSearchTask(imageUrl, callbackUrl);
         log.info("算法任务提交成功: algTaskId={}", algTaskId);
 
-        // 步骤 4：更新任务数据库表，保存算法任务 ID
         task.setAlgTaskId(algTaskId);
         taskMapper.updateById(task);
 
         log.info("任务创建完成: taskId={}, algTaskId={}", taskId, algTaskId);
-
         return taskId;
     }
 
@@ -143,6 +180,19 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
                 task.setSearchResult(objectMapper.writeValueAsString(searchResults));
             } catch (JsonProcessingException e) {
                 log.error("序列化搜索结果失败: taskId={}", taskId, e);
+            }
+
+            // 回填识别记录：取匹配度最高的地标
+            if (!searchResults.isEmpty()) {
+                SearchResultVO top = searchResults.get(0);
+                RecognitionRecord record = recognitionRecordMapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<RecognitionRecord>()
+                                .eq(RecognitionRecord::getTaskId, taskId));
+                if (record != null) {
+                    record.setLandmarkId(UUID.fromString(top.getLandmarkId()));
+                    record.setSimilarity(top.getSimilarity());
+                    recognitionRecordMapper.updateById(record);
+                }
             }
         }
 
@@ -220,6 +270,26 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
 
         log.info("匹配结果处理完成: 输入{}条, 输出{}条", matches.size(), results.size());
         return results;
+    }
+
+    private String extractObjectName(String imageUrl) {
+        try {
+            java.net.URI uri = new java.net.URI(imageUrl);
+            String path = uri.getPath();
+            if (path == null) return "";
+            if (path.startsWith("/" + UPLOAD_BUCKET + "/")) {
+                return path.substring(("/" + UPLOAD_BUCKET + "/").length());
+            }
+            return path.startsWith("/") ? path.substring(1) : path;
+        } catch (Exception e) {
+            log.warn("无法解析图片URL: {}", imageUrl, e);
+            return "";
+        }
+    }
+
+    private String extractFileExt(String objectName) {
+        int dot = objectName.lastIndexOf('.');
+        return dot >= 0 ? objectName.substring(dot + 1) : "jpg";
     }
 
     @Override

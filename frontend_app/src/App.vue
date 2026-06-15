@@ -31,6 +31,10 @@ interface LandmarkData {
   name: string
   rating: number
   checkins: number
+  favoriteCount?: number
+  isFavorited?: boolean
+  userRating?: number | null
+  recommendRate: number
   openTime: string
   category: string
   tags: string[]
@@ -42,10 +46,11 @@ interface LandmarkData {
   openTimeDetail: string
   floors: string
   location: string
+  latitude: number
+  longitude: number
   description: string
   totalFloors: number
   floorList: FloorInfo[]
-  recommendRate: number
 }
 
 interface FloorInfo {

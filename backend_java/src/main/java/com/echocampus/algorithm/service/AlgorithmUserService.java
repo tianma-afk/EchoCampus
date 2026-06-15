@@ -26,7 +26,7 @@ public interface AlgorithmUserService {
      *                 格式示例：http://localhost:9000/campus/images/2025/05/30/a1b2c3d4.jpg
      * @return 任务 ID（Java 端生成的 UUID）
      */
-    UUID createSearchTask(String imageUrl);
+    UUID createSearchTask(UUID userId, String imageUrl);
 
     /**
      * 更新图像搜索任务状态

@@ -2,13 +2,13 @@ package com.echocampus.algorithm.controller;
 
 import com.echocampus.algorithm.service.AlgorithmUserService;
 import com.echocampus.shared.annotation.RequireRole;
+import com.echocampus.shared.context.AuthContext;
 import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.algorithm.vo.SearchResultVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,12 +22,15 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/user/algorithm")
-@RequiredArgsConstructor
 @RequireRole(RoleEnum.USER)
 @Tag(name = "移动端算法任务", description = "提供图像搜索等算法相关功能")
 public class AlgorithmUserController {
 
     private final AlgorithmUserService algorithmUserService;
+
+    public AlgorithmUserController(AlgorithmUserService algorithmUserService) {
+        this.algorithmUserService = algorithmUserService;
+    }
 
     /**
      * 创建图像搜索任务
@@ -65,8 +68,9 @@ public class AlgorithmUserController {
     @Operation(summary = "创建图像搜索任务", description = "移动端用户上传照片后，创建图搜任务并调用 Python 算法服务")
     public Result<UUID> createSearchTask(@RequestBody SearchTaskRequest request) {
         log.info("接收到图像搜索任务请求: imageUrl={}", request.getImageUrl());
-        
-        UUID taskId = algorithmUserService.createSearchTask(request.getImageUrl());
+
+        UUID userId = UUID.fromString(AuthContext.get().getUserId());
+        UUID taskId = algorithmUserService.createSearchTask(userId, request.getImageUrl());
         log.info("图像搜索任务创建成功: taskId={}", taskId);
         return Result.success(taskId);
     }

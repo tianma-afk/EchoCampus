@@ -4,24 +4,21 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Data
-@TableName("rating")
-public class Rating {
+@TableName("user_image")
+public class UserImage {
 
     @TableId
     private UUID id;
 
     private UUID userId;
 
-    private UUID landmarkId;
+    private String objectName;
 
-    private BigDecimal rating;
+    private String fileExt;
 
     private OffsetDateTime createdAt;
-
-    private OffsetDateTime updatedAt;
 }
