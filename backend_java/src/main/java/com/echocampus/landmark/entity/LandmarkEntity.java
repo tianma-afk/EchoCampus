@@ -57,6 +57,8 @@ public class LandmarkEntity {
 
     private BigDecimal recommendRate;
 
+    private Integer favoriteCount;
+
     // Convert JSONB-deserialized String elements to UUID, avoiding ClassCastException in enhanced for-loops.
     public List<UUID> getImgs() {
         if (this.imgs == null) return null;

@@ -254,6 +254,7 @@ public class LandmarkServiceImpl implements LandmarkService {
                 .totalFloors(landmark.getTotalFloors())
                 .recommendRate(landmark.getRecommendRate())
                 .floorList(floorList)
+                .favoriteCount(landmark.getFavoriteCount())
                 .isFavorited(isFavorited)
                 .userRating(userRating)
                 .build();

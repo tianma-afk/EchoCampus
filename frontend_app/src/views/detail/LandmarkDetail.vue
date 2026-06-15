@@ -1,16 +1,21 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { doCheckin } from '../../api/checkin'
+import { toggleFavorite } from '../../api/favorite'
+import { submitRating } from '../../api/rating'
 
 interface LandmarkDetail {
-  id?: number
+  id?: string | number
   name: string
   category: string
   rating: number
   checkins: number
   recommendRate: number
+  favoriteCount?: number
+  isFavorited?: boolean
+  userRating?: number | null
   openTime: string
   tags: string[]
   imgs: string[]
@@ -71,8 +76,83 @@ const selectFloor = (floorNumber: number) => {
   selectedFloorNumber.value = floorNumber
 }
 
+const isFavorited = ref(props.landmark.isFavorited ?? false)
+const favoriteCount = ref(props.landmark.favoriteCount ?? 0)
+
+watch(() => props.landmark, (lm) => {
+  isFavorited.value = lm.isFavorited ?? false
+  favoriteCount.value = lm.favoriteCount ?? 0
+})
+
+async function handleToggleFavorite() {
+  const landmarkId = String(props.landmark.id ?? '')
+  if (!landmarkId) return
+  try {
+    const res = await toggleFavorite(landmarkId)
+    if (res.code === '00000') {
+      isFavorited.value = res.data
+      favoriteCount.value += res.data ? 1 : -1
+    }
+  } catch { /* ignore */ }
+}
+
 const checkinMsg = ref('')
 const checkinMsgType = ref<'success' | 'error'>('success')
+
+const showRatingPanel = ref(false)
+const ratingValue = ref(0)
+const ratingHoverValue = ref(0)
+const ratingSubmitting = ref(false)
+
+function openRatingPanel() {
+  ratingValue.value = 0
+  ratingHoverValue.value = 0
+  showRatingPanel.value = true
+}
+
+function closeRatingPanel() {
+  showRatingPanel.value = false
+  checkinMsg.value = '打卡成功'
+  checkinMsgType.value = 'success'
+  setTimeout(() => { checkinMsg.value = '' }, 2500)
+}
+
+function setRatingByPosition(event: MouseEvent | TouchEvent, starIndex: number) {
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
+  const x = clientX - rect.left
+  const half = x < rect.width / 2
+  ratingValue.value = starIndex + 1 - (half ? 0.5 : 0)
+}
+
+function setRatingHover(event: MouseEvent | TouchEvent, starIndex: number) {
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
+  const x = clientX - rect.left
+  const half = x < rect.width / 2
+  ratingHoverValue.value = starIndex + 1 - (half ? 0.5 : 0)
+}
+
+function clearRatingHover() {
+  ratingHoverValue.value = 0
+}
+
+async function handleSubmitRating() {
+  if (ratingValue.value <= 0) return
+  const landmarkId = String(props.landmark.id ?? '')
+  if (!landmarkId) return
+  ratingSubmitting.value = true
+  try {
+    await submitRating(landmarkId, ratingValue.value)
+  } catch { /* ignore */ }
+  ratingSubmitting.value = false
+  showRatingPanel.value = false
+  checkinMsg.value = '打卡成功'
+  checkinMsgType.value = 'success'
+  setTimeout(() => { checkinMsg.value = '' }, 2500)
+}
 
 async function handleCheckin() {
   const landmarkId = String(props.landmark.id ?? '')
@@ -80,18 +160,18 @@ async function handleCheckin() {
   try {
     const res = await doCheckin(landmarkId)
     if (res.code === '00000') {
-      checkinMsg.value = '打卡成功'
-      checkinMsgType.value = 'success'
       emit('checkin-success', landmarkId)
+      openRatingPanel()
     } else {
       checkinMsg.value = res.message || '打卡失败'
       checkinMsgType.value = 'error'
+      setTimeout(() => { checkinMsg.value = '' }, 2500)
     }
   } catch {
     checkinMsg.value = '网络错误，请重试'
     checkinMsgType.value = 'error'
+    setTimeout(() => { checkinMsg.value = '' }, 2500)
   }
-  setTimeout(() => { checkinMsg.value = '' }, 2500)
 }
 
 onMounted(() => {
@@ -203,8 +283,8 @@ const bubblePositions = computed(() => {
           </svg>
         </button>
         <div class="header-actions">
-          <button class="header-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="header-btn" :class="{ 'favorited': isFavorited }" @click="handleToggleFavorite">
+            <svg viewBox="0 0 24 24" :fill="isFavorited ? '#e74c3c' : 'none'" stroke="currentColor" stroke-width="2">
               <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
             </svg>
           </button>
@@ -377,14 +457,13 @@ const bubblePositions = computed(() => {
                 <span class="stat-value">{{ props.landmark.checkins.toLocaleString() }}</span>
               </div>
             </div>
-            <div class="stat-divider"></div>
             <div class="stat-item">
               <svg class="stat-icon heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
               </svg>
               <div class="stat-text">
-                <span class="stat-label">推荐指数</span>
-                <span class="stat-value highlight">{{ props.landmark.recommendRate }}%</span>
+                <span class="stat-label">收藏人数</span>
+                <span class="stat-value highlight">{{ favoriteCount.toLocaleString() }}</span>
               </div>
             </div>
           </div>
@@ -476,6 +555,54 @@ const bubblePositions = computed(() => {
 
     <div v-if="checkinMsg" class="checkin-toast" :class="checkinMsgType">
       {{ checkinMsg }}
+    </div>
+
+    <!-- 评分半屏面板 -->
+    <div v-if="showRatingPanel" class="rating-overlay" @click.self="closeRatingPanel">
+      <div class="rating-panel">
+        <div class="rating-panel-header">
+          <span class="rating-panel-title">为 {{ props.landmark.name }} 评分</span>
+          <button class="rating-close-btn" @click="closeRatingPanel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="rating-stars-row">
+          <template v-for="i in 5" :key="i">
+            <span
+              class="rating-star-big"
+              @click="setRatingByPosition($event, i - 1)"
+              @touchstart="setRatingByPosition($event, i - 1)"
+              @mousemove="setRatingHover($event, i - 1)"
+              @touchmove="setRatingHover($event, i - 1)"
+              @mouseleave="clearRatingHover"
+            >
+              <svg viewBox="0 0 24 24" width="44" height="44">
+                <defs>
+                  <linearGradient :id="'rating-grad-' + i">
+                    <stop offset="50%" :stop-color="(ratingHoverValue || ratingValue) >= i - 0.5 ? '#f59e0b' : '#e5e7eb'" />
+                    <stop offset="50%" :stop-color="(ratingHoverValue || ratingValue) >= i ? '#f59e0b' : '#e5e7eb'" />
+                  </linearGradient>
+                </defs>
+                <path
+                  :fill="(ratingHoverValue || ratingValue) >= i ? '#f59e0b' : ((ratingHoverValue || ratingValue) >= i - 0.5 ? `url(#rating-grad-${i})` : '#e5e7eb')"
+                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                />
+              </svg>
+            </span>
+          </template>
+        </div>
+        <div class="rating-panel-value">{{ ratingValue > 0 ? ratingValue + ' 分' : '点击星星评分' }}</div>
+        <button
+          class="rating-submit-btn"
+          :disabled="ratingValue <= 0 || ratingSubmitting"
+          @click="handleSubmitRating"
+        >
+          {{ ratingSubmitting ? '提交中...' : (ratingValue > 0 ? '提交评分 ' + ratingValue + ' 分' : '提交评分') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -1074,5 +1201,110 @@ const bubblePositions = computed(() => {
   15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+
+.header-btn.favorited svg {
+  color: #e74c3c;
+}
+
+/* 评分半屏面板 */
+.rating-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.rating-panel {
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-bg-card);
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: rating-slide-up 0.3s ease-out;
+}
+
+@keyframes rating-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.rating-panel-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rating-panel-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.rating-close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--color-bg-input);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.rating-close-btn svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-secondary);
+}
+
+.rating-stars-row {
+  display: flex;
+  gap: 8px;
+}
+
+.rating-star-big {
+  cursor: pointer;
+  transition: transform 0.15s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.rating-star-big:active {
+  transform: scale(1.15);
+}
+
+.rating-panel-value {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
+.rating-submit-btn {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.rating-submit-btn:disabled {
+  background: var(--color-bg-input);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
 }
 </style>

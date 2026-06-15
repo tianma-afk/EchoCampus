@@ -2,7 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { getProfile } from '../../api/auth'
 import { getCheckinHistory, type CheckinRecord } from '../../api/checkin'
+import { getFavorites } from '../../api/favorite'
 import CheckinHistoryPage from './CheckinHistoryPage.vue'
+import HistoryPage from './HistoryPage.vue'
 
 const props = defineProps<{ userNickname: string; userEmail: string; remainingChanges: number }>()
 const emit = defineEmits<{ logout: []; 'update-nickname': [value: string] }>()
@@ -63,6 +65,8 @@ function onUpdateDone(success: boolean, message?: string) {
 defineExpose({ onUpdateDone })
 
 const showCheckinHistory = ref(false)
+const showHistory = ref(false)
+const historyDefaultTab = ref(0)
 
 const checkinRecords = ref<CheckinRecord[]>([])
 const checkinTotal = ref(0)
@@ -72,6 +76,17 @@ const cardColors = ['#4a8c7a', '#d47a4a', '#7b5ea7', '#3a7ca5', '#c0392b', '#27a
 
 function getCardColor(index: number) {
   return cardColors[index % cardColors.length]
+}
+
+const favoriteTotal = ref(0)
+
+async function loadFavoriteCount() {
+  try {
+    const res = await getFavorites(1, 1)
+    if (res.code === '00000') {
+      favoriteTotal.value = res.data.total
+    }
+  } catch { /* ignore */ }
 }
 
 async function loadCheckinHistory() {
@@ -89,7 +104,7 @@ async function loadCheckinHistory() {
   }
 }
 
-onMounted(loadCheckinHistory)
+onMounted(() => { loadCheckinHistory(); loadFavoriteCount() })
 </script>
 
 <template>
@@ -115,7 +130,7 @@ onMounted(loadCheckinHistory)
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <div class="stat-number">8</div>
+            <div class="stat-number">{{ favoriteTotal }}</div>
             <div class="stat-label">收藏</div>
           </div>
         </div>
@@ -166,7 +181,7 @@ onMounted(loadCheckinHistory)
               </svg>
             </div>
             <div class="menu-divider"></div>
-            <div class="menu-item" @click="showCheckinHistory = true">
+            <div class="menu-item" @click="historyDefaultTab = 0; showHistory = true">
               <div class="menu-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
@@ -180,14 +195,14 @@ onMounted(loadCheckinHistory)
               </svg>
             </div>
             <div class="menu-divider"></div>
-            <div class="menu-item">
+            <div class="menu-item" @click="historyDefaultTab = 1; showHistory = true">
               <div class="menu-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                 </svg>
               </div>
               <span class="menu-label">我的收藏</span>
-              <span class="menu-count">8</span>
+              <span class="menu-count">{{ favoriteTotal }}</span>
               <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -286,6 +301,7 @@ onMounted(loadCheckinHistory)
   </div>
 
   <CheckinHistoryPage v-if="showCheckinHistory" @back="showCheckinHistory = false" />
+  <HistoryPage v-if="showHistory" :default-tab="historyDefaultTab" @back="showHistory = false; loadFavoriteCount()" />
 </template>
 
 <style scoped>

@@ -2,6 +2,7 @@ package com.echocampus.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.echocampus.campus.entity.CampusEntity;
 import com.echocampus.campus.mapper.CampusMapper;
 import com.echocampus.category.entity.CategoryEntity;
@@ -19,6 +20,7 @@ import com.echocampus.user.service.FavoriteService;
 import com.echocampus.user.vo.FavoriteVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -52,12 +54,16 @@ public class FavoriteServiceImpl implements FavoriteService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean toggleFavorite(UUID userId, UUID landmarkId) {
         Favorite existing = favoriteMapper.selectOne(new LambdaQueryWrapper<Favorite>()
                 .eq(Favorite::getUserId, userId)
                 .eq(Favorite::getLandmarkId, landmarkId));
         if (existing != null) {
             favoriteMapper.deleteById(existing.getId());
+            landmarkMapper.update(null, new LambdaUpdateWrapper<LandmarkEntity>()
+                    .eq(LandmarkEntity::getId, landmarkId)
+                    .setSql("favorite_count = GREATEST(favorite_count - 1, 0)"));
             log.info("[收藏] 取消收藏 -> userId={}, landmarkId={}", userId, landmarkId);
             return false;
         }
@@ -67,6 +73,9 @@ public class FavoriteServiceImpl implements FavoriteService {
         fav.setLandmarkId(landmarkId);
         fav.setCreatedAt(OffsetDateTime.now());
         favoriteMapper.insert(fav);
+        landmarkMapper.update(null, new LambdaUpdateWrapper<LandmarkEntity>()
+                .eq(LandmarkEntity::getId, landmarkId)
+                .setSql("favorite_count = favorite_count + 1"));
         log.info("[收藏] 添加收藏 -> userId={}, landmarkId={}", userId, landmarkId);
         return true;
     }
