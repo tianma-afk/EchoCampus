@@ -41,4 +41,8 @@ public class LandmarkDetailVO {
     private Integer totalFloors;
     private BigDecimal recommendRate;
     private List<FloorVO> floorList;
+
+    private Boolean isFavorited;
+
+    private BigDecimal userRating;
 }

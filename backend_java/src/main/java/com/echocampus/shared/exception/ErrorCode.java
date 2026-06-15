@@ -42,6 +42,14 @@ public enum ErrorCode {
     UNIVERSITY_NAME_CONFLICT("L0005", "大学名称已存在"),
     IMAGE_NOT_FOUND("L0006", "图片不存在"),
 
+    // ===== 收藏模块 (FAV) =====
+    FAVORITE_ALREADY("FAV001", "已收藏"),
+    FAVORITE_NOT_FOUND("FAV002", "收藏记录不存在"),
+
+    // ===== 评分模块 (RAT) =====
+    RATING_OUT_OF_RANGE("RAT001", "评分范围应为1-5分"),
+    RATING_LANDMARK_NOT_FOUND("RAT002", "地标不存在"),
+
     // ===== 反馈模块 (F) =====
     FEEDBACK_SUBMIT_TOO_FREQUENT("F0001", "提交过于频繁，请5分钟后再试"),
 

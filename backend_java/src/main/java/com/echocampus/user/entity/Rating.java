@@ -1,18 +1,27 @@
 package com.echocampus.user.entity;
 
-import java.util.UUID;
-
-import lombok.Data;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Data
 @TableName("rating")
 public class Rating {
-    @TableId
-    private UUID id; //主键
 
-    private UUID user_id;//用户主键
-    private UUID landmark_uuid;//地标主键
-    private Double rating;//评分
+    @TableId
+    private UUID id;
+
+    private UUID userId;
+
+    private UUID landmarkId;
+
+    private BigDecimal rating;
+
+    private OffsetDateTime createdAt;
+
+    private OffsetDateTime updatedAt;
 }

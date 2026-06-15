@@ -23,6 +23,11 @@ import com.echocampus.shared.util.ImageUrlBuilder;
 import com.echocampus.landmark.vo.FloorVO;
 import com.echocampus.landmark.vo.LandmarkDetailVO;
 import com.echocampus.landmark.vo.LandmarkVO;
+import com.echocampus.shared.context.AuthContext;
+import com.echocampus.user.entity.Favorite;
+import com.echocampus.user.entity.Rating;
+import com.echocampus.user.mapper.FavoriteMapper;
+import com.echocampus.user.mapper.RatingMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -54,12 +59,16 @@ public class LandmarkServiceImpl implements LandmarkService {
     private final ImageMapper imageMapper;
     private final ImageUrlBuilder imageUrlBuilder;
     private final StringRedisTemplate redisTemplate;
+    private final FavoriteMapper favoriteMapper;
+    private final RatingMapper ratingMapper;
 
     public LandmarkServiceImpl(LandmarkMapper landmarkMapper, CategoryMapper categoryMapper,
                                FloorMapper floorMapper, CampusMapper campusMapper,
                                UniversityMapper universityMapper, ImageMapper imageMapper,
                                ImageUrlBuilder imageUrlBuilder,
-                               StringRedisTemplate redisTemplate) {
+                               StringRedisTemplate redisTemplate,
+                               FavoriteMapper favoriteMapper,
+                               RatingMapper ratingMapper) {
         this.landmarkMapper = landmarkMapper;
         this.categoryMapper = categoryMapper;
         this.floorMapper = floorMapper;
@@ -68,6 +77,8 @@ public class LandmarkServiceImpl implements LandmarkService {
         this.imageMapper = imageMapper;
         this.imageUrlBuilder = imageUrlBuilder;
         this.redisTemplate = redisTemplate;
+        this.favoriteMapper = favoriteMapper;
+        this.ratingMapper = ratingMapper;
     }
 
     @Override
@@ -204,6 +215,24 @@ public class LandmarkServiceImpl implements LandmarkService {
                 .build()
         ).collect(Collectors.toList());
 
+        // 填充当前用户的收藏和评分状态（公开接口，未登录则跳过）
+        Boolean isFavorited = null;
+        java.math.BigDecimal userRating = null;
+        try {
+            UUID userId = UUID.fromString(AuthContext.get().getUserId());
+            isFavorited = favoriteMapper.exists(new LambdaQueryWrapper<Favorite>()
+                    .eq(Favorite::getUserId, userId)
+                    .eq(Favorite::getLandmarkId, landmark.getId()));
+            Rating rating = ratingMapper.selectOne(new LambdaQueryWrapper<Rating>()
+                    .eq(Rating::getUserId, userId)
+                    .eq(Rating::getLandmarkId, landmark.getId()));
+            if (rating != null) {
+                userRating = rating.getRating();
+            }
+        } catch (IllegalStateException ignored) {
+            // 未登录，保持 null
+        }
+
         return LandmarkDetailVO.builder()
                 .id(landmark.getId())
                 .name(landmark.getName())
@@ -225,6 +254,8 @@ public class LandmarkServiceImpl implements LandmarkService {
                 .totalFloors(landmark.getTotalFloors())
                 .recommendRate(landmark.getRecommendRate())
                 .floorList(floorList)
+                .isFavorited(isFavorited)
+                .userRating(userRating)
                 .build();
     }
 
