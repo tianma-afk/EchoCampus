@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { getMyFeedbacks, type FeedbackRecord, FEEDBACK_TYPE_MAP, FEEDBACK_STATUS_MAP } from '../../api/feedback'
 import FeedbackDetailPage from './FeedbackDetailPage.vue'
-import FeedbackPage from '../search/FeedbackPage.vue'
+import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 defineEmits<{ back: [] }>()
 
@@ -115,7 +115,7 @@ function onSuggestDone() {
 
   <FeedbackPage
     v-if="showSuggestForm"
-    mode="suggest"
+    default-type="ADD_LANDMARK"
     @done="onSuggestDone"
     @back="showSuggestForm = false"
   />

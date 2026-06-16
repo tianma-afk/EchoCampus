@@ -28,19 +28,19 @@ public class AdminAuthServiceImpl implements AdminAuthService {
 
     @Override
     public LoginVO login(AdminLoginRequest request) {
-        log.info("[管理员登录] 开始处理 -> username={}", request.getUsername());
+        log.info("[管理员登录] 开始处理 -> email={}", request.getEmail());
 
         AdminEntity admin = adminMapper.selectOne(
                 new LambdaQueryWrapper<AdminEntity>()
-                        .eq(AdminEntity::getUsername, request.getUsername()));
+                        .eq(AdminEntity::getEmail, request.getEmail()));
         if (admin == null) {
-            log.warn("[管理员登录] 管理员不存在 -> username={}", request.getUsername());
+            log.warn("[管理员登录] 管理员不存在 -> email={}", request.getEmail());
             throw new BusinessException(ErrorCode.ADMIN_LOGIN_ERROR);
         }
 
         String hashed = PasswordUtil.hashPassword(request.getPassword());
         if (!hashed.equals(admin.getPasswordHash())) {
-            log.warn("[管理员登录] 密码错误 -> username={}", request.getUsername());
+            log.warn("[管理员登录] 密码错误 -> email={}", request.getEmail());
             throw new BusinessException(ErrorCode.ADMIN_LOGIN_ERROR);
         }
 
@@ -59,6 +59,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
                 .expiresIn(jwtUtil.getExpiration())
                 .nickname(admin.getUsername())
                 .role(role.getValue())
+                .email(admin.getEmail())
                 .adminId(admin.getId().toString())
                 .build();
     }

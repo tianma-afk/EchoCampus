@@ -32,19 +32,19 @@ public class AdminAuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "管理员登录", description = "使用用户名和密码登录管理后台")
+    @Operation(summary = "管理员登录", description = "使用邮箱和密码登录管理后台")
     public Result<LoginVO> login(@Valid @RequestBody AdminLoginRequest request) {
-        log.info("[管理员登录] 请求 -> username={}", request.getUsername());
+        log.info("[管理员登录] 请求 -> email={}", request.getEmail());
         try {
             LoginVO result = adminAuthService.login(request);
-            log.info("[管理员登录] 成功 -> username={}", request.getUsername());
+            log.info("[管理员登录] 成功 -> email={}", request.getEmail());
             return Result.success(SUCCESS, "登录成功", result);
         } catch (BusinessException e) {
-            log.warn("[管理员登录] 业务异常 -> username={} | {}: {}",
-                    request.getUsername(), e.getCode(), e.getMessage());
+            log.warn("[管理员登录] 业务异常 -> email={} | {}: {}",
+                    request.getEmail(), e.getCode(), e.getMessage());
             return Result.failure(e.getErrorCode(), e.getMessage());
         } catch (RuntimeException e) {
-            log.error("[管理员登录] 系统异常 -> username={} | {}", request.getUsername(), e.getMessage(), e);
+            log.error("[管理员登录] 系统异常 -> email={} | {}", request.getEmail(), e.getMessage(), e);
             return Result.failure(SYSTEM_ERROR, e.getMessage());
         }
     }

@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import { doCheckin } from '../../api/checkin'
 import { toggleFavorite } from '../../api/favorite'
 import { submitRating } from '../../api/rating'
+import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 interface LandmarkDetail {
   id?: string | number
@@ -100,6 +101,7 @@ const checkinMsg = ref('')
 const checkinMsgType = ref<'success' | 'error'>('success')
 
 const showRatingPanel = ref(false)
+const showFeedback = ref(false)
 const ratingValue = ref(0)
 const ratingHoverValue = ref(0)
 const ratingSubmitting = ref(false)
@@ -538,6 +540,10 @@ const bubblePositions = computed(() => {
       </div>
     </div>
 
+    <div class="detail-feedback-row">
+      <span class="feedback-text-link" @click="showFeedback = true">有问题？去反馈</span>
+    </div>
+
     <div class="detail-footer">
       <button class="action-btn outline" @click="handleViewLargeMap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -605,6 +611,15 @@ const bubblePositions = computed(() => {
       </div>
     </div>
   </div>
+
+  <FeedbackPage
+    v-if="showFeedback"
+    default-type="INFO_ERROR"
+    :landmark-id="String(props.landmark.id || '')"
+    :landmark-name="props.landmark.name"
+    @done="showFeedback = false"
+    @back="showFeedback = false"
+  />
 </template>
 
 <style scoped>
@@ -1118,6 +1133,22 @@ const bubblePositions = computed(() => {
   border-radius: 16px;
   font-size: 12px;
   font-weight: 500;
+}
+
+.detail-feedback-row {
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px 4px;
+}
+
+.feedback-text-link {
+  font-size: 13px;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.feedback-text-link:active {
+  opacity: 0.7;
 }
 
 .detail-footer {

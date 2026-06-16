@@ -40,6 +40,7 @@ const avatarChar = computed(() => {
       <div class="user-info">
         <div class="user-text">
           <span class="user-name">{{ auth.username }}</span>
+          <span class="user-email">{{ auth.email }}</span>
           <span class="user-role">
             <el-tag :type="roleTagType" size="small">{{ roleLabel }}</el-tag>
           </span>
@@ -134,6 +135,11 @@ const avatarChar = computed(() => {
   font-size: 14px;
   font-weight: 500;
   color: #1f2937;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .user-role {

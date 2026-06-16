@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
-import FeedbackPage from './FeedbackPage.vue'
+import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 const emit = defineEmits<{
   openDetail: [landmarkId: string]
@@ -372,16 +372,16 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="result-bottom-btn">
-        <button class="back-btn" @click="showResult = false">重新拍摄</button>
-        <button v-if="topResult" class="feedback-btn" @click="showFeedback = true">纠正反馈</button>
-        <button class="suggest-btn" @click="showSuggest = true">建议新增地标</button>
+      <div class="result-bottom-links">
+        <span class="feedback-link" @click="showResult = false">重新拍摄</span>
+        <span v-if="topResult" class="feedback-link" @click="showFeedback = true">有问题？去反馈</span>
+        <span class="feedback-link" @click="showSuggest = true">都不对？去反馈</span>
       </div>
     </div>
 
     <FeedbackPage
       v-if="showFeedback && topResult"
-      mode="correct"
+      default-type="INFO_CHANGE"
       :landmark-id="topResult.landmarkId"
       :landmark-name="topResult.landmarkName"
       :image-url="resultShowImageUrl"
@@ -391,7 +391,7 @@ onUnmounted(() => {
 
     <FeedbackPage
       v-if="showSuggest"
-      mode="suggest"
+      default-type="ADD_LANDMARK"
       :image-url="resultShowImageUrl"
       @done="showSuggest = false"
       @back="showSuggest = false"
@@ -1042,64 +1042,21 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.result-bottom-btn {
-  padding: 12px 30px calc(80px + env(safe-area-inset-bottom));
+.result-bottom-links {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 30px calc(80px + env(safe-area-inset-bottom));
   flex-shrink: 0;
 }
 
-.back-btn {
-  width: 100%;
-  height: 52px;
-  border-radius: 52px;
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  font-size: 18px;
-  font-weight: 600;
-  box-shadow: 0 5px 18px var(--color-primary-shadow);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.back-btn:active {
-  transform: scale(0.97);
-}
-
-.feedback-btn {
-  width: 100%;
-  height: 52px;
-  border-radius: 52px;
-  background: #fff;
+.feedback-link {
+  font-size: 14px;
   color: var(--color-primary);
-  border: 2px solid var(--color-primary);
-  font-size: 18px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 12px;
 }
 
-.feedback-btn:active {
-  transform: scale(0.97);
-  background: #f0fdf4;
-}
-
-.suggest-btn {
-  width: 100%;
-  height: 52px;
-  border-radius: 52px;
-  background: #fff;
-  color: #d97706;
-  border: 2px solid #d97706;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 12px;
-}
-
-.suggest-btn:active {
-  transform: scale(0.97);
-  background: #fffbeb;
+.feedback-link:active {
+  opacity: 0.7;
 }
 </style>

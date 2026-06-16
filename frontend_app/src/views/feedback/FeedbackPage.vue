@@ -3,12 +3,12 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 
 const props = withDefaults(defineProps<{
-  mode: 'correct' | 'suggest'
+  defaultType?: string
   landmarkId?: string
   landmarkName?: string
   imageUrl?: string
 }>(), {
-  mode: 'correct',
+  defaultType: 'OTHER',
   landmarkId: undefined,
   landmarkName: '',
   imageUrl: '',
@@ -21,32 +21,25 @@ const emit = defineEmits<{
 
 const API_BASE_URL = 'http://localhost:8080/api/v1'
 
-const isSuggest = computed(() => props.mode === 'suggest')
-
-const feedbackType = ref(isSuggest.value ? 'ADD_LANDMARK' : 'INFO_ERROR')
-const landmarkNameInput = ref('')
-const content = ref('')
-const submitting = ref(false)
-
-const correctTypes = [
+const allTypes = [
   { value: 'INFO_ERROR', label: '信息错误' },
-  { value: 'CONTENT_ILLEGAL', label: '违禁内容' },
   { value: 'INFO_CHANGE', label: '信息变更' },
-  { value: 'OTHER', label: '其他' },
-]
-
-const suggestTypes = [
+  { value: 'CONTENT_ILLEGAL', label: '违禁内容' },
   { value: 'ADD_LANDMARK', label: '新增地标' },
   { value: 'OTHER', label: '其他' },
 ]
 
-const feedbackTypes = computed(() => isSuggest.value ? suggestTypes : correctTypes)
+const feedbackType = ref(props.defaultType)
+const isAddLandmark = computed(() => feedbackType.value === 'ADD_LANDMARK')
+const landmarkNameInput = ref('')
+const content = ref('')
+const submitting = ref(false)
 
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 
 const selectedLabel = computed(() => {
-  const found = feedbackTypes.value.find(ft => ft.value === feedbackType.value)
+  const found = allTypes.find(ft => ft.value === feedbackType.value)
   return found ? found.label : ''
 })
 
@@ -73,12 +66,17 @@ onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 
+const pageTitle = computed(() => {
+  if (props.landmarkName) return `反馈 - ${props.landmarkName}`
+  return '提交反馈'
+})
+
 async function handleSubmit() {
   if (!content.value.trim()) {
     alert('请输入反馈正文')
     return
   }
-  if (isSuggest.value && !landmarkNameInput.value.trim()) {
+  if (isAddLandmark.value && !landmarkNameInput.value.trim()) {
     alert('请输入地标名称')
     return
   }
@@ -89,11 +87,11 @@ async function handleSubmit() {
       content: content.value.trim(),
       uploadUrl: props.imageUrl || undefined,
     }
-    if (isSuggest.value) {
+    if (isAddLandmark.value) {
       body.landmarkId = null
       body.correctLandmarkName = landmarkNameInput.value.trim()
     } else {
-      body.landmarkId = props.landmarkId
+      body.landmarkId = props.landmarkId || null
       body.correctLandmarkName = landmarkNameInput.value.trim() || undefined
     }
     const res = await axios.post(`${API_BASE_URL}/user/feedbacks/`, body)
@@ -119,7 +117,7 @@ async function handleSubmit() {
           <polyline points="15 18 9 12 15 6" />
         </svg>
       </button>
-      <h2 class="header-title">{{ isSuggest ? '建议新增地标' : '纠正反馈' }}</h2>
+      <h2 class="header-title">{{ pageTitle }}</h2>
       <div class="header-spacer"></div>
     </div>
 
@@ -143,7 +141,7 @@ async function handleSubmit() {
           </button>
           <div class="custom-select-dropdown" :class="{ open: dropdownOpen }">
             <div
-              v-for="ft in feedbackTypes"
+              v-for="ft in allTypes"
               :key="ft.value"
               class="custom-select-option"
               :class="{ selected: feedbackType === ft.value }"
@@ -155,20 +153,20 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <!-- 纠正模式：显示识别结果 -->
-      <div v-if="!isSuggest" class="form-group">
-        <label class="form-label">识别结果</label>
+      <!-- 当前地标（有 landmarkId 时显示） -->
+      <div v-if="landmarkName" class="form-group">
+        <label class="form-label">当前地标</label>
         <input type="text" class="form-input readonly" :value="landmarkName" readonly />
       </div>
 
       <!-- 地标名称 -->
       <div class="form-group">
-        <label class="form-label">{{ isSuggest ? '地标名称' : '实际建筑' }}</label>
+        <label class="form-label">{{ isAddLandmark ? '新地标名称' : '正确名称（选填）' }}</label>
         <input
           v-model="landmarkNameInput"
           type="text"
           class="form-input"
-          :placeholder="isSuggest ? '请输入新地标名称' : '请输入真正的地标名称'"
+          :placeholder="isAddLandmark ? '请输入新地标名称' : '如有正确名称请填写'"
         />
       </div>
 
@@ -177,7 +175,7 @@ async function handleSubmit() {
         <textarea
           v-model="content"
           class="form-textarea"
-          :placeholder="isSuggest ? '请描述新地标的位置、外观等信息...' : '请描述您发现的错误信息...'"
+          placeholder="请描述您遇到的问题或建议..."
           rows="4"
           maxlength="2000"
         ></textarea>
@@ -191,7 +189,7 @@ async function handleSubmit() {
       </div>
 
       <button class="submit-btn" :disabled="submitting" @click="handleSubmit">
-        {{ submitting ? '提交中...' : '完成' }}
+        {{ submitting ? '提交中...' : '提交反馈' }}
       </button>
     </div>
   </div>
@@ -385,7 +383,7 @@ async function handleSubmit() {
 }
 
 .custom-select-option:hover {
-  background-color: #ffffff;
+  background-color: #f9fafb;
   color: #1f2937;
 }
 

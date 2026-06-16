@@ -4,26 +4,30 @@ import { ref, computed } from 'vue'
 const TOKEN_KEY = 'echocampus_token'
 const USERNAME_KEY = 'echocampus_username'
 const ROLE_KEY = 'echocampus_role'
+const EMAIL_KEY = 'echocampus_email'
 const ADMIN_ID_KEY = 'echocampus_admin_id'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
   const username = ref<string | null>(localStorage.getItem(USERNAME_KEY))
   const role = ref<string | null>(localStorage.getItem(ROLE_KEY))
+  const email = ref<string | null>(localStorage.getItem(EMAIL_KEY))
   const adminId = ref<string | null>(localStorage.getItem(ADMIN_ID_KEY))
 
   const isLoggedIn = computed(() => !!token.value)
   const isSuperAdmin = computed(() => role.value === 'SUPER_ADMIN')
 
-  function login(accessToken: string, nickname: string, userRole: string, id: string) {
+  function login(accessToken: string, nickname: string, userRole: string, userEmail: string, id: string) {
     token.value = accessToken
     username.value = nickname
     role.value = userRole
+    email.value = userEmail
     adminId.value = id
 
     localStorage.setItem(TOKEN_KEY, accessToken)
     localStorage.setItem(USERNAME_KEY, nickname)
     localStorage.setItem(ROLE_KEY, userRole)
+    localStorage.setItem(EMAIL_KEY, userEmail)
     localStorage.setItem(ADMIN_ID_KEY, id)
   }
 
@@ -31,13 +35,15 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     username.value = null
     role.value = null
+    email.value = null
     adminId.value = null
 
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USERNAME_KEY)
     localStorage.removeItem(ROLE_KEY)
+    localStorage.removeItem(EMAIL_KEY)
     localStorage.removeItem(ADMIN_ID_KEY)
   }
 
-  return { token, username, role, adminId, isLoggedIn, isSuperAdmin, login, logout }
+  return { token, username, role, email, adminId, isLoggedIn, isSuperAdmin, login, logout }
 })
