@@ -51,7 +51,8 @@ public class FeedbackAdminServiceImpl implements FeedbackAdminService {
 
         List<FeedbackEntity> entities = entityPage.getRecords();
 
-        List<UUID> landmarkIds = entities.stream().map(FeedbackEntity::getLandmarkId).distinct().toList();
+        List<UUID> landmarkIds = entities.stream().map(FeedbackEntity::getLandmarkId)
+                .filter(id -> id != null).distinct().toList();
         Map<UUID, String> landmarkNameMap = landmarkIds.isEmpty() ? Map.of()
                 : landmarkMapper.selectBatchIds(landmarkIds).stream()
                         .collect(Collectors.toMap(LandmarkEntity::getId, LandmarkEntity::getName));
@@ -92,9 +93,11 @@ public class FeedbackAdminServiceImpl implements FeedbackAdminService {
         }
 
         String landmarkName = "";
-        LandmarkEntity landmark = landmarkMapper.selectById(entity.getLandmarkId());
-        if (landmark != null) {
-            landmarkName = landmark.getName();
+        if (entity.getLandmarkId() != null) {
+            LandmarkEntity landmark = landmarkMapper.selectById(entity.getLandmarkId());
+            if (landmark != null) {
+                landmarkName = landmark.getName();
+            }
         }
 
         String adminName = null;

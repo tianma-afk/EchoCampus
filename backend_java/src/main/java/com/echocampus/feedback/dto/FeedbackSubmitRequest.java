@@ -10,8 +10,7 @@ import java.util.UUID;
 @Data
 public class FeedbackSubmitRequest {
 
-    @Schema(description = "地标ID", example = "550e8400-e29b-41d4-a716-446655440000")
-    @NotNull(message = "地标ID不能为空")
+    @Schema(description = "地标ID（新增地标时可为空）", example = "550e8400-e29b-41d4-a716-446655440000")
     private UUID landmarkId;
 
     @Schema(description = "反馈类型", example = "INFO_ERROR")

@@ -4,8 +4,10 @@ import { getProfile } from '../../api/auth'
 import { getCheckinHistory, type CheckinRecord } from '../../api/checkin'
 import { getFavorites } from '../../api/favorite'
 import { getRecognitions } from '../../api/recognition'
+import { getMyFeedbacks } from '../../api/feedback'
 import CheckinHistoryPage from './CheckinHistoryPage.vue'
 import HistoryPage from './HistoryPage.vue'
+import FeedbackListPage from './FeedbackListPage.vue'
 
 const props = defineProps<{ userNickname: string; userEmail: string; remainingChanges: number }>()
 const emit = defineEmits<{ logout: []; 'update-nickname': [value: string] }>()
@@ -67,6 +69,7 @@ defineExpose({ onUpdateDone })
 
 const showCheckinHistory = ref(false)
 const showHistory = ref(false)
+const showFeedbackList = ref(false)
 const historyDefaultTab = ref(0)
 
 const checkinRecords = ref<CheckinRecord[]>([])
@@ -101,6 +104,17 @@ async function loadRecognitionCount() {
   } catch { /* ignore */ }
 }
 
+const feedbackTotal = ref(0)
+
+async function loadFeedbackCount() {
+  try {
+    const res = await getMyFeedbacks(1, 1)
+    if (res.code === '00000') {
+      feedbackTotal.value = res.data.total
+    }
+  } catch { /* ignore */ }
+}
+
 async function loadCheckinHistory() {
   checkinLoading.value = true
   try {
@@ -116,7 +130,7 @@ async function loadCheckinHistory() {
   }
 }
 
-onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCount() })
+onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCount(); loadFeedbackCount() })
 </script>
 
 <template>
@@ -219,6 +233,21 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </div>
+            <div class="menu-divider"></div>
+            <div class="menu-item" @click="showFeedbackList = true">
+              <div class="menu-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  <line x1="8" y1="10" x2="16" y2="10" />
+                  <line x1="8" y1="14" x2="12" y2="14" />
+                </svg>
+              </div>
+              <span class="menu-label">我的反馈</span>
+              <span class="menu-count">{{ feedbackTotal }}</span>
+              <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -314,6 +343,7 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
 
   <CheckinHistoryPage v-if="showCheckinHistory" @back="showCheckinHistory = false" />
   <HistoryPage v-if="showHistory" :default-tab="historyDefaultTab" @back="showHistory = false; loadFavoriteCount()" />
+  <FeedbackListPage v-if="showFeedbackList" @back="showFeedbackList = false; loadFeedbackCount()" />
 </template>
 
 <style scoped>

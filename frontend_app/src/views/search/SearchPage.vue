@@ -28,6 +28,7 @@ const recognizingTaskId = ref('')
 const recognitionResults = ref<Array<{landmarkId: string, landmarkName: string, similarity: number, coverUrl: string}>>([])
 const showResult = ref(false)
 const showFeedback = ref(false)
+const showSuggest = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const handleCameraClick = () => {
@@ -374,11 +375,13 @@ onUnmounted(() => {
       <div class="result-bottom-btn">
         <button class="back-btn" @click="showResult = false">重新拍摄</button>
         <button v-if="topResult" class="feedback-btn" @click="showFeedback = true">纠正反馈</button>
+        <button class="suggest-btn" @click="showSuggest = true">建议新增地标</button>
       </div>
     </div>
 
     <FeedbackPage
       v-if="showFeedback && topResult"
+      mode="correct"
       :landmark-id="topResult.landmarkId"
       :landmark-name="topResult.landmarkName"
       :image-url="resultShowImageUrl"
@@ -386,8 +389,16 @@ onUnmounted(() => {
       @back="showFeedback = false"
     />
 
+    <FeedbackPage
+      v-if="showSuggest"
+      mode="suggest"
+      :image-url="resultShowImageUrl"
+      @done="showSuggest = false"
+      @back="showSuggest = false"
+    />
+
     <!-- 拍摄界面 -->
-    <div v-else-if="showCamera" class="camera-interface">
+    <div v-if="showCamera" class="camera-interface">
       <!-- 3/4 摄像头预览区域 -->
       <div class="camera-preview">
         <video
@@ -1071,5 +1082,24 @@ onUnmounted(() => {
 .feedback-btn:active {
   transform: scale(0.97);
   background: #f0fdf4;
+}
+
+.suggest-btn {
+  width: 100%;
+  height: 52px;
+  border-radius: 52px;
+  background: #fff;
+  color: #d97706;
+  border: 2px solid #d97706;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.suggest-btn:active {
+  transform: scale(0.97);
+  background: #fffbeb;
 }
 </style>

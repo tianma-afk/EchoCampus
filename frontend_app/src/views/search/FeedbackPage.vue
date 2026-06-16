@@ -2,11 +2,17 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
 
-const props = defineProps<{
-  landmarkId: string
-  landmarkName: string
-  imageUrl: string
-}>()
+const props = withDefaults(defineProps<{
+  mode: 'correct' | 'suggest'
+  landmarkId?: string
+  landmarkName?: string
+  imageUrl?: string
+}>(), {
+  mode: 'correct',
+  landmarkId: undefined,
+  landmarkName: '',
+  imageUrl: '',
+})
 
 const emit = defineEmits<{
   done: []
@@ -15,23 +21,32 @@ const emit = defineEmits<{
 
 const API_BASE_URL = 'http://localhost:8080/api/v1'
 
-const feedbackType = ref('INFO_ERROR')
-const correctLandmarkName = ref('')
+const isSuggest = computed(() => props.mode === 'suggest')
+
+const feedbackType = ref(isSuggest.value ? 'ADD_LANDMARK' : 'INFO_ERROR')
+const landmarkNameInput = ref('')
 const content = ref('')
 const submitting = ref(false)
 
-const feedbackTypes = [
+const correctTypes = [
   { value: 'INFO_ERROR', label: '信息错误' },
   { value: 'CONTENT_ILLEGAL', label: '违禁内容' },
   { value: 'INFO_CHANGE', label: '信息变更' },
   { value: 'OTHER', label: '其他' },
 ]
 
+const suggestTypes = [
+  { value: 'ADD_LANDMARK', label: '新增地标' },
+  { value: 'OTHER', label: '其他' },
+]
+
+const feedbackTypes = computed(() => isSuggest.value ? suggestTypes : correctTypes)
+
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 
 const selectedLabel = computed(() => {
-  const found = feedbackTypes.find(ft => ft.value === feedbackType.value)
+  const found = feedbackTypes.value.find(ft => ft.value === feedbackType.value)
   return found ? found.label : ''
 })
 
@@ -63,15 +78,25 @@ async function handleSubmit() {
     alert('请输入反馈正文')
     return
   }
+  if (isSuggest.value && !landmarkNameInput.value.trim()) {
+    alert('请输入地标名称')
+    return
+  }
   submitting.value = true
   try {
-    const res = await axios.post(`${API_BASE_URL}/user/feedbacks/`, {
-      landmarkId: props.landmarkId,
+    const body: Record<string, any> = {
       feedbackType: feedbackType.value,
       content: content.value.trim(),
-      correctLandmarkName: correctLandmarkName.value.trim() || undefined,
-      uploadUrl: props.imageUrl,
-    })
+      uploadUrl: props.imageUrl || undefined,
+    }
+    if (isSuggest.value) {
+      body.landmarkId = null
+      body.correctLandmarkName = landmarkNameInput.value.trim()
+    } else {
+      body.landmarkId = props.landmarkId
+      body.correctLandmarkName = landmarkNameInput.value.trim() || undefined
+    }
+    const res = await axios.post(`${API_BASE_URL}/user/feedbacks/`, body)
     if (res.data.code === '00000') {
       alert('感谢您的反馈，我们会尽快处理')
       emit('done')
@@ -94,7 +119,7 @@ async function handleSubmit() {
           <polyline points="15 18 9 12 15 6" />
         </svg>
       </button>
-      <h2 class="header-title">纠正反馈</h2>
+      <h2 class="header-title">{{ isSuggest ? '建议新增地标' : '纠正反馈' }}</h2>
       <div class="header-spacer"></div>
     </div>
 
@@ -130,18 +155,20 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <div class="form-group">
+      <!-- 纠正模式：显示识别结果 -->
+      <div v-if="!isSuggest" class="form-group">
         <label class="form-label">识别结果</label>
         <input type="text" class="form-input readonly" :value="landmarkName" readonly />
       </div>
 
+      <!-- 地标名称 -->
       <div class="form-group">
-        <label class="form-label">实际建筑</label>
+        <label class="form-label">{{ isSuggest ? '地标名称' : '实际建筑' }}</label>
         <input
-          v-model="correctLandmarkName"
+          v-model="landmarkNameInput"
           type="text"
           class="form-input"
-          placeholder="请输入真正的地标名称"
+          :placeholder="isSuggest ? '请输入新地标名称' : '请输入真正的地标名称'"
         />
       </div>
 
@@ -150,13 +177,13 @@ async function handleSubmit() {
         <textarea
           v-model="content"
           class="form-textarea"
-          placeholder="请描述您发现的错误信息..."
+          :placeholder="isSuggest ? '请描述新地标的位置、外观等信息...' : '请描述您发现的错误信息...'"
           rows="4"
           maxlength="2000"
         ></textarea>
       </div>
 
-      <div class="form-group">
+      <div v-if="imageUrl" class="form-group">
         <label class="form-label">反馈图片</label>
         <div class="image-preview">
           <img :src="imageUrl" alt="反馈图片" class="feedback-img" />
