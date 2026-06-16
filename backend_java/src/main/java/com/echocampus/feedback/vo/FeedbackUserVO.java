@@ -12,18 +12,15 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FeedbackAdminVO {
+public class FeedbackUserVO {
     private UUID id;
     private UUID landmarkId;
     private String landmarkName;
-    private UUID userId;
     private String feedbackType;
     private String content;
     private String status;
-    private UUID adminId;
-    private String adminName;
-    private OffsetDateTime resolveTime;
     private String resolveNote;
+    private OffsetDateTime resolveTime;
     private OffsetDateTime createdAt;
     private String uploadUrl;
     private String correctLandmarkName;

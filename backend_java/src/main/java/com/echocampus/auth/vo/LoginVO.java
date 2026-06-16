@@ -24,4 +24,9 @@ public class LoginVO {
     private String nickname;
 
     private String role;
+
+    private String email;
+
+    @JsonProperty("admin_id")
+    private String adminId;
 }

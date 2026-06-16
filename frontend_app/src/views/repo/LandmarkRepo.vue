@@ -288,7 +288,7 @@ const handleSortChange = () => {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索地标、类别..."
+          placeholder="搜你想搜..."
           class="search-input"
           @keyup.enter="handleKeywordSearch"
         />

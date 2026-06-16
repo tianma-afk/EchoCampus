@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
-import FeedbackPage from './FeedbackPage.vue'
+import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 const emit = defineEmits<{
   openDetail: [landmarkId: string]
@@ -28,6 +28,7 @@ const recognizingTaskId = ref('')
 const recognitionResults = ref<Array<{landmarkId: string, landmarkName: string, similarity: number, coverUrl: string}>>([])
 const showResult = ref(false)
 const showFeedback = ref(false)
+const showSuggest = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const handleCameraClick = () => {
@@ -371,14 +372,16 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="result-bottom-btn">
-        <button class="back-btn" @click="showResult = false">重新拍摄</button>
-        <button v-if="topResult" class="feedback-btn" @click="showFeedback = true">纠正反馈</button>
+      <div class="result-bottom-links">
+        <span class="feedback-link" @click="showResult = false">重新拍摄</span>
+        <span v-if="topResult" class="feedback-link" @click="showFeedback = true">有问题？去反馈</span>
+        <span class="feedback-link" @click="showSuggest = true">都不对？去反馈</span>
       </div>
     </div>
 
     <FeedbackPage
       v-if="showFeedback && topResult"
+      default-type="INFO_CHANGE"
       :landmark-id="topResult.landmarkId"
       :landmark-name="topResult.landmarkName"
       :image-url="resultShowImageUrl"
@@ -386,8 +389,16 @@ onUnmounted(() => {
       @back="showFeedback = false"
     />
 
+    <FeedbackPage
+      v-if="showSuggest"
+      default-type="ADD_LANDMARK"
+      :image-url="resultShowImageUrl"
+      @done="showSuggest = false"
+      @back="showSuggest = false"
+    />
+
     <!-- 拍摄界面 -->
-    <div v-else-if="showCamera" class="camera-interface">
+    <div v-if="showCamera" class="camera-interface">
       <!-- 3/4 摄像头预览区域 -->
       <div class="camera-preview">
         <video
@@ -1031,45 +1042,21 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.result-bottom-btn {
-  padding: 12px 30px calc(80px + env(safe-area-inset-bottom));
+.result-bottom-links {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 30px calc(80px + env(safe-area-inset-bottom));
   flex-shrink: 0;
 }
 
-.back-btn {
-  width: 100%;
-  height: 52px;
-  border-radius: 52px;
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  font-size: 18px;
-  font-weight: 600;
-  box-shadow: 0 5px 18px var(--color-primary-shadow);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.back-btn:active {
-  transform: scale(0.97);
-}
-
-.feedback-btn {
-  width: 100%;
-  height: 52px;
-  border-radius: 52px;
-  background: #fff;
+.feedback-link {
+  font-size: 14px;
   color: var(--color-primary);
-  border: 2px solid var(--color-primary);
-  font-size: 18px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 12px;
 }
 
-.feedback-btn:active {
-  transform: scale(0.97);
-  background: #f0fdf4;
+.feedback-link:active {
+  opacity: 0.7;
 }
 </style>

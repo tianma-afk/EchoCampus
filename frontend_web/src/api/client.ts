@@ -43,6 +43,7 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem('echocampus_username')
     localStorage.removeItem('echocampus_role')
+    localStorage.removeItem('echocampus_admin_id')
     window.location.href = '/login'
     throw new Error('Unauthorized')
   }

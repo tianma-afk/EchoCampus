@@ -1,0 +1,1 @@
+ALTER TABLE admin DROP CONSTRAINT IF EXISTS uk_admin_username;

@@ -61,11 +61,6 @@ public class AdminManageServiceImpl implements AdminManageService {
     public UUID createAdmin(AdminCreateRequest request) {
         if (adminMapper.selectCount(
                 new LambdaQueryWrapper<AdminEntity>()
-                        .eq(AdminEntity::getUsername, request.getUsername())) > 0) {
-            throw new BusinessException(ErrorCode.CONFLICT, "用户名已存在");
-        }
-        if (adminMapper.selectCount(
-                new LambdaQueryWrapper<AdminEntity>()
                         .eq(AdminEntity::getEmail, request.getEmail())) > 0) {
             throw new BusinessException(ErrorCode.CONFLICT, "邮箱已存在");
         }
@@ -93,13 +88,6 @@ public class AdminManageServiceImpl implements AdminManageService {
         }
 
         if (request.getUsername() != null) {
-            long count = adminMapper.selectCount(
-                    new LambdaQueryWrapper<AdminEntity>()
-                            .eq(AdminEntity::getUsername, request.getUsername())
-                            .ne(AdminEntity::getId, id));
-            if (count > 0) {
-                throw new BusinessException(ErrorCode.CONFLICT, "用户名已存在");
-            }
             admin.setUsername(request.getUsername());
         }
 

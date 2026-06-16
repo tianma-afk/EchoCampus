@@ -10,12 +10,14 @@ interface LoginVO {
   expires_in: number
   nickname: string
   role: string
+  email: string
+  admin_id: string
 }
 
 const router = useRouter()
 const auth = useAuthStore()
 
-const username = ref('')
+const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
@@ -25,11 +27,11 @@ async function handleLogin() {
   loading.value = true
   try {
     const res = await post<Result<LoginVO>>('/admin/auth/login', {
-      username: username.value,
+      email: email.value,
       password: password.value,
     })
     if (res.code === '00000') {
-      auth.login(res.data.access_token, res.data.nickname, res.data.role)
+      auth.login(res.data.access_token, res.data.nickname, res.data.role, res.data.email, res.data.admin_id)
       router.replace('/landmark')
     } else {
       errorMsg.value = res.message || '登录失败'
@@ -53,9 +55,9 @@ async function handleLogin() {
       <el-form class="login-form" @submit.prevent="handleLogin">
         <el-form-item>
           <el-input
-            v-model="username"
-            placeholder="用户名"
-            :prefix-icon="'User'"
+            v-model="email"
+            placeholder="邮箱"
+            :prefix-icon="'Message'"
             size="large"
           />
         </el-form-item>

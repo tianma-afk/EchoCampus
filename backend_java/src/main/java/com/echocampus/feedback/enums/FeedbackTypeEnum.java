@@ -20,7 +20,10 @@ public enum FeedbackTypeEnum {
     INFO_CHANGE("INFO_CHANGE", "信息变更"),
 
     @Schema(description = "其他")
-    OTHER("OTHER", "其他");
+    OTHER("OTHER", "其他"),
+
+    @Schema(description = "新增地标")
+    ADD_LANDMARK("ADD_LANDMARK", "新增地标");
 
     @EnumValue
     @JsonValue

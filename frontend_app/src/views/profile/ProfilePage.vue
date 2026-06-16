@@ -4,8 +4,11 @@ import { getProfile } from '../../api/auth'
 import { getCheckinHistory, type CheckinRecord } from '../../api/checkin'
 import { getFavorites } from '../../api/favorite'
 import { getRecognitions } from '../../api/recognition'
-import CheckinHistoryPage from './CheckinHistoryPage.vue'
+import { getMyFeedbacks } from '../../api/feedback'
 import HistoryPage from './HistoryPage.vue'
+import FeedbackListPage from './FeedbackListPage.vue'
+import SettingsPage from './SettingsPage.vue'
+import HelpFeedbackPage from './HelpFeedbackPage.vue'
 
 const props = defineProps<{ userNickname: string; userEmail: string; remainingChanges: number }>()
 const emit = defineEmits<{ logout: []; 'update-nickname': [value: string] }>()
@@ -65,8 +68,10 @@ function onUpdateDone(success: boolean, message?: string) {
 
 defineExpose({ onUpdateDone })
 
-const showCheckinHistory = ref(false)
 const showHistory = ref(false)
+const showFeedbackList = ref(false)
+const showSettings = ref(false)
+const showHelpFeedback = ref(false)
 const historyDefaultTab = ref(0)
 
 const checkinRecords = ref<CheckinRecord[]>([])
@@ -101,6 +106,17 @@ async function loadRecognitionCount() {
   } catch { /* ignore */ }
 }
 
+const feedbackTotal = ref(0)
+
+async function loadFeedbackCount() {
+  try {
+    const res = await getMyFeedbacks(1, 1)
+    if (res.code === '00000') {
+      feedbackTotal.value = res.data.total
+    }
+  } catch { /* ignore */ }
+}
+
 async function loadCheckinHistory() {
   checkinLoading.value = true
   try {
@@ -116,7 +132,7 @@ async function loadCheckinHistory() {
   }
 }
 
-onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCount() })
+onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCount(); loadFeedbackCount() })
 </script>
 
 <template>
@@ -132,13 +148,13 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
         </div>
         <div class="stats-bar">
           <div class="stat-item">
-            <div class="stat-number">{{ checkinTotal }}</div>
-            <div class="stat-label">打卡</div>
+            <div class="stat-number">{{ recognitionTotal }}</div>
+            <div class="stat-label">识别</div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <div class="stat-number">{{ recognitionTotal }}</div>
-            <div class="stat-label">识别</div>
+            <div class="stat-number">{{ checkinTotal }}</div>
+            <div class="stat-label">打卡</div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
@@ -154,7 +170,7 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
         <div class="section">
           <div class="section-header">
             <h3 class="section-title">最近打卡</h3>
-            <button class="view-all-btn" @click="showCheckinHistory = true">查看全部</button>
+            <button class="view-all-btn" @click="historyDefaultTab = 0; showHistory = true">查看全部</button>
           </div>
           <div v-if="checkinLoading" class="checkin-cards">
             <div class="checkin-card loading">加载中...</div>
@@ -187,7 +203,6 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
                 </svg>
               </div>
               <span class="menu-label">我的识别</span>
-              <span class="menu-count">{{ recognitionTotal }}</span>
               <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -201,7 +216,6 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
                 </svg>
               </div>
               <span class="menu-label">我的打卡</span>
-              <span class="menu-count">{{ checkinTotal }}</span>
               <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -214,7 +228,20 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
                 </svg>
               </div>
               <span class="menu-label">我的收藏</span>
-              <span class="menu-count">{{ favoriteTotal }}</span>
+              <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </div>
+            <div class="menu-divider"></div>
+            <div class="menu-item" @click="showFeedbackList = true">
+              <div class="menu-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  <line x1="8" y1="10" x2="16" y2="10" />
+                  <line x1="8" y1="14" x2="12" y2="14" />
+                </svg>
+              </div>
+              <span class="menu-label">我的反馈</span>
               <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -225,20 +252,7 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
         <div class="section">
           <h3 class="section-title">设置</h3>
           <div class="menu-card">
-            <div class="menu-item">
-              <div class="menu-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 01-3.46 0" />
-                </svg>
-              </div>
-              <span class="menu-label">消息通知</span>
-              <svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </div>
-            <div class="menu-divider"></div>
-            <div class="menu-item">
+            <div class="menu-item" @click="showSettings = true">
               <div class="menu-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="3" />
@@ -251,12 +265,12 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
               </svg>
             </div>
             <div class="menu-divider"></div>
-            <div class="menu-item">
+            <div class="menu-item" @click="showHelpFeedback = true">
               <div class="menu-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10" />
-                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                  <path d="M9.5 9a3 3 0 0 1 5 1.5c0 1.5-2 2.5-2.5 3.5" />
+                  <circle cx="12" cy="17" r="0.8" fill="currentColor" stroke="none" />
                 </svg>
               </div>
               <span class="menu-label">帮助与反馈</span>
@@ -299,21 +313,14 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
             </div>
           </div>
         </div>
-
-        <button class="logout-btn" @click="emit('logout')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          退出登录
-        </button>
       </div>
     </div>
   </div>
 
-  <CheckinHistoryPage v-if="showCheckinHistory" @back="showCheckinHistory = false" />
   <HistoryPage v-if="showHistory" :default-tab="historyDefaultTab" @back="showHistory = false; loadFavoriteCount()" />
+  <FeedbackListPage v-if="showFeedbackList" @back="showFeedbackList = false; loadFeedbackCount()" />
+  <SettingsPage v-if="showSettings" @back="showSettings = false" @logout="emit('logout')" />
+  <HelpFeedbackPage v-if="showHelpFeedback" @back="showHelpFeedback = false" />
 </template>
 
 <style scoped>
@@ -568,27 +575,6 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
   margin: 0 16px;
 }
 
-.logout-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  height: 48px;
-  border: none;
-  border-radius: var(--radius-xl);
-  background: var(--color-bg-card);
-  color: var(--color-danger);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-}
-
-.logout-btn svg {
-  width: 18px;
-  height: 18px;
-}
 
 /* 编辑资料弹窗 */
 .modal-overlay {
