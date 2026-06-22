@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
-const router = useRouter()
 const auth = useAuthStore()
+
+const collapsed = ref(false)
+
+function toggleCollapse() {
+  collapsed.value = !collapsed.value
+}
 
 const menuItems = computed(() => {
   const items = [
@@ -54,30 +59,10 @@ const menuItems = computed(() => {
 const isActive = (path: string) => {
   return route.path.startsWith(path)
 }
-
-function handleLogout() {
-  auth.logout()
-  router.push('/login')
-}
 </script>
 
 <template>
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 8v4l3 3" />
-          </svg>
-        </div>
-        <div class="logo-text">
-          <span class="logo-title">校园地标导航</span>
-          <span class="logo-subtitle">管理端</span>
-        </div>
-      </div>
-    </div>
-
+  <aside class="sidebar" :class="{ collapsed }">
     <nav class="sidebar-nav">
       <router-link
         v-for="item in menuItems"
@@ -85,6 +70,7 @@ function handleLogout() {
         :to="item.path"
         class="nav-item"
         :class="{ active: isActive(item.path) }"
+        :title="collapsed ? item.label : ''"
       >
         <span class="nav-icon">
           <svg v-if="item.icon === 'home'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -114,18 +100,17 @@ function handleLogout() {
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
         </span>
-        <span class="nav-label">{{ item.label }}</span>
+        <span v-show="!collapsed" class="nav-label">{{ item.label }}</span>
       </router-link>
     </nav>
 
     <div class="sidebar-footer">
-      <button class="logout-btn" @click="handleLogout">
+      <button class="collapse-btn" @click="toggleCollapse" :title="collapsed ? '展开菜单' : '收起菜单'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-          <polyline points="16 17 21 12 16 7" />
-          <line x1="21" y1="12" x2="9" y2="12" />
+          <polyline v-if="collapsed" points="13 17 18 12 13 7" />
+          <polyline v-else points="11 7 6 12 11 17" />
+          <line v-if="collapsed" x1="6" y1="12" x2="18" y2="12" />
         </svg>
-        <span>退出登录</span>
       </button>
     </div>
   </aside>
@@ -135,53 +120,16 @@ function handleLogout() {
 .sidebar {
   width: 240px;
   background: #fff;
-  border-right: 1px solid #e8e8e8;
+  border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  transition: width 0.25s ease;
+  flex-shrink: 0;
 }
 
-.sidebar-header {
-  padding: 20px 16px;
-  border-bottom: 1px solid #e8e8e8;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-}
-
-.logo-icon svg {
-  width: 20px;
-  height: 20px;
-}
-
-.logo-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.logo-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.logo-subtitle {
-  font-size: 11px;
-  color: #9ca3af;
+.sidebar.collapsed {
+  width: 64px;
 }
 
 .sidebar-nav {
@@ -189,17 +137,30 @@ function handleLogout() {
   padding: 16px 12px;
 }
 
+.sidebar.collapsed .sidebar-nav {
+  padding: 16px 8px;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
   color: #6b7280;
   text-decoration: none;
-  margin-bottom: 4px;
-  transition: all 0.2s;
+  margin-bottom: 2px;
+  transition: all 0.2s ease;
   position: relative;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+  gap: 0;
 }
 
 .nav-item:hover {
@@ -212,60 +173,85 @@ function handleLogout() {
   color: #059669;
 }
 
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: #059669;
+  border-radius: 0 2px 2px 0;
+}
+
+.sidebar.collapsed .nav-item.active::before {
+  display: none;
+}
+
 .nav-icon {
   width: 20px;
   height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .nav-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .nav-label {
   font-size: 14px;
   flex: 1;
-}
-
-.nav-badge {
-  background: #fbbf24;
-  color: #fff;
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-weight: 500;
+  opacity: 1;
+  transition: opacity 0.15s ease;
 }
 
 .sidebar-footer {
-  padding: 16px 12px;
-  border-top: 1px solid #e8e8e8;
+  padding: 12px;
+  border-top: 1px solid #f0f0f0;
 }
 
-.logout-btn {
+.collapse-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: none;
   background: none;
   color: #9ca3af;
   cursor: pointer;
   border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.2s;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.logout-btn:hover {
-  background: #fef2f2;
-  color: #ef4444;
+.sidebar.collapsed .collapse-btn {
+  justify-content: center;
+  padding: 10px 0;
 }
 
-.logout-btn svg {
+.collapse-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.collapse-btn svg {
   width: 18px;
   height: 18px;
+  flex-shrink: 0;
+}
+
+.collapse-label {
+  opacity: 1;
+  transition: opacity 0.15s ease;
 }
 </style>

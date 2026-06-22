@@ -198,7 +198,6 @@ onMounted(() => {
 
 <style scoped>
 .university-management {
-  max-width: 800px;
 }
 
 .page-header {
@@ -215,10 +214,11 @@ onMounted(() => {
 }
 
 .page-title h1 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .page-count {
@@ -229,37 +229,36 @@ onMounted(() => {
 .table-card {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
 .uni-name {
-  font-weight: 500;
-  color: #1f2937;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 .table-footer {
   display: flex;
   justify-content: center;
   padding: 16px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid #f0f0f0;
 }
 
 /* el-table style overrides */
 :deep(.el-table th.el-table__cell) {
-  background: #f9fafb;
+  background: #f8f9fb;
   font-size: 12px;
   font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
+  color: #6b7280;
 }
 
 :deep(.el-table .el-table__cell) {
-  padding: 12px 16px;
+  padding: 14px 16px;
 }
 
 :deep(.el-table__body tr:hover > td.el-table__cell) {
-  background-color: #f9fafb;
+  background-color: #f8f9fb;
 }
 
 :deep(.el-table__body tr) {
@@ -267,20 +266,12 @@ onMounted(() => {
   transition: background 0.15s;
 }
 
-/* el-pagination style overrides */
-:deep(.el-pagination .el-pager li.is-active) {
-  background-color: #059669;
-}
-
-:deep(.el-pagination .el-pager li:hover) {
-  color: #10b981;
-}
-
 /* Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -289,44 +280,45 @@ onMounted(() => {
 
 .modal-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 16px;
+  padding: 28px;
   width: 420px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
 }
 
 .modal-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 24px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .form-group label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
 }
 
 .form-group input {
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
-  color: #374151;
+  color: #1a1a1a;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-group input:focus {
-  border-color: #10b981;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.08);
 }
 
 .form-error {

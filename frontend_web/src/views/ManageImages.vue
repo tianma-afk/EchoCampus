@@ -416,7 +416,6 @@ function curatedIdx(img: LandmarkImageVO): number {
 
 <style scoped>
 .manage-images {
-  max-width: 960px;
 }
 
 /* Toolbar */
@@ -489,8 +488,9 @@ function curatedIdx(img: LandmarkImageVO): number {
 }
 
 .back-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
+  border-color: #059669;
+  color: #059669;
+  background: #ecfdf5;
 }
 
 .toolbar-actions {
@@ -594,15 +594,16 @@ function curatedIdx(img: LandmarkImageVO): number {
 .image-card {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: default;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .image-card:hover {
-  border-color: #10b981;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+  border-color: #059669;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.1);
+  transform: translateY(-1px);
 }
 
 .card-thumb {

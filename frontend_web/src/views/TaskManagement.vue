@@ -147,25 +147,25 @@ onUnmounted(() => {
           </el-empty>
         </template>
 
-        <el-table-column label="任务ID" width="160">
+        <el-table-column label="任务ID" min-width="180">
           <template #default="{ row }">
             <span class="mono" :title="row.id">{{ shortId(row.id) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="类型" width="100">
+        <el-table-column label="类型" min-width="100">
           <template #default="{ row }">
             {{ typeLabel[row.taskType] ?? row.taskType }}
           </template>
         </el-table-column>
 
-        <el-table-column label="算法任务ID" width="140">
+        <el-table-column label="算法任务ID" min-width="160">
           <template #default="{ row }">
             <span class="mono">{{ row.algTaskId ?? '-' }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" min-width="100">
           <template #default="{ row }">
             <el-tag
               :type="statusType[row.taskStatus] ?? 'info'"
@@ -177,13 +177,13 @@ onUnmounted(() => {
           </template>
         </el-table-column>
 
-        <el-table-column label="创建时间" width="170">
+        <el-table-column label="创建时间" min-width="180">
           <template #default="{ row }">
             <span class="time-cell">{{ formatTime(row.createdAt) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="更新时间" width="170">
+        <el-table-column label="更新时间" min-width="180">
           <template #default="{ row }">
             <span class="time-cell">{{ formatTime(row.updatedAt) }}</span>
           </template>
@@ -205,7 +205,6 @@ onUnmounted(() => {
 
 <style scoped>
 .task-management {
-  max-width: 1200px;
 }
 
 .page-header {
@@ -222,10 +221,11 @@ onUnmounted(() => {
 }
 
 .page-title h1 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .page-count {
@@ -242,12 +242,12 @@ onUnmounted(() => {
 .table-card {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
 .mono {
-  font-family: 'Courier New', monospace;
+  font-family: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Courier New', monospace;
   font-size: 13px;
 }
 
@@ -261,37 +261,27 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   padding: 16px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid #f0f0f0;
 }
 
 /* el-table style overrides */
 :deep(.el-table th.el-table__cell) {
-  background: #f9fafb;
+  background: #f8f9fb;
   font-size: 12px;
   font-weight: 600;
   color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
 }
 
 :deep(.el-table .el-table__cell) {
-  padding: 12px 16px;
+  padding: 14px 16px;
 }
 
 :deep(.el-table__body tr:hover > td.el-table__cell) {
-  background-color: #f9fafb;
+  background-color: #f8f9fb;
 }
 
 :deep(.el-table__body tr) {
   transition: background 0.15s;
-}
-
-/* el-pagination style overrides */
-:deep(.el-pagination .el-pager li.is-active) {
-  background-color: #059669;
-}
-
-:deep(.el-pagination .el-pager li:hover) {
-  color: #10b981;
 }
 </style>

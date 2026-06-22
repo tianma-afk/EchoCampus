@@ -325,11 +325,10 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .create-landmark {
-  max-width: 800px;
 }
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .page-title {
@@ -339,18 +338,19 @@ onBeforeUnmount(() => {
 }
 
 .page-title h1 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fff;
@@ -360,8 +360,9 @@ onBeforeUnmount(() => {
 }
 
 .back-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
+  border-color: #059669;
+  color: #059669;
+  background: #ecfdf5;
 }
 
 .back-btn svg {
@@ -378,21 +379,21 @@ onBeforeUnmount(() => {
 .form-card {
   background: #fff;
   border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .form-section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1a1a1a;
   margin: 0 0 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 2px solid #ecfdf5;
 }
 
 .form-row {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .form-row:last-child {
@@ -402,7 +403,7 @@ onBeforeUnmount(() => {
 .form-row.two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
 }
 
 .form-group {
@@ -413,7 +414,7 @@ onBeforeUnmount(() => {
 
 .form-group label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
 }
 
@@ -425,13 +426,13 @@ onBeforeUnmount(() => {
 .form-group input,
 .form-group textarea,
 .form-group select {
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
-  color: #374151;
+  color: #1a1a1a;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   font-family: inherit;
   resize: vertical;
 }
@@ -439,7 +440,8 @@ onBeforeUnmount(() => {
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-  border-color: #10b981;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.08);
 }
 
 .form-group input::placeholder,
@@ -478,9 +480,10 @@ onBeforeUnmount(() => {
   padding: 10px 24px;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .cancel-btn {
@@ -492,6 +495,7 @@ onBeforeUnmount(() => {
 .cancel-btn:hover {
   border-color: #d1d5db;
   color: #374151;
+  background: #f9fafb;
 }
 
 .submit-btn {

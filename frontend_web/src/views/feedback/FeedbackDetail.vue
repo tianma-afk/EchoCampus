@@ -161,7 +161,6 @@ onMounted(() => {
 
 <style scoped>
 .feedback-detail {
-  max-width: 720px;
 }
 
 .page-header {
@@ -189,8 +188,9 @@ onMounted(() => {
 }
 
 .back-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
+  border-color: #059669;
+  color: #059669;
+  background: #ecfdf5;
 }
 
 .back-btn svg {
@@ -219,12 +219,12 @@ onMounted(() => {
 }
 
 .breadcrumb-current {
-  color: #1f2937;
-  font-weight: 500;
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
 .loading-state {
-  padding: 48px 16px;
+  padding: 64px 16px;
   text-align: center;
   color: #9ca3af;
 }
@@ -232,18 +232,18 @@ onMounted(() => {
 .info-card {
   background: #fff;
   border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   margin-bottom: 24px;
 }
 
 .card-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1a1a1a;
   margin: 0 0 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 2px solid #ecfdf5;
 }
 
 .info-grid {

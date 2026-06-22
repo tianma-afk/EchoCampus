@@ -1,0 +1,40 @@
+# Python 虚拟环境（将在镜像内重新创建）
+.venv/
+
+# 模型权重（运行时自动下载，不打入镜像）
+weights/
+
+# 缓存文件
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# 日志和数据（运行时产生）
+logs/
+data/
+
+# 开发工具
+.vscode/
+.trae/
+.claude/
+
+# 环境文件（通过 docker-compose 注入）
+.env
+
+# Git
+.git/
+.gitignore
+
+# 杂项
+*.md
+README.md
+CLAUDE.local.md
+算法后台启动文档.md
+
+# 测试
+tests/
+app/test_insert_milvus.py
+
+# 空目录
+Pair-VPR/

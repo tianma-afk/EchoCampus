@@ -307,7 +307,6 @@ onMounted(() => {
 
 <style scoped>
 .university-detail {
-  max-width: 800px;
 }
 
 .page-header {
@@ -335,8 +334,9 @@ onMounted(() => {
 }
 
 .back-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
+  border-color: #059669;
+  color: #059669;
+  background: #ecfdf5;
 }
 
 .back-btn svg {
@@ -365,12 +365,12 @@ onMounted(() => {
 }
 
 .breadcrumb-current {
-  color: #1f2937;
-  font-weight: 500;
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
 .loading-state {
-  padding: 48px 16px;
+  padding: 64px 16px;
   text-align: center;
   color: #9ca3af;
 }
@@ -378,8 +378,8 @@ onMounted(() => {
 .info-card {
   background: #fff;
   border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 24px 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   margin-bottom: 24px;
 }
 
@@ -392,7 +392,7 @@ onMounted(() => {
 
 .info-label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #9ca3af;
   min-width: 64px;
 }
@@ -406,7 +406,7 @@ onMounted(() => {
 .info-value {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1a1a1a;
 }
 
 .inline-btn {

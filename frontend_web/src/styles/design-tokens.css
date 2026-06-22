@@ -1,0 +1,135 @@
+/* ═══════════════════════════════════════════════════════════════
+   EchoCampus Admin · Design Tokens
+   MiMo-inspired light campus aesthetic
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Color System ── */
+  --color-primary: #059669;
+  --color-primary-light: #ecfdf5;
+  --color-primary-hover: #047857;
+  --color-primary-soft: #d1fae5;
+
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+
+  --color-surface: #ffffff;
+  --color-bg: #f7f8fa;
+  --color-bg-subtle: #f3f4f6;
+
+  --color-border: #e5e7eb;
+  --color-border-light: #f0f0f0;
+
+  --color-danger: #ef4444;
+  --color-danger-light: #fef2f2;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fffbeb;
+
+  /* ── Category Gradients (MiMo-style tiered card headers) ── */
+  --gradient-teaching: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-library: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --gradient-sports: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-living: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --gradient-activity: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+  --gradient-scenery: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --gradient-default: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+
+  /* ── Typography ── */
+  --font-sans: 'PingFang SC', 'Noto Sans SC', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono',
+    'Courier New', monospace;
+
+  --text-h1: 24px;
+  --text-h2: 16px;
+  --text-body: 14px;
+  --text-sm: 13px;
+  --text-xs: 12px;
+
+  --weight-bold: 700;
+  --weight-semibold: 600;
+  --weight-medium: 500;
+  --weight-normal: 400;
+
+  --leading-relaxed: 1.7;
+  --leading-normal: 1.6;
+  --leading-tight: 1.3;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.06);
+  --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+  /* ── Radii ── */
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --radius-input: 8px;
+  --radius-tag: 999px;
+  --radius-modal: 16px;
+  --radius-sm: 6px;
+  --radius-xs: 4px;
+
+  /* ── Spacing ── */
+  --space-page-padding: 32px;
+  --space-card-padding: 24px;
+  --space-section-gap: 24px;
+  --space-element-gap: 16px;
+  --space-tight-gap: 12px;
+  --space-compact-gap: 8px;
+
+  /* ── Sizing ── */
+  --sidebar-width: 240px;
+  --header-height: 60px;
+
+  /* ── Transitions ── */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}
+
+/* ── Global Reset & Base ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+/* ── Selection ── */
+::selection {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
