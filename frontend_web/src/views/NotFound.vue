@@ -19,19 +19,22 @@ const router = useRouter()
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 8px;
+  gap: 12px;
 }
 
 .code {
-  font-size: 64px;
-  font-weight: 700;
-  color: #d1d5db;
+  font-size: 72px;
+  font-weight: 800;
+  color: #e5e7eb;
   margin: 0;
+  letter-spacing: -0.03em;
+  line-height: 1;
 }
 
 .message {
   font-size: 16px;
-  color: #9ca3af;
-  margin: 0 0 16px 0;
+  color: #6b7280;
+  margin: 0 0 20px 0;
+  font-weight: 500;
 }
 </style>

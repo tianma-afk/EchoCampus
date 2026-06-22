@@ -5,9 +5,9 @@ import Header from '../components/Header.vue'
 
 <template>
   <div class="layout">
-    <Sidebar />
-    <div class="main-content">
-      <Header />
+    <Header />
+    <div class="layout-body">
+      <Sidebar />
       <main class="page-content">
         <router-view />
       </main>
@@ -18,20 +18,21 @@ import Header from '../components/Header.vue'
 <style scoped>
 .layout {
   display: flex;
+  flex-direction: column;
   height: 100vh;
-  background-color: #f5f7fa;
+  background-color: #f7f8fa;
 }
 
-.main-content {
+.layout-body {
   flex: 1;
   display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
 
 .page-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 32px;
+  min-width: 0;
 }
 </style>

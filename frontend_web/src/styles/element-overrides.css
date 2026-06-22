@@ -1,0 +1,212 @@
+/* ═══════════════════════════════════════════════════════════════
+   EchoCampus Admin · Element Plus Theme Overrides
+   MiMo-inspired clean aesthetic
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Primary Color ── */
+:root {
+  --el-color-primary: #059669;
+  --el-color-primary-light-3: #34d399;
+  --el-color-primary-light-5: #6ee7b7;
+  --el-color-primary-light-7: #a7f3d0;
+  --el-color-primary-light-8: #d1fae5;
+  --el-color-primary-light-9: #ecfdf5;
+  --el-color-primary-dark-2: #047857;
+  --el-color-success: #059669;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #ef4444;
+  --el-color-info: #6b7280;
+}
+
+/* ── Button ── */
+.el-button {
+  border-radius: var(--radius-btn);
+  font-weight: var(--weight-medium);
+  transition: all var(--transition-normal);
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--color-primary);
+  --el-button-border-color: var(--color-primary);
+  --el-button-hover-bg-color: var(--color-primary-hover);
+  --el-button-hover-border-color: var(--color-primary-hover);
+}
+
+.el-button--small {
+  border-radius: 6px;
+  font-size: var(--text-xs);
+}
+
+/* ── Table ── */
+.el-table {
+  --el-table-border-color: var(--color-border-light);
+  --el-table-header-bg-color: #f8f9fb;
+}
+
+.el-table th.el-table__cell {
+  background: var(--el-table-header-bg-color);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.el-table .el-table__cell {
+  padding: 14px 16px;
+}
+
+.el-table__body tr:hover > td.el-table__cell {
+  background-color: #f8f9fb;
+}
+
+.el-table__body tr {
+  transition: background var(--transition-fast);
+}
+
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background: #fafbfc;
+}
+
+/* ── Tag ── */
+.el-tag {
+  border-radius: var(--radius-tag);
+  font-weight: var(--weight-medium);
+  border: none;
+}
+
+.el-tag--small {
+  padding: 2px 10px;
+  font-size: 11px;
+}
+
+/* ── Pagination ── */
+.el-pagination .el-pager li.is-active {
+  background-color: var(--color-primary) !important;
+  border-radius: 6px;
+}
+
+.el-pagination .el-pager li:hover {
+  color: var(--color-primary);
+}
+
+.el-pagination .el-pager li {
+  border-radius: 6px;
+  font-weight: var(--weight-medium);
+}
+
+/* ── Input / Select / Textarea ── */
+.el-input__wrapper {
+  border-radius: var(--radius-input);
+  box-shadow: 0 0 0 1px var(--color-border) inset;
+  transition: box-shadow var(--transition-normal);
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--color-text-tertiary) inset;
+}
+
+.el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px var(--color-primary) inset !important;
+}
+
+.el-input.is-disabled .el-input__wrapper {
+  background-color: var(--color-bg-subtle);
+}
+
+.el-select .el-input__wrapper {
+  border-radius: var(--radius-input);
+}
+
+.el-textarea__inner {
+  border-radius: var(--radius-input);
+  font-family: var(--font-sans);
+  line-height: var(--leading-relaxed);
+}
+
+.el-textarea__inner:focus {
+  border-color: var(--color-primary);
+}
+
+/* ── Dialog / Drawer ── */
+.el-dialog {
+  border-radius: var(--radius-modal);
+}
+
+.el-dialog__header {
+  padding: 20px 24px 0;
+}
+
+.el-dialog__body {
+  padding: 20px 24px;
+}
+
+.el-dialog__footer {
+  padding: 0 24px 20px;
+}
+
+/* ── Message Box ── */
+.el-message-box {
+  border-radius: var(--radius-modal);
+  padding-bottom: 20px;
+}
+
+/* ── Empty ── */
+.el-empty__description {
+  color: var(--color-text-tertiary);
+}
+
+/* ── Loading ── */
+.el-loading-mask {
+  backdrop-filter: blur(2px);
+}
+
+/* ── Card (Element Plus built-in) ── */
+.el-card {
+  border-radius: var(--radius-card);
+  border: none;
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Breadcrumb ── */
+.el-breadcrumb__inner {
+  font-weight: var(--weight-medium);
+}
+
+/* ── Popover / Tooltip ── */
+.el-popover,
+.el-tooltip__popper {
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-dropdown);
+}
+
+/* ── Badge ── */
+.el-badge__content {
+  border-radius: var(--radius-tag);
+}
+
+/* ── Switch ── */
+.el-switch.is-checked .el-switch__core {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ── Checkbox ── */
+.el-checkbox__input.is-checked .el-checkbox__inner {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.el-checkbox__input.is-checked + .el-checkbox__label {
+  color: var(--color-primary);
+}
+
+/* ── Radio ── */
+.el-radio__input.is-checked .el-radio__inner {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.el-radio__input.is-checked + .el-radio__label {
+  color: var(--color-primary);
+}

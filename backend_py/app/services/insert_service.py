@@ -53,6 +53,9 @@ class InsertService:
             image_uuid = image.uuid
             image_url = image.url
             img = await download_image_to_pil(image_url)
+            if img is None:
+                logger.error(f"图片下载失败，跳过: {image_url}")
+                continue
             await img_queue.put((img, image_uuid))
         await img_queue.put(None)  # 下载完成的标志
 

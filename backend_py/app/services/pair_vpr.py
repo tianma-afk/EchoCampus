@@ -129,8 +129,13 @@ class PairVPRExtractor:
     
     def download_file(self):
         try:
-            logger.info(f"下载权重: {self.model_dict[self.model_type]['path']}")
-            response = requests.get(self.model_dict[self.model_type]["download_url"], stream=True)
+            download_url = self.model_dict[self.model_type]["download_url"]
+            # 支持 HF_ENDPOINT 国内镜像（如 https://hf-mirror.com）
+            hf_endpoint = os.environ.get("HF_ENDPOINT", "")
+            if hf_endpoint:
+                download_url = download_url.replace("https://huggingface.co", hf_endpoint)
+            logger.info(f"下载权重: {self.model_dict[self.model_type]['path']}，来源: {download_url}")
+            response = requests.get(download_url, stream=True)
             response.raise_for_status()
             total_size = int(response.headers.get('content-length', 0))
             os.makedirs(self.weights_dir, exist_ok=True)

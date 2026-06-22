@@ -24,6 +24,10 @@ class SearchService:
     async def search_process(self, params: SearchParams):
         try:
             img = await download_image_to_pil(params.imgUrl)
+            if img is None:
+                logger.error(f"图片下载失败，任务取消: {params.imgUrl}")
+                await self.search_callback(params.callbackUrl, "FAILED", [])
+                return
             extractor = get_extractor()
             async with gpu_lock:  # 确保同一时间只有一个任务在使用 GPU
                 global_desc, dense_features = await asyncio.to_thread(extractor.extract_complete_features, img)
@@ -66,7 +70,7 @@ class SearchService:
                         "pair_similarity": "None",
                     }
                     results.append(item)
-                        
+            logger.info(f"图像搜索任务成功: {params.callbackUrl}")            
             await self.search_callback(params.callbackUrl, "SUCCESS", results)
 
         except Exception as e:

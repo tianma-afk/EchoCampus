@@ -17,17 +17,17 @@ const totalPages = ref(1)
 const totalCount = ref(0)
 const pageSize = 9
 
-const categoryColors: Record<string, string> = {
-  教学楼: '#6ee7b7',
-  图书馆: '#93c5fd',
-  体育场馆: '#fcd34d',
-  生活区: '#f9a8d4',
-  活动场馆: '#c4b5fd',
-  景观景点: '#5eead4',
+const categoryGradients: Record<string, string> = {
+  教学楼: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  图书馆: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+  体育场馆: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  生活区: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+  活动场馆: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+  景观景点: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
 }
 
-function categoryColor(name: string) {
-  return categoryColors[name] ?? '#e5e7eb'
+function categoryGradient(name: string) {
+  return categoryGradients[name] ?? 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)'
 }
 
 async function fetchLandmarks() {
@@ -175,7 +175,7 @@ watch(keywordFilter, () => {
         >
           <div
             class="card-header"
-            :style="{ backgroundColor: categoryColor(landmark.categoryName) + '40' }"
+            :style="{ background: categoryGradient(landmark.categoryName) }"
           >
             <div class="card-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -257,42 +257,43 @@ watch(keywordFilter, () => {
 
 <style scoped>
 .landmark-management {
-  max-width: 1200px;
 }
 
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .page-title {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: 14px;
 }
 
 .page-title h1 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .page-count {
   font-size: 13px;
   color: #9ca3af;
+  font-weight: 500;
 }
 
 .page-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .filter-select {
-  padding: 8px 12px;
+  padding: 8px 14px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 13px;
@@ -300,25 +301,28 @@ watch(keywordFilter, () => {
   background: #fff;
   cursor: pointer;
   outline: none;
-}
-
-.filter-select:focus {
-  border-color: #10b981;
-}
-
-.search-input {
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #374151;
-  outline: none;
-  width: 160px;
+  font-family: inherit;
   transition: border-color 0.2s;
 }
 
+.filter-select:focus {
+  border-color: #059669;
+}
+
+.search-input {
+  padding: 8px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #374151;
+  outline: none;
+  width: 180px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
 .search-input:focus {
-  border-color: #10b981;
+  border-color: #059669;
 }
 
 .search-input::placeholder {
@@ -329,15 +333,16 @@ watch(keywordFilter, () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 8px 18px;
   background: #059669;
   color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .add-btn:hover {
@@ -348,15 +353,16 @@ watch(keywordFilter, () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 8px 18px;
   background: #3b82f6;
   color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .vectorize-btn:hover:not(:disabled) {
@@ -381,7 +387,7 @@ watch(keywordFilter, () => {
 .loading-state,
 .empty-state {
   text-align: center;
-  padding: 48px 0;
+  padding: 64px 0;
   color: #9ca3af;
   font-size: 14px;
 }
@@ -389,24 +395,25 @@ watch(keywordFilter, () => {
 .landmark-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 24px;
 }
 
 .landmark-card {
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.25s ease;
   cursor: pointer;
 }
 
 .landmark-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
 }
 
 .card-header {
-  height: 120px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -414,19 +421,20 @@ watch(keywordFilter, () => {
 }
 
 .card-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.6);
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(4px);
 }
 
 .card-icon svg {
   width: 24px;
   height: 24px;
-  color: #6b7280;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .category-badge {
@@ -434,7 +442,7 @@ watch(keywordFilter, () => {
   top: 12px;
   right: 12px;
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
   background: rgba(255, 255, 255, 0.9);
@@ -442,33 +450,37 @@ watch(keywordFilter, () => {
 }
 
 .card-body {
-  padding: 16px;
+  padding: 20px;
 }
 
 .card-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .card-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1a1a1a;
   margin: 0;
+  text-wrap: pretty;
 }
 
 .card-campus {
-  font-size: 12px;
+  font-size: 11px;
   color: #9ca3af;
   background: #f3f4f6;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .progress-section {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .progress-header {
@@ -498,14 +510,14 @@ watch(keywordFilter, () => {
 .progress-fill {
   height: 100%;
   border-radius: 3px;
-  background: #10b981;
-  transition: width 0.3s;
+  background: linear-gradient(90deg, #34d399, #059669);
+  transition: width 0.4s ease;
 }
 
 .meta-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
@@ -529,9 +541,11 @@ watch(keywordFilter, () => {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   background: #fff;
+  font-family: inherit;
 }
 
 .action-btn svg {
@@ -544,8 +558,9 @@ watch(keywordFilter, () => {
 }
 
 .edit-btn:hover {
-  border-color: #10b981;
-  color: #10b981;
+  border-color: #059669;
+  color: #059669;
+  background: #ecfdf5;
 }
 
 .delete-btn {
@@ -562,23 +577,25 @@ watch(keywordFilter, () => {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-top: 24px;
+  margin-top: 32px;
 }
 
 .page-btn {
-  padding: 8px 16px;
+  padding: 8px 18px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: #fff;
   font-size: 13px;
+  font-weight: 500;
   color: #374151;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .page-btn:hover:not(:disabled) {
-  border-color: #10b981;
-  color: #10b981;
+  border-color: #059669;
+  color: #059669;
 }
 
 .page-btn:disabled {
@@ -589,5 +606,6 @@ watch(keywordFilter, () => {
 .page-info {
   font-size: 13px;
   color: #6b7280;
+  font-weight: 500;
 }
 </style>

@@ -34,6 +34,22 @@ services:
 #      redis:
 #        condition: service_healthy
 
+  # backend-py:
+  #   build:
+  #     context: ./backend_py
+  #     dockerfile: Dockerfile
+  #   container_name: backend-py
+  #   restart: always
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     MILVUS_URI: http://milvus-standalone:19530
+  #     HF_ENDPOINT: https://hf-mirror.com
+  #     MINIO_INTERNAL_HOST: minio:9000
+  #   depends_on:
+  #     milvus-standalone:
+  #       condition: service_started
+
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
     container_name: minio

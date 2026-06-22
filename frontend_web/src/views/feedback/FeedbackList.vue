@@ -167,7 +167,6 @@ onMounted(() => {
 
 <style scoped>
 .feedback-list {
-  max-width: 1000px;
 }
 
 .page-header {
@@ -184,10 +183,11 @@ onMounted(() => {
 }
 
 .page-title h1 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .page-count {
@@ -198,7 +198,7 @@ onMounted(() => {
 .filter-bar {
   display: flex;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .filter-group {
@@ -209,14 +209,14 @@ onMounted(() => {
 
 .filter-group label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #374151;
 }
 
 .table-card {
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
@@ -248,32 +248,22 @@ onMounted(() => {
 
 /* el-table style overrides */
 :deep(.el-table th.el-table__cell) {
-  background: #f9fafb;
+  background: #f8f9fb;
   font-size: 12px;
   font-weight: 600;
-  color: #9ca3af;
-  text-transform: uppercase;
+  color: #6b7280;
 }
 
 :deep(.el-table .el-table__cell) {
-  padding: 12px 16px;
+  padding: 14px 16px;
 }
 
 :deep(.el-table__body tr:hover > td.el-table__cell) {
-  background-color: #f9fafb;
+  background-color: #f8f9fb;
 }
 
 :deep(.el-table__body tr) {
   cursor: pointer;
   transition: background 0.15s;
-}
-
-/* el-pagination style overrides */
-:deep(.el-pagination .el-pager li.is-active) {
-  background-color: #059669;
-}
-
-:deep(.el-pagination .el-pager li:hover) {
-  color: #10b981;
 }
 </style>

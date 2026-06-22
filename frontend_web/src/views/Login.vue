@@ -95,33 +95,63 @@ async function handleLogin() {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #f7f8fa;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: -180px;
+  right: -120px;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.login-page::after {
+  content: '';
+  position: absolute;
+  bottom: -140px;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(5, 150, 105, 0.05) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .login-card {
   width: 400px;
-  padding: 40px;
+  padding: 44px 40px;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 1;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
 }
 
 .login-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
 }
 
 .login-desc {
   font-size: 14px;
   color: #9ca3af;
   margin: 0;
+  font-weight: 500;
 }
 
 .login-form {
@@ -138,5 +168,6 @@ async function handleLogin() {
 
 .login-btn {
   width: 100%;
+  margin-top: 8px;
 }
 </style>
