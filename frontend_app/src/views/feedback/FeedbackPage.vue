@@ -199,7 +199,7 @@ async function handleSubmit() {
 .feedback-page {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 1000;
   background: #f3f4f6;
   display: flex;
   flex-direction: column;

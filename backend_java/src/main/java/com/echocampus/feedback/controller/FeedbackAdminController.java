@@ -6,14 +6,17 @@ import com.echocampus.feedback.service.FeedbackAdminService;
 import com.echocampus.feedback.vo.FeedbackAdminVO;
 import com.echocampus.shared.annotation.RequireRole;
 import com.echocampus.shared.enums.RoleEnum;
+import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/admin/feedbacks")
 @RequireRole(RoleEnum.ADMIN)
@@ -32,7 +35,14 @@ public class FeedbackAdminController {
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String feedbackType) {
-        return Result.success(feedbackAdminService.listFeedbacks(page, pageSize, status, feedbackType));
+        log.info("[管理端反馈列表] 请求 -> page={}, pageSize={}, status={}, feedbackType={}",
+                page, pageSize, status, feedbackType);
+        try {
+            return Result.success(feedbackAdminService.listFeedbacks(page, pageSize, status, feedbackType));
+        } catch (Exception e) {
+            log.error("[管理端反馈列表] 查询异常 -> {}: {}", e.getClass().getName(), e.getMessage(), e);
+            return Result.failure(ErrorCode.SYSTEM_ERROR);
+        }
     }
 
     @GetMapping("/{id}")

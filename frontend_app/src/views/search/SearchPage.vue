@@ -1006,8 +1006,8 @@ onUnmounted(() => {
 }
 
 .circle-img-box {
-  width: 110px;
-  height: 110px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0,0,0,0.12);
