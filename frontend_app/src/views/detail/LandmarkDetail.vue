@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import { doCheckin } from '../../api/checkin'
 import { toggleFavorite } from '../../api/favorite'
 import { submitRating } from '../../api/rating'
+import { wgs84ToGcj02 } from '../../utils/coordConvert'
 import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 interface LandmarkDetail {
@@ -98,7 +99,9 @@ async function handleToggleFavorite() {
 }
 
 const checkinMsg = ref('')
-const checkinMsgType = ref<'success' | 'error'>('success')
+const checkinMsgType = ref<'success' | 'error' | 'info'>('success')
+const checkinLocating = ref(false)
+const checkinBtnDisabled = ref(false)
 
 const showRatingPanel = ref(false)
 const showFeedback = ref(false)
@@ -158,22 +161,59 @@ async function handleSubmitRating() {
 
 async function handleCheckin() {
   const landmarkId = String(props.landmark.id ?? '')
-  if (!landmarkId) return
-  try {
-    const res = await doCheckin(landmarkId)
-    if (res.code === '00000') {
-      emit('checkin-success', landmarkId)
-      openRatingPanel()
-    } else {
-      checkinMsg.value = res.message || '打卡失败'
-      checkinMsgType.value = 'error'
-      setTimeout(() => { checkinMsg.value = '' }, 2500)
-    }
-  } catch {
-    checkinMsg.value = '网络错误，请重试'
+  if (!landmarkId || checkinBtnDisabled.value) return
+
+  if (!navigator.geolocation) {
+    checkinMsg.value = '当前设备不支持定位'
     checkinMsgType.value = 'error'
     setTimeout(() => { checkinMsg.value = '' }, 2500)
+    return
   }
+
+  checkinBtnDisabled.value = true
+  checkinLocating.value = true
+  checkinMsg.value = '定位中...'
+  checkinMsgType.value = 'info'
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const gcj = wgs84ToGcj02(pos.coords.latitude, pos.coords.longitude)
+      const latitude = gcj.lat
+      const longitude = gcj.lng
+      checkinLocating.value = false
+      try {
+        const res = await doCheckin(landmarkId, latitude, longitude)
+        if (res.code === '00000') {
+          checkinMsg.value = '打卡成功'
+          checkinMsgType.value = 'success'
+          emit('checkin-success', landmarkId)
+          openRatingPanel()
+        } else {
+          checkinMsg.value = res.message || '打卡失败'
+          checkinMsgType.value = 'error'
+          setTimeout(() => { checkinMsg.value = '' }, 2500)
+        }
+      } catch {
+        checkinMsg.value = '网络错误，请重试'
+        checkinMsgType.value = 'error'
+        setTimeout(() => { checkinMsg.value = '' }, 2500)
+      }
+      checkinBtnDisabled.value = false
+    },
+    (err) => {
+      checkinLocating.value = false
+      checkinBtnDisabled.value = false
+      const messages: Record<number, string> = {
+        1: '定位失败，请开启位置权限',
+        2: '定位失败，请检查GPS或网络',
+        3: '定位超时，请重试',
+      }
+      checkinMsg.value = messages[err.code] || '定位失败'
+      checkinMsgType.value = 'error'
+      setTimeout(() => { checkinMsg.value = '' }, 2500)
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+  )
 }
 
 onMounted(() => {
@@ -551,11 +591,14 @@ const bubblePositions = computed(() => {
         </svg>
         导航前往
       </button>
-      <button class="action-btn primary" @click="handleCheckin">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <button class="action-btn primary" :disabled="checkinBtnDisabled" @click="handleCheckin">
+        <svg v-if="!checkinLocating" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        打卡签到
+        <svg v-else class="loading-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+        </svg>
+        {{ checkinLocating ? '定位中...' : '打卡签到' }}
       </button>
     </div>
 
@@ -1225,6 +1268,26 @@ const bubblePositions = computed(() => {
   background: #f8d7da;
   color: #721c24;
   box-shadow: 0 4px 16px rgba(114, 28, 36, 0.2);
+}
+
+.checkin-toast.info {
+  background: #cce5ff;
+  color: #004085;
+  box-shadow: 0 4px 16px rgba(0, 64, 133, 0.2);
+}
+
+.action-btn.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes toast-fade {

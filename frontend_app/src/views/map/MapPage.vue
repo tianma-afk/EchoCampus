@@ -5,6 +5,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useNavigation } from '../../composables/useNavigation'
 import { useSpeech } from '../../composables/useSpeech'
+import { wgs84ToGcj02 } from '../../utils/coordConvert'
 
 interface LandmarkMarker {
   id: string
@@ -94,7 +95,7 @@ function exitNavigation() {
   clearNavLayers()
 }
 let routePolyline: L.Polyline | null = null
-let userMarker: L.CircleMarker | null = null
+let userMarker: L.Marker | null = null
 let endMarker: L.Marker | null = null
 
 const mapContainer = ref<HTMLDivElement>()
@@ -105,6 +106,21 @@ function createLabelIcon(name: string, active: boolean): L.DivIcon {
     className: 'label-icon-container',
     iconSize: [150, 30] as any,
     iconAnchor: [75, 30] as any,
+  })
+}
+
+function createUserMarkerIcon(heading?: number): L.DivIcon {
+  const deg = heading ?? 0
+  return L.divIcon({
+    html: `<div class="user-arrow" style="transform:rotate(${deg}deg)">
+      <svg viewBox="0 0 32 32" width="28" height="28">
+        <circle cx="16" cy="16" r="15" fill="#3388ff" opacity="0.2"/>
+        <path d="M16 4L8 24h16z" fill="#3388ff" stroke="#fff" stroke-width="1.5"/>
+      </svg>
+    </div>`,
+    className: 'user-marker-icon',
+    iconSize: [28, 28] as any,
+    iconAnchor: [14, 14] as any,
   })
 }
 
@@ -296,7 +312,8 @@ function showUserLocation() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         if (map) {
-          L.circleMarker([pos.coords.latitude, pos.coords.longitude], {
+          const gcj = wgs84ToGcj02(pos.coords.latitude, pos.coords.longitude)
+          L.circleMarker([gcj.lat, gcj.lng], {
             radius: 8,
             color: '#3388ff',
             fillColor: '#3388ff',
@@ -373,14 +390,13 @@ watch(() => nav.hasArrived.value, (arrived) => {
 watch(() => nav.userPosition.value, (pos) => {
   if (!map || !pos || !nav.isNavigating.value) return
   if (!userMarker) {
-    userMarker = L.circleMarker([pos.lat, pos.lng], {
-      radius: 8,
-      color: '#3388ff',
-      fillColor: '#3388ff',
-      fillOpacity: 0.6,
+    userMarker = L.marker([pos.lat, pos.lng], {
+      icon: createUserMarkerIcon(pos.heading),
+      zIndexOffset: 1000,
     }).addTo(map)
   } else {
     userMarker.setLatLng([pos.lat, pos.lng])
+    userMarker.setIcon(createUserMarkerIcon(pos.heading))
   }
 })
 
@@ -1045,6 +1061,18 @@ onActivated(() => {
   font-size: 16px;
   padding: 6px 14px;
   box-shadow: 0 2px 8px var(--color-primary-shadow);
+}
+
+.user-marker-icon {
+  background: transparent;
+  border: none;
+}
+
+.user-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
 }
 
 .leaflet-bottom {

@@ -319,7 +319,6 @@ onUnmounted(() => {
       <div class="uploading-spinner">
         <div class="spinner-icon"></div>
         <p class="uploading-text">等待识别中...</p>
-        <p class="task-id-text">TaskId: {{ recognizingTaskId }}</p>
       </div>
     </div>
 
@@ -796,15 +795,7 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.task-id-text {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  margin-top: 12px;
-  word-break: break-all;
-  padding: 0 40px;
-  user-select: all;
-  cursor: text;
-}
+
 
 @keyframes spin {
   to { transform: rotate(360deg); }
@@ -1015,8 +1006,8 @@ onUnmounted(() => {
 }
 
 .circle-img-box {
-  width: 110px;
-  height: 110px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0,0,0,0.12);

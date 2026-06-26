@@ -6,9 +6,11 @@ import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.vo.Result;
+import com.echocampus.user.dto.CheckinRequest;
 import com.echocampus.user.service.CheckinService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,11 +31,14 @@ public class CheckinController {
 
     @PostMapping("/{landmarkId}/checkin")
     @Operation(summary = "打卡", description = "用户对指定地标进行打卡")
-    public Result<Void> doCheckin(@PathVariable UUID landmarkId) {
+    public Result<Void> doCheckin(@PathVariable UUID landmarkId,
+                                  @Valid @RequestBody CheckinRequest request) {
         String userId = AuthContext.get().getUserId();
-        log.info("[打卡] userId={}, landmarkId={}", userId, landmarkId);
+        log.info("[打卡] userId={}, landmarkId={}, lat={}, lng={}",
+                userId, landmarkId, request.getLatitude(), request.getLongitude());
         try {
-            checkinService.doCheckin(UUID.fromString(userId), landmarkId);
+            checkinService.doCheckin(UUID.fromString(userId), landmarkId,
+                    request.getLatitude(), request.getLongitude());
             log.info("[打卡] 成功 -> userId={}, landmarkId={}", userId, landmarkId);
             return Result.success(ErrorCode.SUCCESS, "打卡成功", null);
         } catch (BusinessException e) {
