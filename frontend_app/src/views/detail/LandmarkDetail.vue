@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import { doCheckin } from '../../api/checkin'
 import { toggleFavorite } from '../../api/favorite'
 import { submitRating } from '../../api/rating'
+import { wgs84ToGcj02 } from '../../utils/coordConvert'
 import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 interface LandmarkDetail {
@@ -176,7 +177,9 @@ async function handleCheckin() {
 
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
-      const { latitude, longitude } = pos.coords
+      const gcj = wgs84ToGcj02(pos.coords.latitude, pos.coords.longitude)
+      const latitude = gcj.lat
+      const longitude = gcj.lng
       checkinLocating.value = false
       try {
         const res = await doCheckin(landmarkId, latitude, longitude)

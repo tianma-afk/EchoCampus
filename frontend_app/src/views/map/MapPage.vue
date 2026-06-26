@@ -5,6 +5,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useNavigation } from '../../composables/useNavigation'
 import { useSpeech } from '../../composables/useSpeech'
+import { wgs84ToGcj02 } from '../../utils/coordConvert'
 
 interface LandmarkMarker {
   id: string
@@ -296,7 +297,8 @@ function showUserLocation() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         if (map) {
-          L.circleMarker([pos.coords.latitude, pos.coords.longitude], {
+          const gcj = wgs84ToGcj02(pos.coords.latitude, pos.coords.longitude)
+          L.circleMarker([gcj.lat, gcj.lng], {
             radius: 8,
             color: '#3388ff',
             fillColor: '#3388ff',

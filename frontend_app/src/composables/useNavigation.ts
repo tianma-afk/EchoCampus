@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { wgs84ToGcj02 } from '../utils/coordConvert'
 
 const AMAP_KEY = import.meta.env.VITE_AMAP_KEY || ''
 const AMAP_JSCODE = import.meta.env.VITE_AMAP_JSCODE || ''
@@ -86,7 +87,8 @@ export function useNavigation() {
 
     try {
       const pos = await getCurrentPosition()
-      const origin = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+      const gcj = wgs84ToGcj02(pos.coords.latitude, pos.coords.longitude)
+      const origin = { lat: gcj.lat, lng: gcj.lng }
       userPosition.value = origin
       console.log('当前位置:', origin.lat, origin.lng, '目的地:', dest.lat, dest.lng)
 
@@ -194,8 +196,9 @@ export function useNavigation() {
   }
 
   function onPositionUpdate(pos: GeolocationPosition) {
-    const lat = pos.coords.latitude
-    const lng = pos.coords.longitude
+    const gcj = wgs84ToGcj02(pos.coords.latitude, pos.coords.longitude)
+    const lat = gcj.lat
+    const lng = gcj.lng
     userPosition.value = { lat, lng, heading: pos.coords.heading || undefined }
 
     if (routeCoords.value.length === 0) return
