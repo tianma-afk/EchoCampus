@@ -33,6 +33,7 @@ public enum ErrorCode {
     NICKNAME_ILLEGAL_CHARACTERS("U1014", "昵称包含非法字符"),
     NICKNAME_CHANGE_LIMIT("U1015", "昵称修改次数已达上限"),
     CHECKIN_ALREADY("U1016", "今日已打卡"),
+    CHECKIN_OUT_OF_RANGE("U1017", "超出打卡范围"),
 
     // ===== 地标/校区/大学模块 (L) =====
     LANDMARK_NOT_FOUND("L0001", "地标不存在"),
