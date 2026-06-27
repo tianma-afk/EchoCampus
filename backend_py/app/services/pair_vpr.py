@@ -5,7 +5,6 @@ from PIL import Image
 import numpy as np
 import os
 from pathlib import Path
-import requests
 import sys
 from omegaconf import OmegaConf
 import re
@@ -58,10 +57,11 @@ def get_cfg(model_type="vitB"):
 
 # ==================== 官方权重加载器 ====================
 class PairVPRExtractor:
+    # 模型权重文件名映射（权重通过 scripts/download_models.py 预下载）
     model_dict = {
-        "vitB": {"path": "pairvpr-vitB.pth", "download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitB.pth"},
-        "vitL": {"path": "pairvpr-vitL.pth", "download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitL.pth"},
-        "vitG": {"path": "pairvpr-vitH.pth", "download_url": "https://huggingface.co/CSIRORobotics/Pair-VPR/resolve/main/pairvpr-vitG.pth"},
+        "vitB": "pairvpr-vitB.pth",
+        "vitL": "pairvpr-vitL.pth",
+        "vitG": "pairvpr-vitH.pth",
     }
     
     def __init__(self, model_type="vitB", processing_size=322, out_dim=512,use_fp16=False,
@@ -72,10 +72,15 @@ class PairVPRExtractor:
         self.weights_dir = weight_dir
         os.makedirs(weight_dir, exist_ok=True)
         
-        self.model_path = os.path.join(self.weights_dir, self.model_dict[model_type]["path"])
+        self.model_path = os.path.join(self.weights_dir, self.model_dict[model_type])
         
         if not os.path.exists(self.model_path):
-            self.download_file()
+            raise FileNotFoundError(
+                f"Pair-VPR 模型权重文件缺失，开发环境请先运行下载脚本:\n"
+                f"  uv run python scripts/download_models.py\n"
+                f"Pair-VPR 模型权重文件缺失，生产环境请先检查镜像构建是否出错\n"
+                f"期望路径: {self.model_path}"
+            )
         
         cfg = get_cfg(model_type)
         cfg.globaldesc.dim = out_dim
@@ -126,33 +131,6 @@ class PairVPRExtractor:
         if unexpected:
             logger.warning(f"权重多余的键: {unexpected}")
         logger.info("权重加载成功")
-    
-    def download_file(self):
-        try:
-            download_url = self.model_dict[self.model_type]["download_url"]
-            # 支持 HF_ENDPOINT 国内镜像（如 https://hf-mirror.com）
-            hf_endpoint = os.environ.get("HF_ENDPOINT", "")
-            if hf_endpoint:
-                download_url = download_url.replace("https://huggingface.co", hf_endpoint)
-            logger.info(f"下载权重: {self.model_dict[self.model_type]['path']}，来源: {download_url}")
-            response = requests.get(download_url, stream=True)
-            response.raise_for_status()
-            total_size = int(response.headers.get('content-length', 0))
-            os.makedirs(self.weights_dir, exist_ok=True)
-            
-            downloaded = 0
-            with open(self.model_path, 'wb') as file:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        file.write(chunk)
-                        downloaded += len(chunk)
-                        if total_size > 0:
-                            percent = (downloaded / total_size) * 100
-                            logger.debug(f"下载进度: {percent:.1f}%")
-            logger.info(f"下载完成: {self.model_path}")
-        except Exception as e:
-            logger.error(f"下载失败: {e}")
-            raise
     
     def _get_transform(self):
         return transforms.Compose([

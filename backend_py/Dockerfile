@@ -1,48 +1,50 @@
 # ============================================================
 # EchoCampus 图像相似度算法后端 (backend_py)
-# Pair-VPR + DINOv2 + Milvus 向量检索服务
+# 多阶段构建：构建阶段处理依赖+模型，运行阶段只含运行时产物
 # ============================================================
 
-FROM python:3.12-slim
+# ── 构建阶段 ──────────────────────────────────────────
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-# ---- 系统依赖 ----
-# libgomp1: PyTorch CPU 推理所需
-# git: DINOv2 torch.hub 首次加载时需要 clone facebookresearch/dinov2 仓库
-# wget: 预下载权重文件
+# 系统依赖（PyTorch CPU 推理所需）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
-    git \
-    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# ---- 安装 uv ----
+# uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# ---- 依赖安装（利用 Docker 层缓存） ----
+# 依赖安装 → /app/.venv
 COPY pyproject.toml uv.lock ./
-RUN uv lock && uv sync --extra cpu
+RUN uv lock && uv sync --frozen --extra cpu --no-dev
 
-# ---- 复制源码 ----
+# 复制源码 + 下载脚本
 COPY app/ ./app/
+COPY scripts/ ./scripts/
 
-# ---- 下载模型权重----
+# 下载模型权重
 ENV HF_ENDPOINT=https://hf-mirror.com
+RUN /app/.venv/bin/python scripts/download_models.py
 
-# 注意：源码中的绝对导入 (from core.xxx) 依赖 CWD 为 backend_py/app/
-# 所以先 cd 到 /app/app 再执行 Python
-RUN mkdir -p /app/weights /app/data /app/logs && \
-    cd /app/app && \
-    uv run python -c "\
-from services.pair_vpr import PairVPRExtractor; \
-print('>> 加载 Pair-VPR + DINOv2 模型权重（首次将从 hf-mirror.com 下载）...'); \
-extractor = PairVPRExtractor(model_type='vitB', use_fp16=True); \
-print('>> 模型权重加载完成，已内置于镜像中'); \
-"
+# ── 运行阶段 ──────────────────────────────────────────
+FROM python:3.12-slim AS runtime
+
+WORKDIR /app
+
+# 运行时系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 从构建阶段仅复制产物
+COPY --from=builder /app/.venv    /app/.venv
+COPY --from=builder /app/weights  /app/weights
+COPY app/ ./app/
 
 EXPOSE 8000
 
-# 源码中的绝对导入 (from core.xxx / from services.xxx) 依赖 CWD 为 backend_py/app/
+# 使用 venv 的 python
 WORKDIR /app/app
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

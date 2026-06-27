@@ -4,13 +4,14 @@ from io import BytesIO
 from PIL import Image
 from typing import Optional, Union
 import asyncio
-import os
 import re
 from loguru import logger
 
+from core.settings import settings
+
 # Docker 网络内 MinIO 访问：Java 后端传的 URL 可能是 http://localhost:9000/...
 # 容器内需要改写为 Docker 服务名 http://minio:9000/...
-_MINIO_INTERNAL_HOST = os.environ.get("MINIO_INTERNAL_HOST", "")
+_MINIO_INTERNAL_HOST = settings.MINIO_INTERNAL_HOST
 
 
 def _rewrite_minio_url(url: str) -> str:
