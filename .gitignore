@@ -50,6 +50,7 @@ logs/
 #数据库文件
 data/
 
+.opencode/
 .claude/
 CLAUDE.local.md
 CLAUDE.md

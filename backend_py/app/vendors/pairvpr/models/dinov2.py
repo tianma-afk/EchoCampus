@@ -37,10 +37,19 @@ class DINOv2(nn.Module):
         assert model_name in DINOV2_ARCHS.keys(), f'Unknown model name {model_name}'
         _DINOV2_REPO = str(Path(__file__).resolve().parents[4] / 'weights' / 'hub' / 'facebookresearch_dinov2_main')
         _DINOV2_MODEL = str(Path(__file__).resolve().parents[4] / 'weights' / 'hub' / 'checkpoints' / f'{model_name}_pretrain.pth')
-        if Path(_DINOV2_REPO).is_dir() and Path(_DINOV2_MODEL).is_file():
-            self.model = torch.hub.load(_DINOV2_REPO, model_name, source='local')
-        else:
-            self.model = torch.hub.load('facebookresearch/dinov2', model_name)
+        if not Path(_DINOV2_REPO).is_dir():
+            raise FileNotFoundError(
+                f"DINOv2 仓库目录不存在，请先运行下载脚本:\n"
+                f"  uv run python scripts/download_models.py\n"
+                f"期望路径: {_DINOV2_REPO}"
+            )
+        if not Path(_DINOV2_MODEL).is_file():
+            raise FileNotFoundError(
+                f"DINOv2 预训练权重文件不存在，请先运行下载脚本:\n"
+                f"  uv run python scripts/download_models.py\n"
+                f"期望路径: {_DINOV2_MODEL}"
+            )
+        self.model = torch.hub.load(_DINOV2_REPO, model_name, source='local')
         self.num_channels = DINOV2_ARCHS[model_name]
         self.num_trainable_blocks = num_trainable_blocks
         self.return_classtok = return_classtok
