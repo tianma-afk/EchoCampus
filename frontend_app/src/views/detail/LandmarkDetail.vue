@@ -756,7 +756,7 @@ const bubblePositions = computed(() => {
   position: relative;
   border-radius: var(--radius-xl);
   overflow: hidden;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4 / 4;
   background: var(--color-bg-input);
 }
 
