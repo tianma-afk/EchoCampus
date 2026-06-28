@@ -476,11 +476,11 @@ watch(keywordFilter, () => {
   left: 8px;
   font-size: 11px;
   font-weight: 500;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
+  color: #059669;
+  background: #ecfdf5;
   padding: 2px 8px;
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 .card-title {
