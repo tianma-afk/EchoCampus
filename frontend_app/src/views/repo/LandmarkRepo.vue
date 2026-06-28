@@ -338,7 +338,6 @@ const handleSortChange = () => {
             @click="handleCardClick(landmark)"
           >
           <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.coverImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
-            <div class="image-decoration"></div>
           </div>
           <div class="landmark-info">
             <div class="landmark-header">
@@ -412,9 +411,6 @@ const handleSortChange = () => {
               </span>
             </div>
           </div>
-          <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
         </div>
         <div v-if="index === landmarks.length - 3" :ref="setSentinelRef" class="scroll-sentinel"></div>
       </template>
@@ -570,12 +566,12 @@ const handleSortChange = () => {
 }
 
 .landmark-card {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  padding: 16px;
   background: var(--color-bg-card);
   border-radius: var(--radius-xl);
-  padding: 16px;
-  gap: 14px;
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   transition: box-shadow 0.2s;
@@ -586,33 +582,11 @@ const handleSortChange = () => {
 }
 
 .landmark-image {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--radius-xl);
-  flex-shrink: 0;
-  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-}
-
-.image-decoration {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  top: -10px;
-  right: -10px;
-}
-
-.image-decoration::after {
-  content: '';
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  bottom: 5px;
-  left: 5px;
+  position: relative;
+  background-color: var(--color-bg-input);
 }
 
 .landmark-info {
@@ -641,6 +615,7 @@ const handleSortChange = () => {
   padding: 2px 10px;
   border-radius: var(--radius-md);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .landmark-rating {
@@ -708,13 +683,6 @@ const handleSortChange = () => {
   background: var(--color-bg-input);
   padding: 2px 10px;
   border-radius: var(--radius-md);
-}
-
-.arrow-icon {
-  width: 16px;
-  height: 16px;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
 }
 
 .loading-container {

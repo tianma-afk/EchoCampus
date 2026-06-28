@@ -1,17 +1,20 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { getDashboardStats, type DashboardStats } from '../api/dashboard'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-// TODO: 对接真实 API 获取统计数据
-const stats = [
+const dashboard = ref<DashboardStats | null>(null)
+
+const stats = ref([
   { label: '地标总数', value: '--', icon: 'location', color: '#059669' },
   { label: '大学总数', value: '--', icon: 'school', color: '#4facfe' },
   { label: '待处理反馈', value: '--', icon: 'feedback', color: '#f59e0b' },
   { label: '任务总数', value: '--', icon: 'new', color: '#a18cd1' },
-]
+])
 
 const quickActions = [
   { label: '新增地标', desc: '录入新的校园地标信息', path: '/landmark/create', color: '#059669' },
@@ -19,6 +22,21 @@ const quickActions = [
   { label: '反馈审核', desc: '处理用户提交的反馈', path: '/feedback', color: '#f59e0b' },
   { label: '任务管理', desc: '查看任务状态', path: '/tasks', color: '#a18cd1' },
 ]
+
+onMounted(async () => {
+  try {
+    const res = await getDashboardStats()
+    if (res.code === '00000' && res.data) {
+      dashboard.value = res.data
+      stats.value[0]!.value = String(res.data.landmarkCount)
+      stats.value[1]!.value = String(res.data.universityCount)
+      stats.value[2]!.value = String(res.data.pendingFeedbackCount)
+      stats.value[3]!.value = String(res.data.taskCount)
+    }
+  } catch {
+    // keep -- placeholders
+  }
+})
 </script>
 
 <template>
@@ -86,17 +104,25 @@ const quickActions = [
       </button>
     </div>
 
-    <!-- Recent Activity (placeholder) -->
-    <!-- TODO: 对接真实 API 展示最近操作记录 -->
-    <h2 class="section-title">最近动态</h2>
-    <div class="activity-placeholder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <line x1="3" y1="9" x2="21" y2="9" />
-        <line x1="9" y1="21" x2="9" y2="9" />
+    <!-- Category Breakdown -->
+    <h2 class="section-title">地标分类概览</h2>
+    <div v-if="dashboard?.categoryBreakdown?.length" class="category-grid">
+      <div
+        v-for="cat in dashboard.categoryBreakdown"
+        :key="cat.categoryName"
+        class="category-card"
+      >
+        <span class="category-name">{{ cat.categoryName }}</span>
+        <span class="category-count">{{ cat.count }}</span>
+      </div>
+    </div>
+    <div v-else class="activity-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
       </svg>
-      <p>暂无最近动态</p>
-      <span>对地标、大学或反馈的操作记录将显示在这里</span>
+      <p>暂无地标数据</p>
+      <span>创建地标后，分类统计将显示在这里</span>
     </div>
   </div>
 </template>
@@ -275,7 +301,7 @@ const quickActions = [
   color: #6b7280;
 }
 
-/* ── Activity Placeholder ── */
+/* ── Activity Placeholder (empty state) ── */
 .activity-placeholder {
   background: #fff;
   border-radius: 12px;
@@ -301,5 +327,34 @@ const quickActions = [
 .activity-placeholder span {
   font-size: 13px;
   color: #9ca3af;
+}
+
+/* ── Category Overview ── */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.category-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.category-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.category-count {
+  font-size: 20px;
+  font-weight: 700;
+  color: #374151;
 }
 </style>

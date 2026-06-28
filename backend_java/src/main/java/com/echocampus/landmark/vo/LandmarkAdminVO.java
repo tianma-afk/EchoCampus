@@ -24,6 +24,7 @@ public class LandmarkAdminVO {
     private BigDecimal rating;
     private Integer checkInCount;
     private BigDecimal recommendRate;
+    private Integer favoriteCount;
     private String buildYear;
     private String openTime;
 }

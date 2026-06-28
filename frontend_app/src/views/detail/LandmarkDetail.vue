@@ -255,6 +255,7 @@ function handleViewLargeMap() {
 
 const currentImageIndex = ref(0)
 const touchStartX = ref(0)
+const touchStartY = ref(0)
 
 const selectImage = (index: number) => {
   currentImageIndex.value = index
@@ -262,16 +263,19 @@ const selectImage = (index: number) => {
 
 const handleTouchStart = (e: TouchEvent) => {
   touchStartX.value = e.touches[0].clientX
+  touchStartY.value = e.touches[0].clientY
 }
 
 const handleTouchEnd = (e: TouchEvent) => {
   const deltaX = e.changedTouches[0].clientX - touchStartX.value
+  const deltaY = e.changedTouches[0].clientY - touchStartY.value
   const imgs = props.landmark.imgs
-  if (!imgs || imgs.length <= 1) return
-  if (deltaX < -40 && currentImageIndex.value < imgs.length - 1) {
-    currentImageIndex.value++
-  } else if (deltaX > 40 && currentImageIndex.value > 0) {
-    currentImageIndex.value--
+  if (imgs && imgs.length > 1 && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 20) {
+    if (deltaX < 0 && currentImageIndex.value < imgs.length - 1) {
+      currentImageIndex.value++
+    } else if (deltaX > 0 && currentImageIndex.value > 0) {
+      currentImageIndex.value--
+    }
   }
 }
 
@@ -307,59 +311,70 @@ const bubblePositions = computed(() => {
 
 <template>
   <div class="landmark-detail">
-    <div
-        class="detail-header"
-        :style="{
-        backgroundImage: props.landmark.imgs?.length ? `url(${props.landmark.imgs[currentImageIndex]})` : 'none',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }"
-        @touchstart="handleTouchStart"
-        @touchend="handleTouchEnd"
-    >
-      <div class="header-overlay"></div>
-      <div class="header-top">
-        <button class="header-btn" @click="emit('back')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 18 9 12 15 6" />
+    <!-- Fixed top bar -->
+    <div class="detail-topbar">
+      <button class="topbar-btn" @click="emit('back')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <span class="topbar-title">{{ props.landmark.name }}</span>
+      <div class="topbar-actions">
+        <button class="topbar-btn" :class="{ 'favorited': isFavorited }" @click="handleToggleFavorite">
+          <svg viewBox="0 0 24 24" :fill="isFavorited ? '#e74c3c' : 'none'" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
           </svg>
         </button>
-        <div class="header-actions">
-          <button class="header-btn" :class="{ 'favorited': isFavorited }" @click="handleToggleFavorite">
-            <svg viewBox="0 0 24 24" :fill="isFavorited ? '#e74c3c' : 'none'" stroke="currentColor" stroke-width="2">
-              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-            </svg>
-          </button>
-          <button class="header-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="header-bottom">
-        <h1 class="detail-title">{{ props.landmark.name }}</h1>
-        <div class="image-dots">
-          <span
-              v-for="(_img, i) in props.landmark.imgs"
-              :key="i"
-              class="dot"
-              :class="{ active: i === currentImageIndex }"
-              @click="selectImage(i)"
-          ></span>
-        </div>
+        <button class="topbar-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+            <polyline points="16 6 12 2 8 6" />
+            <line x1="12" y1="2" x2="12" y2="15" />
+          </svg>
+        </button>
       </div>
     </div>
 
     <div class="detail-scroll">
       <div class="scroll-content">
+        <!-- 精选图片 -->
+        <div v-if="props.landmark.imgs?.length" class="image-gallery">
+          <div
+            class="image-card"
+            @touchstart="handleTouchStart"
+            @touchend="handleTouchEnd"
+          >
+            <img :src="props.landmark.imgs[currentImageIndex]" :alt="props.landmark.name" />
+            <span class="image-counter" v-if="props.landmark.imgs.length > 1">
+              {{ currentImageIndex + 1 }}/{{ props.landmark.imgs.length }}
+            </span>
+          </div>
+          <div class="thumbnail-strip" v-if="props.landmark.imgs.length > 1">
+            <button
+              v-for="(img, i) in props.landmark.imgs"
+              :key="i"
+              class="thumbnail"
+              :class="{ active: i === currentImageIndex }"
+              @click.stop="selectImage(i)"
+            >
+              <img :src="img" :alt="'精选 ' + (i + 1)" />
+            </button>
+          </div>
+        </div>
+        <div v-else class="image-placeholder-card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="M21 15l-5-5L5 21" />
+          </svg>
+          <span>暂无精选图片</span>
+        </div>
+
         <div class="info-card">
           <div class="tags-row">
             <div class="campus-info">
-              <span class="campus-name">{{ props.landmark.campusName }}</span>
-              <span class="university-name">{{ props.landmark.universityName }}</span>
+              <span class="landmark-name">{{ props.landmark.name }}</span>
+              <span class="university-name">{{ props.landmark.universityName }}·{{ props.landmark.campusName }}</span>
               <div class="rating-inline">
                 <div class="stars">
                   <template v-for="i in 5" :key="i">
@@ -577,11 +592,11 @@ const bubblePositions = computed(() => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="detail-feedback-row">
-      <span class="feedback-text-link" @click="showFeedback = true">有问题？去反馈</span>
+        <div class="detail-feedback-row">
+          <span class="feedback-text-link" @click="showFeedback = true">有问题？去反馈</span>
+        </div>
+      </div>
     </div>
 
     <div class="detail-footer">
@@ -678,89 +693,149 @@ const bubblePositions = computed(() => {
   background: var(--color-bg);
 }
 
-.detail-header {
+/* ── Top Bar ── */
+.detail-topbar {
   position: relative;
-  height: 220px;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.header-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
-}
-
-.header-top {
-  position: relative;
-  z-index: 1;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  justify-content: space-between;
+  padding: 12px 16px;
+  flex-shrink: 0;
+  background: var(--color-bg-card);
+  z-index: 10;
 }
 
-.header-btn {
-  width: 40px;
-  height: 40px;
+.topbar-btn {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.3);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s;
+  color: var(--color-text);
 }
 
-.header-btn:hover {
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.header-btn svg {
+.topbar-btn svg {
   width: 20px;
   height: 20px;
-  color: #fff;
 }
 
-.header-actions {
+.topbar-btn.favorited svg {
+  color: #e74c3c;
+}
+
+.topbar-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-heading);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  text-align: center;
+  margin: 0 12px;
+}
+
+.topbar-actions {
   display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Image Gallery ── */
+.image-gallery {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-.header-bottom {
+.image-card {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: var(--color-bg-input);
+}
+
+.image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.image-counter {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 16px;
-  z-index: 1;
-}
-
-.detail-title {
-  font-size: 28px;
-  font-weight: 600;
+  bottom: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
   color: #fff;
-  margin: 0 0 8px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
 }
 
-.image-dots {
+/* ── Thumbnail Strip ── */
+.thumbnail-strip {
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.thumbnail-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.thumbnail {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+
+.thumbnail.active {
+  border-color: var(--color-primary);
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Image Placeholder ── */
+.image-placeholder-card {
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-input);
+  aspect-ratio: 4 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 8px;
+  color: var(--color-text-muted);
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.4);
+.image-placeholder-card svg {
+  width: 40px;
+  height: 40px;
 }
 
-.dot.active {
-  width: 24px;
-  border-radius: 4px;
-  background: #fff;
+.image-placeholder-card span {
+  font-size: 13px;
 }
 
 .detail-scroll {
@@ -804,8 +879,8 @@ const bubblePositions = computed(() => {
   flex-shrink: 0;
 }
 
-.campus-name {
-  font-size: 15px;
+.landmark-name {
+  font-size: 18px;
   color: var(--color-text-heading);
   font-weight: 600;
 }
@@ -1181,7 +1256,7 @@ const bubblePositions = computed(() => {
 .detail-feedback-row {
   display: flex;
   justify-content: center;
-  padding: 12px 16px 4px;
+  padding: 8px 0 0;
 }
 
 .feedback-text-link {
@@ -1295,10 +1370,6 @@ const bubblePositions = computed(() => {
   15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-}
-
-.header-btn.favorited svg {
-  color: #e74c3c;
 }
 
 /* 评分半屏面板 */

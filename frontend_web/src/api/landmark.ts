@@ -39,6 +39,7 @@ export interface LandmarkAdminVO {
   rating: number | null
   checkInCount: number | null
   recommendRate: number | null
+  favoriteCount: number | null
   buildYear: string | null
   openTime: string | null
 }

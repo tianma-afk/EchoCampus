@@ -17,19 +17,6 @@ const totalPages = ref(1)
 const totalCount = ref(0)
 const pageSize = 9
 
-const categoryGradients: Record<string, string> = {
-  教学楼: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  图书馆: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  体育场馆: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  生活区: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-  活动场馆: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-  景观景点: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-}
-
-function categoryGradient(name: string) {
-  return categoryGradients[name] ?? 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)'
-}
-
 async function fetchLandmarks() {
   loading.value = true
   try {
@@ -54,6 +41,7 @@ async function fetchLandmarks() {
 function goPage(page: number) {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
+  fetchLandmarks()
 }
 
 function handleEdit(id: string) {
@@ -87,11 +75,6 @@ async function handleDelete(landmark: LandmarkAdminVO) {
   } catch {
     alert('删除失败，请重试')
   }
-}
-
-function ratingPercent(rating: number | null) {
-  if (rating == null) return 0
-  return Math.round((rating / 5) * 100)
 }
 
 onMounted(async () => {
@@ -173,48 +156,77 @@ watch(keywordFilter, () => {
           class="landmark-card"
           @click="router.push('/landmark/' + landmark.id)"
         >
-          <div
-            class="card-header"
-            :style="{ background: categoryGradient(landmark.categoryName) }"
-          >
-            <div class="card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
+          <div class="card-cover">
+            <img v-if="landmark.coverImageUrl" :src="landmark.coverImageUrl" :alt="landmark.name" />
+            <div v-else class="cover-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="M21 15l-5-5L5 21" />
               </svg>
             </div>
-            <span class="category-badge" v-if="landmark.categoryName">
-              {{ landmark.categoryName }}
-            </span>
+            <span class="category-tag" v-if="landmark.categoryName">{{ landmark.categoryName }}</span>
           </div>
-
           <div class="card-body">
-            <div class="card-title-row">
-              <h3 class="card-title">{{ landmark.name }}</h3>
+            <div class="card-top-row">
               <span class="card-campus" v-if="landmark.universityName || landmark.campusName">
                 {{ landmark.universityName }}{{ landmark.universityName && landmark.campusName ? ' · ' : '' }}{{ landmark.campusName }}
               </span>
             </div>
+            <h3 class="card-title">{{ landmark.name }}</h3>
 
-            <div class="progress-section">
-              <div class="progress-header">
-                <span class="progress-label">评分</span>
-                <span class="progress-value">{{ landmark.rating ?? '-' }} / 5</span>
-              </div>
-              <div class="progress-bar">
-                <div
-                  class="progress-fill"
-                  :style="{ width: ratingPercent(landmark.rating) + '%' }"
-                ></div>
+            <div class="rating-section">
+              <div class="stars-row">
+                <template v-for="i in 5" :key="i">
+                  <!-- full star -->
+                  <svg
+                    v-if="i <= Math.floor(landmark.rating ?? 0)"
+                    class="star"
+                    viewBox="0 0 24 24"
+                    fill="#f59e0b"
+                    stroke="#f59e0b"
+                    stroke-width="1.5"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                  <!-- half star -->
+                  <svg
+                    v-else-if="i === Math.ceil(landmark.rating ?? 0) && ((landmark.rating ?? 0) % 1) >= 0.25"
+                    class="star"
+                    viewBox="0 0 24 24"
+                    stroke="#f59e0b"
+                    stroke-width="1.5"
+                  >
+                    <defs>
+                      <linearGradient :id="'hg-' + landmark.id + '-' + i">
+                        <stop offset="50%" stop-color="#f59e0b" />
+                        <stop offset="50%" stop-color="transparent" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" :fill="'url(#hg-' + landmark.id + '-' + i + ')'" />
+                  </svg>
+                  <!-- empty star -->
+                  <svg
+                    v-else
+                    class="star"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#d1d5db"
+                    stroke-width="1.5"
+                  >
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </template>
+                <span class="rating-value">{{ landmark.rating != null ? landmark.rating + ' 分' : '暂无评分' }}</span>
               </div>
             </div>
 
-            <div class="meta-row" v-if="landmark.checkInCount != null || landmark.recommendRate != null">
+            <div class="meta-row" v-if="landmark.checkInCount != null || landmark.favoriteCount != null">
               <span class="meta-item" v-if="landmark.checkInCount != null">
                 打卡 {{ landmark.checkInCount }} 次
               </span>
-              <span class="meta-item" v-if="landmark.recommendRate != null">
-                推荐率 {{ (landmark.recommendRate * 100).toFixed(0) }}%
+              <span class="meta-item" v-if="landmark.favoriteCount != null">
+                收藏 {{ landmark.favoriteCount }} 次
               </span>
             </div>
 
@@ -224,7 +236,7 @@ watch(keywordFilter, () => {
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
-                编辑信息
+                编辑
               </button>
               <button class="action-btn delete-btn" @click.stop="handleDelete(landmark)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -257,6 +269,9 @@ watch(keywordFilter, () => {
 
 <style scoped>
 .landmark-management {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 124px);
 }
 
 .page-header {
@@ -399,6 +414,7 @@ watch(keywordFilter, () => {
 }
 
 .landmark-card {
+  display: flex;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
@@ -412,106 +428,96 @@ watch(keywordFilter, () => {
   transform: translateY(-2px);
 }
 
-.card-header {
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ── Cover ── */
+.card-cover {
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  background: #f3f4f6;
   position: relative;
 }
 
-.card-icon {
-  width: 44px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 50%;
+.card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
+  color: #d1d5db;
 }
 
-.card-icon svg {
-  width: 24px;
-  height: 24px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.category-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.9);
-  color: #374151;
+.cover-placeholder svg {
+  width: 32px;
+  height: 32px;
 }
 
 .card-body {
-  padding: 20px;
+  flex: 1;
+  padding: 16px 20px;
+  min-width: 0;
 }
 
-.card-title-row {
+.card-top-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 14px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.category-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 .card-title {
   font-size: 16px;
   font-weight: 600;
   color: #1a1a1a;
-  margin: 0;
-  text-wrap: pretty;
+  margin: 0 0 14px 0;
 }
 
 .card-campus {
   font-size: 11px;
   color: #9ca3af;
-  background: #f3f4f6;
-  padding: 3px 8px;
-  border-radius: 999px;
   white-space: nowrap;
-  flex-shrink: 0;
-  margin-left: 8px;
 }
 
-.progress-section {
+.rating-section {
   margin-bottom: 12px;
 }
 
-.progress-header {
+
+.stars-row {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 2px;
 }
 
-.progress-label {
-  font-size: 12px;
-  color: #9ca3af;
+.star {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
-.progress-value {
+.rating-value {
   font-size: 12px;
   font-weight: 600;
   color: #059669;
-}
-
-.progress-bar {
-  height: 6px;
-  background: #f3f4f6;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #34d399, #059669);
-  transition: width 0.4s ease;
+  margin-left: 6px;
 }
 
 .meta-row {
@@ -532,14 +538,13 @@ watch(keywordFilter, () => {
 }
 
 .action-btn {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 4px;
+  padding: 6px 12px;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -577,7 +582,8 @@ watch(keywordFilter, () => {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  margin-top: 32px;
+  margin-top: auto;
+  padding-top: 32px;
 }
 
 .page-btn {
