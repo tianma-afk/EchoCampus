@@ -163,6 +163,7 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
                     .rating(e.getRating())
                     .checkInCount(e.getCheckInCount())
                     .recommendRate(e.getRecommendRate())
+                    .favoriteCount(e.getFavoriteCount())
                     .buildYear(e.getBuildYear())
                     .openTime(e.getOpenTime())
                     .build();

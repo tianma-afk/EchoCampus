@@ -46,45 +46,53 @@ async function handleLogin() {
 
 <template>
   <div class="login-page">
-    <div class="login-card">
-      <div class="login-header">
-        <h1 class="login-title">映像校园后台</h1>
-        <p class="login-desc">管理员登录</p>
+    <!-- Left: Brand -->
+    <div class="login-brand">
+      <div class="brand-content">
+        <p class="brand-title">映像校园</p>
+        <p class="brand-subtitle">每一帧映像，都是校园的温度</p>
       </div>
+    </div>
 
-      <el-form class="login-form" @submit.prevent="handleLogin">
-        <el-form-item>
-          <el-input
-            v-model="email"
-            placeholder="邮箱"
-            :prefix-icon="'Message'"
+    <!-- Right: Form -->
+    <div class="login-form-area">
+      <div class="form-wrapper">
+        <h2 class="form-title">欢迎登录</h2>
+
+        <el-form class="login-form" @submit.prevent="handleLogin">
+          <el-form-item>
+            <el-input
+              v-model="email"
+              placeholder="邮箱"
+              :prefix-icon="'Message'"
+              size="large"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-input
+              v-model="password"
+              type="password"
+              placeholder="密码"
+              :prefix-icon="'Lock'"
+              size="large"
+              show-password
+              @keyup.enter="handleLogin"
+            />
+          </el-form-item>
+
+          <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
+
+          <el-button
+            type="primary"
             size="large"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-input
-            v-model="password"
-            type="password"
-            placeholder="密码"
-            :prefix-icon="'Lock'"
-            size="large"
-            show-password
-            @keyup.enter="handleLogin"
-          />
-        </el-form-item>
-
-        <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
-
-        <el-button
-          type="primary"
-          size="large"
-          class="login-btn"
-          :loading="loading"
-          @click="handleLogin"
-        >
-          登录
-        </el-button>
-      </el-form>
+            class="login-btn"
+            :loading="loading"
+            @click="handleLogin"
+          >
+            登录
+          </el-button>
+        </el-form>
+      </div>
     </div>
   </div>
 </template>
@@ -92,66 +100,91 @@ async function handleLogin() {
 <style scoped>
 .login-page {
   display: flex;
-  align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  background: #f7f8fa;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 40%, #a7f3d0 100%);
   position: relative;
   overflow: hidden;
 }
 
+/* decorative circles */
 .login-page::before {
   content: '';
   position: absolute;
-  top: -180px;
-  right: -120px;
-  width: 500px;
-  height: 500px;
+  top: -120px;
+  right: -80px;
+  width: 360px;
+  height: 360px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(5, 150, 105, 0.04) 0%, transparent 70%);
+  background: rgba(5, 150, 105, 0.06);
   pointer-events: none;
 }
 
 .login-page::after {
   content: '';
   position: absolute;
-  bottom: -140px;
-  left: -100px;
-  width: 400px;
-  height: 400px;
+  bottom: -100px;
+  left: -60px;
+  width: 280px;
+  height: 280px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(5, 150, 105, 0.05) 0%, transparent 70%);
+  background: rgba(5, 150, 105, 0.08);
   pointer-events: none;
 }
 
-.login-card {
-  width: 400px;
-  padding: 44px 40px;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+/* ═══════════ Left: Brand ═══════════ */
+.login-brand {
+  flex: 0 0 44%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
   z-index: 1;
 }
 
-.login-header {
-  text-align: center;
-  margin-bottom: 36px;
+.brand-content {
+  text-align: left;
+  padding: 40px;
 }
 
-.login-title {
-  font-size: 26px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 8px 0;
-  letter-spacing: -0.02em;
-}
-
-.login-desc {
-  font-size: 14px;
-  color: #9ca3af;
-  margin: 0;
+.brand-title {
+  font-size: 84px;
   font-weight: 500;
+  color: #059669;
+  margin: 0 0 16px 0;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.brand-subtitle {
+  font-size: 36px;
+  color: #34d399;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+}
+
+/* ═══════════ Right: Form ═══════════ */
+.login-form-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.form-wrapper {
+  width: 360px;
+  max-width: 90%;
+}
+
+.form-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 36px 0;
+  letter-spacing: -0.01em;
 }
 
 .login-form {
@@ -169,5 +202,35 @@ async function handleLogin() {
 .login-btn {
   width: 100%;
   margin-top: 8px;
+}
+
+/* ═══════════ Responsive ═══════════ */
+@media (max-width: 768px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-brand {
+    flex: 0 0 auto;
+    padding: 56px 32px;
+  }
+
+  .brand-title {
+    font-size: 36px;
+  }
+
+  .brand-subtitle {
+    font-size: 15px;
+  }
+
+  .login-form-area {
+    flex: 1;
+    padding: 40px 24px 60px;
+  }
+
+  .form-title {
+    font-size: 20px;
+    margin-bottom: 28px;
+  }
 }
 </style>
