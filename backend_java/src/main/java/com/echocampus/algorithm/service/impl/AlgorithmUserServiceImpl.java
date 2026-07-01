@@ -214,9 +214,16 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
                     continue;
                 }
                 UUID landmarkId = image.getLandmarkId();
+                double combined;
+                if (match.getPairSimilarity() == null) {
+                    combined = 0.8 * match.getScore();
+                } else {
+                    double pairBonus = match.getPairSimilarity() > 0 ? 1 : 0;
+                    combined = 0.5 * match.getScore() + 0.5 * pairBonus;
+                }
                 Double existing = landmarkScores.get(landmarkId);
-                if (existing == null || match.getScore() > existing) {
-                    landmarkScores.put(landmarkId, match.getScore());
+                if (existing == null || combined > existing) {
+                    landmarkScores.put(landmarkId, combined);
                 }
             } catch (IllegalArgumentException e) {
                 log.warn("无效的图片ID格式: {}", match.getImageId(), e);

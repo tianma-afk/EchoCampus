@@ -52,5 +52,12 @@ public class SearchCallbackRequest {
         @Schema(description = "相似度分数", example = "0.95")
         @NotNull(message = "相似度分数不能为空")
         private Double score;
+
+        /**
+         * 二阶相似度分数（Pair-VPR pairwise similarity）
+         */
+        @Schema(description = "二阶相似度分数", example = "0.88")
+        @JsonProperty("pair_similarity")
+        private Double pairSimilarity;
     }
 }
