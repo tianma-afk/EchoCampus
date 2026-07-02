@@ -36,3 +36,8 @@ export async function getUserRatings(page = 1, size = 10): Promise<{ code: strin
   const res = await axios.get(API_BASE, { params: { page, size } })
   return res.data
 }
+
+export async function batchDeleteRatings(ids: string[]): Promise<{ code: string; message: string }> {
+  const res = await axios.delete(API_BASE, { data: { ids } })
+  return res.data
+}

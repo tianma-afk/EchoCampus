@@ -31,3 +31,8 @@ export async function getCheckinHistory(page = 1, size = 10): Promise<{ code: st
   const res = await axios.get(`${USER_API_BASE}/checkins`, { params: { page, size } })
   return res.data
 }
+
+export async function batchDeleteCheckins(ids: string[]): Promise<{ code: string; message: string }> {
+  const res = await axios.delete(`${USER_API_BASE}/checkins`, { data: { ids } })
+  return res.data
+}

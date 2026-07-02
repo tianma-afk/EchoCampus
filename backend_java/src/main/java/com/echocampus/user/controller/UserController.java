@@ -6,6 +6,7 @@ import com.echocampus.shared.context.AuthContext;
 import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.exception.ErrorCode;
+import com.echocampus.shared.dto.BatchDeleteRequest;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.user.dto.UserUpdateRequest;
 import com.echocampus.user.service.CheckinService;
@@ -14,6 +15,7 @@ import com.echocampus.user.vo.CheckinVO;
 import com.echocampus.user.vo.UserProfileVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,5 +82,13 @@ public class UserController {
             log.warn("[打卡历史] 业务异常 -> {}", e.getMessage());
             return Result.failure(e.getErrorCode(), e.getMessage());
         }
+    }
+
+    @DeleteMapping("/checkins")
+    @Operation(summary = "批量删除打卡记录")
+    public Result<Void> batchDeleteCheckins(@Valid @RequestBody BatchDeleteRequest request) {
+        UUID userId = UUID.fromString(AuthContext.get().getUserId());
+        checkinService.batchDelete(userId, request.getIds());
+        return Result.success(ErrorCode.SUCCESS, "删除成功", null);
     }
 }

@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -129,6 +130,26 @@ public class FavoriteServiceImpl implements FavoriteService {
         return favoriteMapper.exists(new LambdaQueryWrapper<Favorite>()
                 .eq(Favorite::getUserId, userId)
                 .eq(Favorite::getLandmarkId, landmarkId));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDelete(UUID userId, List<UUID> ids) {
+        List<Favorite> entities = favoriteMapper.selectList(new LambdaQueryWrapper<Favorite>()
+                .in(Favorite::getId, ids)
+                .eq(Favorite::getUserId, userId));
+        if (entities.isEmpty()) return;
+
+        Set<UUID> landmarkIds = entities.stream().map(Favorite::getLandmarkId).collect(Collectors.toSet());
+        List<UUID> validIds = entities.stream().map(Favorite::getId).collect(Collectors.toList());
+        favoriteMapper.delete(new LambdaQueryWrapper<Favorite>().in(Favorite::getId, validIds));
+
+        for (UUID landmarkId : landmarkIds) {
+            landmarkMapper.update(null, new LambdaUpdateWrapper<LandmarkEntity>()
+                    .eq(LandmarkEntity::getId, landmarkId)
+                    .setSql("favorite_count = GREATEST(favorite_count - 1, 0)"));
+        }
+        log.info("[收藏] 批量删除 -> userId={}, count={}, landmarks={}", userId, validIds.size(), landmarkIds.size());
     }
 
     private Map<UUID, String> buildCategoryNameMap(Map<UUID, LandmarkEntity> landmarkMap) {

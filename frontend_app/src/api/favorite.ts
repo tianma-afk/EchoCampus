@@ -34,3 +34,8 @@ export async function isFavorited(landmarkId: string): Promise<{ code: string; m
   const res = await axios.get(`${API_BASE}/${landmarkId}`)
   return res.data
 }
+
+export async function batchDeleteFavorites(ids: string[]): Promise<{ code: string; message: string }> {
+  const res = await axios.delete(API_BASE, { data: { ids } })
+  return res.data
+}

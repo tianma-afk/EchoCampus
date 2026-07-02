@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { getCheckinHistory, type CheckinRecord } from '../../api/checkin'
-import { getFavorites, type FavoriteRecord } from '../../api/favorite'
-import { getUserRatings, type RatingRecord } from '../../api/rating'
-import { getRecognitions, type RecognitionRecord } from '../../api/recognition'
+import { ref, watch, computed } from 'vue'
+import { getCheckinHistory, batchDeleteCheckins, type CheckinRecord } from '../../api/checkin'
+import { getFavorites, batchDeleteFavorites, type FavoriteRecord } from '../../api/favorite'
+import { getUserRatings, batchDeleteRatings, type RatingRecord } from '../../api/rating'
+import { getRecognitions, batchDeleteRecognitions, type RecognitionRecord } from '../../api/recognition'
 
 const props = defineProps<{ defaultTab?: number }>()
 const emit = defineEmits<{ back: [] }>()
@@ -139,7 +139,69 @@ function ensureTabLoaded(tab: number) {
   else if (tab === 3) loadRecognitions(true)
 }
 
-watch(activeTab, (val) => ensureTabLoaded(val), { immediate: true })
+// ---- 批量删除 ----
+const editMode = ref(false)
+const selectedIds = ref(new Set<string>())
+const selectedCount = computed(() => selectedIds.value.size)
+
+watch(activeTab, (val) => {
+  editMode.value = false
+  selectedIds.value = new Set()
+  ensureTabLoaded(val)
+}, { immediate: true })
+
+function getCurrentRecords() {
+  if (activeTab.value === 0) return checkinRecords.value
+  if (activeTab.value === 1) return favoriteRecords.value
+  if (activeTab.value === 2) return ratingRecords.value
+  return recognitionRecords.value
+}
+
+function toggleEditMode() {
+  if (editMode.value) {
+    editMode.value = false
+    selectedIds.value = new Set()
+  } else {
+    editMode.value = true
+  }
+}
+
+function toggleSelect(id: string) {
+  const next = new Set(selectedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selectedIds.value = next
+}
+
+function selectAll() {
+  const all = getCurrentRecords().map(r => r.id)
+  if (selectedIds.value.size === all.length) {
+    selectedIds.value = new Set()
+  } else {
+    selectedIds.value = new Set(all)
+  }
+}
+
+async function deleteSelected() {
+  const ids = Array.from(selectedIds.value)
+  if (!ids.length) return
+  if (!confirm(`确定删除选中的 ${ids.length} 条记录吗？`)) return
+  try {
+    let res
+    if (activeTab.value === 0) res = await batchDeleteCheckins(ids)
+    else if (activeTab.value === 1) res = await batchDeleteFavorites(ids)
+    else if (activeTab.value === 2) res = await batchDeleteRatings(ids)
+    else res = await batchDeleteRecognitions(ids)
+    if (res.code === '00000') {
+      editMode.value = false
+      selectedIds.value = new Set()
+      if (activeTab.value === 0) loadCheckins(true)
+      else if (activeTab.value === 1) loadFavorites(true)
+      else if (activeTab.value === 2) loadRatings(true)
+      else loadRecognitions(true)
+    }
+  } catch { /* ignore */ }
+}
 
 const cardColors = ['#4a8c7a', '#d47a4a', '#7b5ea7', '#3a7ca5', '#c0392b', '#27ae60', '#8e44ad', '#d35400']
 function getColor(index: number) { return cardColors[index % cardColors.length] }
@@ -154,13 +216,25 @@ function renderStars(rating: number) {
 <template>
   <div class="history-page" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
     <div class="history-header">
-      <button class="history-back" @click="emit('back')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-      </button>
-      <span class="history-title">我的记录</span>
-      <div style="width: 40px" />
+      <template v-if="!editMode">
+        <button class="history-back" @click="emit('back')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <span class="history-title">我的记录</span>
+        <button class="header-action-btn" @click="toggleEditMode">管理</button>
+      </template>
+      <template v-else>
+        <button class="history-back" @click="toggleEditMode">
+          <span class="cancel-text">取消</span>
+        </button>
+        <span class="history-title">已选 {{ selectedCount }} 项</span>
+        <div class="edit-actions">
+          <button class="header-action-btn" @click="selectAll">全选</button>
+          <button class="header-action-btn delete" :class="{ disabled: selectedCount === 0 }" :disabled="selectedCount === 0" @click="deleteSelected">删除</button>
+        </div>
+      </template>
     </div>
 
     <div class="tab-bar">
@@ -179,7 +253,10 @@ function renderStars(rating: number) {
         <div v-if="checkinLoading" class="list-empty">加载中...</div>
         <div v-else-if="checkinRecords.length === 0" class="list-empty">暂无打卡记录</div>
         <div v-else class="card-list">
-          <div v-for="(r, i) in checkinRecords" :key="r.id" class="record-card">
+          <div v-for="(r, i) in checkinRecords" :key="r.id" class="record-card" :class="{ 'selecting': editMode, 'selected': selectedIds.has(r.id) }" @click="editMode && toggleSelect(r.id)">
+            <div v-if="editMode" class="check-box" :class="{ checked: selectedIds.has(r.id) }">
+              <svg v-if="selectedIds.has(r.id)" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
             <div class="card-img" :style="{ background: getColor(i) }">
               <span class="card-name">{{ r.landmarkName }}</span>
             </div>
@@ -198,7 +275,10 @@ function renderStars(rating: number) {
         <div v-if="favoriteLoading" class="list-empty">加载中...</div>
         <div v-else-if="favoriteRecords.length === 0" class="list-empty">暂无收藏记录</div>
         <div v-else class="card-list">
-          <div v-for="(r, i) in favoriteRecords" :key="r.id" class="record-card wide">
+          <div v-for="(r, i) in favoriteRecords" :key="r.id" class="record-card wide" :class="{ 'selecting': editMode, 'selected': selectedIds.has(r.id) }" @click="editMode && toggleSelect(r.id)">
+            <div v-if="editMode" class="check-box" :class="{ checked: selectedIds.has(r.id) }">
+              <svg v-if="selectedIds.has(r.id)" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
             <div class="card-img" :style="{ background: r.coverImageUrl ? `url(${r.coverImageUrl}) center/cover` : getColor(i) }">
               <span class="card-name" v-if="!r.coverImageUrl">{{ r.landmarkName }}</span>
             </div>
@@ -235,7 +315,10 @@ function renderStars(rating: number) {
         <div v-if="ratingLoading" class="list-empty">加载中...</div>
         <div v-else-if="ratingRecords.length === 0" class="list-empty">暂无评分记录</div>
         <div v-else class="card-list">
-          <div v-for="(r, i) in ratingRecords" :key="r.id" class="record-card wide">
+          <div v-for="(r, i) in ratingRecords" :key="r.id" class="record-card wide" :class="{ 'selecting': editMode, 'selected': selectedIds.has(r.id) }" @click="editMode && toggleSelect(r.id)">
+            <div v-if="editMode" class="check-box" :class="{ checked: selectedIds.has(r.id) }">
+              <svg v-if="selectedIds.has(r.id)" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
             <div class="card-img" :style="{ background: r.coverImageUrl ? `url(${r.coverImageUrl}) center/cover` : getColor(i) }">
               <span class="card-name" v-if="!r.coverImageUrl">{{ r.landmarkName }}</span>
             </div>
@@ -273,7 +356,10 @@ function renderStars(rating: number) {
         <div v-if="recognitionLoading" class="list-empty">加载中...</div>
         <div v-else-if="recognitionRecords.length === 0" class="list-empty">暂无识别记录</div>
         <div v-else class="card-list">
-          <div v-for="r in recognitionRecords" :key="r.id" class="record-card wide">
+          <div v-for="r in recognitionRecords" :key="r.id" class="record-card wide" :class="{ 'selecting': editMode, 'selected': selectedIds.has(r.id) }" @click="editMode && toggleSelect(r.id)">
+            <div v-if="editMode" class="check-box" :class="{ checked: selectedIds.has(r.id) }">
+              <svg v-if="selectedIds.has(r.id)" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
             <div class="card-img" :style="{ background: r.imageUrl ? `url(${r.imageUrl}) center/cover` : 'var(--color-bg-input)' }">
             </div>
             <div class="card-info">
@@ -535,5 +621,77 @@ function renderStars(rating: number) {
   font-size: 14px;
   cursor: pointer;
   padding: 8px 20px;
+}
+
+.header-action-btn {
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.header-action-btn.delete {
+  color: var(--color-danger);
+}
+
+.header-action-btn.delete.disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.cancel-text {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.check-box {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--color-text-muted);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.check-box.checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.check-box svg {
+  width: 14px;
+  height: 14px;
+  color: #fff;
+}
+
+.record-card.selecting {
+  cursor: pointer;
+  position: relative;
+  padding-left: 40px;
+}
+
+.record-card.selecting .card-img {
+  margin-left: 0;
+}
+
+.record-card.selected {
+  background: var(--color-primary-light);
 }
 </style>
