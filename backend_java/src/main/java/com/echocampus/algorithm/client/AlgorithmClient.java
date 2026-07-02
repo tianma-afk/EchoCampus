@@ -1,6 +1,7 @@
 package com.echocampus.algorithm.client;
 
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -11,4 +12,5 @@ public interface AlgorithmClient {
     String submitSearchTask(String imgUrl, String callbackUrl,int topK);
     String submitSearchTask(String imgUrl, String callbackUrl);
 
+    void submitDeleteTask(List<UUID> uuids);
 }

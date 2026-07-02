@@ -76,10 +76,16 @@ export function deleteImagesBatch(
 }
 
 async function delWithBody<T>(url: string, body: unknown): Promise<T> {
+  const TOKEN_KEY = 'echocampus_token'
   const BASE_URL = '/api/v1'
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const token = localStorage.getItem(TOKEN_KEY)
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
   const response = await fetch(`${BASE_URL}${url}`, {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   })
   if (!response.ok) {

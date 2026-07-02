@@ -18,6 +18,7 @@ import com.echocampus.landmark.mapper.ImageMapper;
 import com.echocampus.landmark.mapper.LandmarkMapper;
 import com.echocampus.university.mapper.UniversityMapper;
 import com.echocampus.landmark.service.LandmarkAdminService;
+import com.echocampus.cleanup.service.CleanupService;
 import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.util.MinioUtil;
@@ -49,12 +50,14 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     private final MinioUtil minioUtil;
     private final String bucket;
     private final StringRedisTemplate redisTemplate;
+    private final CleanupService cleanupService;
 
     public LandmarkAdminServiceImpl(LandmarkMapper landmarkMapper, FloorMapper floorMapper,
-                                     ImageMapper imageMapper, CategoryMapper categoryMapper,
-                                     CampusMapper campusMapper, UniversityMapper universityMapper,
-                                     MinioUtil minioUtil, com.echocampus.shared.config.MinioConfig minioConfig,
-                                     StringRedisTemplate redisTemplate) {
+                                      ImageMapper imageMapper, CategoryMapper categoryMapper,
+                                      CampusMapper campusMapper, UniversityMapper universityMapper,
+                                      MinioUtil minioUtil, com.echocampus.shared.config.MinioConfig minioConfig,
+                                      StringRedisTemplate redisTemplate,
+                                      CleanupService cleanupService) {
         this.landmarkMapper = landmarkMapper;
         this.floorMapper = floorMapper;
         this.imageMapper = imageMapper;
@@ -64,6 +67,7 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
         this.minioUtil = minioUtil;
         this.bucket = minioConfig.getBucket();
         this.redisTemplate = redisTemplate;
+        this.cleanupService = cleanupService;
     }
 
     @Override
@@ -309,6 +313,9 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
                         minioUtil.removeObject(bucket, key);
                     } catch (Exception ignored) {
                     }
+                }
+                if (Boolean.TRUE.equals(image.getIsVectorized())) {
+                    cleanupService.addPending(image.getId());
                 }
             }
             imageMapper.delete(new LambdaQueryWrapper<ImageEntity>().eq(ImageEntity::getLandmarkId, id));

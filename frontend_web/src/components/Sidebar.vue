@@ -47,6 +47,12 @@ const menuItems = computed(() => {
   ]
   if (auth.isSuperAdmin) {
     items.push({
+      id: 'cleanup',
+      label: '图片清理',
+      icon: 'cleanup',
+      path: '/cleanup',
+    })
+    items.push({
       id: 'admins',
       label: '管理员管理',
       icon: 'admin',
@@ -98,6 +104,12 @@ const isActive = (path: string) => {
             <circle cx="9" cy="7" r="4" />
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          <svg v-else-if="item.icon === 'cleanup'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <line x1="10" y1="11" x2="10" y2="17" />
+            <line x1="14" y1="11" x2="14" y2="17" />
           </svg>
         </span>
         <span v-show="!collapsed" class="nav-label">{{ item.label }}</span>

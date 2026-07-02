@@ -1,6 +1,7 @@
 package com.echocampus.landmark.service.impl;
 
 import com.echocampus.shared.config.MinioConfig;
+import com.echocampus.cleanup.service.CleanupService;
 import com.echocampus.landmark.dto.ImageConfirmRequest;
 import com.echocampus.landmark.dto.ImagePresignRequest;
 import com.echocampus.landmark.dto.ImagePresignResponse;
@@ -52,17 +53,20 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
     private final UniversityMapper universityMapper;
     private final ImageMapper imageMapper;
     private final MinioUtil minioUtil;
+    private final CleanupService cleanupService;
     private final String bucket;
 
     public LandmarkImageAdminServiceImpl(LandmarkMapper landmarkMapper, CampusMapper campusMapper,
-                                         UniversityMapper universityMapper, ImageMapper imageMapper,
-                                         MinioUtil minioUtil, MinioConfig minioConfig) {
+                                          UniversityMapper universityMapper, ImageMapper imageMapper,
+                                          MinioUtil minioUtil, MinioConfig minioConfig,
+                                          CleanupService cleanupService) {
         this.landmarkMapper = landmarkMapper;
         this.campusMapper = campusMapper;
         this.universityMapper = universityMapper;
         this.imageMapper = imageMapper;
         this.minioUtil = minioUtil;
         this.bucket = minioConfig.getBucket();
+        this.cleanupService = cleanupService;
     }
 
     @Override
@@ -313,6 +317,11 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
 
         // delete from DB
         imageMapper.deleteById(imageId);
+
+        // 已向量化的图片，加入 Milvus 待删队列
+        if (Boolean.TRUE.equals(image.getIsVectorized())) {
+            cleanupService.addPending(imageId);
+        }
     }
 
     @Override
@@ -359,6 +368,11 @@ public class LandmarkImageAdminServiceImpl implements LandmarkImageAdminService 
             }
 
             imageMapper.deleteById(imageId);
+
+            // 已向量化的图片，加入 Milvus 待删队列
+            if (Boolean.TRUE.equals(image.getIsVectorized())) {
+                cleanupService.addPending(imageId);
+            }
         }
 
         // clean up landmark references

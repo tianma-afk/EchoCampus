@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.URI;
@@ -22,6 +24,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 
+@Slf4j
 @Service
 public class AlgorithmClientImpl implements AlgorithmClient {
     private final CircuitBreaker insertCB;
@@ -108,5 +111,22 @@ public class AlgorithmClientImpl implements AlgorithmClient {
 
     public String submitSearchTask(String imgUrl, String callbackUrl) {
         return submitSearchTask(imgUrl, callbackUrl, 10,true);
+    }
+
+    @Override
+    public void submitDeleteTask(List<UUID> uuids) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            String bodyJson = mapper.writeValueAsString(Map.of("uuids", uuids));
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(baseUrl + "/delete"))
+                    .timeout(Duration.ofSeconds(30))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
+                    .build();
+            java.net.http.HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (Exception e) {
+            log.error("调用 Python 删除 Milvus 向量失败", e);
+        }
     }
 }
