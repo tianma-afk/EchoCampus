@@ -430,6 +430,7 @@ watch(keywordFilter, () => {
 
 /* ── Cover ── */
 .card-cover {
+  width: 160px;
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
   background: #f3f4f6;
