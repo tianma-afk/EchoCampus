@@ -236,36 +236,33 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
             Double maxScore = entry.getValue();
 
             LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
-            if (landmark == null || landmark.getCoverImageId() == null) {
-                log.warn("地标信息不完整: landmarkId={}", landmarkId);
+            if (landmark == null) {
+                log.warn("地标不存在: landmarkId={}", landmarkId);
                 continue;
             }
 
-            ImageEntity coverImage = imageMapper.selectById(landmark.getCoverImageId());
-            if (coverImage == null) {
-                log.warn("封面图片不存在: coverImageId={}", landmark.getCoverImageId());
-                continue;
-            }
-
-            UUID universityId = null;
-            if (landmark.getCampusId() != null) {
-                CampusEntity campus = campusMapper.selectById(landmark.getCampusId());
-                if (campus != null) {
-                    universityId = campus.getUniversityId();
+            String coverUrl = null;
+            if (landmark.getCoverImageId() != null) {
+                ImageEntity coverImage = imageMapper.selectById(landmark.getCoverImageId());
+                if (coverImage != null) {
+                    UUID universityId = null;
+                    if (landmark.getCampusId() != null) {
+                        CampusEntity campus = campusMapper.selectById(landmark.getCampusId());
+                        if (campus != null) {
+                            universityId = campus.getUniversityId();
+                        }
+                    }
+                    if (universityId != null) {
+                        coverUrl = imageUrlBuilder.buildUrl(
+                                universityId,
+                                landmark.getCampusId(),
+                                landmarkId,
+                                coverImage.getId(),
+                                coverImage.getFileExt()
+                        );
+                    }
                 }
             }
-            if (universityId == null) {
-                log.warn("无法获取大学ID: landmarkId={}, campusId={}", landmarkId, landmark.getCampusId());
-                continue;
-            }
-
-            String coverUrl = imageUrlBuilder.buildUrl(
-                    universityId,
-                    landmark.getCampusId(),
-                    landmarkId,
-                    coverImage.getId(),
-                    coverImage.getFileExt()
-            );
 
             results.add(new SearchResultVO(
                     landmarkId.toString(),

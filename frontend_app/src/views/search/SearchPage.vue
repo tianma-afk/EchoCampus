@@ -361,7 +361,8 @@ onUnmounted(() => {
                :class="{ 'in-view': visibleCards.has(index), 'card-first': index === 0, 'card-last': index === recognitionResults.length - 1 }"
                @click="handleCardClick(item)">
             <div class="circle-img-box">
-              <img :src="item.coverUrl" alt="建筑封面" class="circle-img" @error="onCoverImgError" />
+              <img v-if="item.coverUrl" :src="item.coverUrl" alt="建筑封面" class="circle-img" @error="onCoverImgError" />
+              <div v-else class="circle-img-placeholder">暂未设置封面</div>
             </div>
             <div class="card-text">
               <p class="land-name">{{ item.landmarkName }}</p>
@@ -1018,6 +1019,19 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.circle-img-placeholder {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: #f2f0eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b0b0b0;
+  font-size: 13px;
+  margin: 0 auto 8px;
 }
 
 .land-name {
