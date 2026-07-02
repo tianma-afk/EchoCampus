@@ -7,6 +7,7 @@ import { toggleFavorite } from '../../api/favorite'
 import { submitRating } from '../../api/rating'
 import { wgs84ToGcj02 } from '../../utils/coordConvert'
 import FeedbackPage from '../feedback/FeedbackPage.vue'
+import ShareModal from '../../components/ShareModal.vue'
 
 interface LandmarkDetail {
   id?: string | number
@@ -105,6 +106,7 @@ const checkinBtnDisabled = ref(false)
 
 const showRatingPanel = ref(false)
 const showFeedback = ref(false)
+const showShareModal = ref(false)
 const ratingValue = ref(0)
 const ratingHoverValue = ref(0)
 const ratingSubmitting = ref(false)
@@ -325,7 +327,7 @@ const bubblePositions = computed(() => {
             <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
           </svg>
         </button>
-        <button class="topbar-btn">
+        <button class="topbar-btn" @click="showShareModal = true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
             <polyline points="16 6 12 2 8 6" />
@@ -677,6 +679,12 @@ const bubblePositions = computed(() => {
     :landmark-name="props.landmark.name"
     @done="showFeedback = false"
     @back="showFeedback = false"
+  />
+
+  <ShareModal
+    v-if="showShareModal"
+    :landmark="props.landmark"
+    @close="showShareModal = false"
   />
 </template>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useAuth } from './composables/useAuth'
 import SearchPage from './views/search/SearchPage.vue'
@@ -14,8 +14,22 @@ const API_BASE_URL = 'http://localhost:8080/api/v1'
 
 const { token, nickname, email, remainingNicknameChanges, isLoggedIn, loading, tryRestoreSession, logout, updateNickname } = useAuth()
 
+const pendingLandmarkId = ref('')
+
 onMounted(() => {
+  const params = new URLSearchParams(window.location.search)
+  const id = params.get('landmarkId')
+  if (id) {
+    pendingLandmarkId.value = id
+  }
   tryRestoreSession()
+})
+
+watch([loading, isLoggedIn], ([ld, logged]) => {
+  if (!ld && logged && pendingLandmarkId.value) {
+    handleOpenLandmarkDetail(pendingLandmarkId.value)
+    pendingLandmarkId.value = ''
+  }
 })
 
 // 所有请求自动带上 token
@@ -76,7 +90,10 @@ interface FocusMarker {
 const mapFocusTarget = ref<FocusMarker | null>(null)
 
 function handleLoginSuccess() {
-  // 登录成功后自动切换回主界面
+  if (pendingLandmarkId.value) {
+    handleOpenLandmarkDetail(pendingLandmarkId.value)
+    pendingLandmarkId.value = ''
+  }
 }
 
 const handleSelectLandmark = (landmark: LandmarkData) => {
