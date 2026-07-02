@@ -5,6 +5,7 @@ import com.echocampus.shared.context.AuthContext;
 import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.exception.ErrorCode;
+import com.echocampus.shared.dto.BatchDeleteRequest;
 import com.echocampus.shared.vo.Result;
 import com.echocampus.user.dto.CheckinRequest;
 import com.echocampus.user.service.CheckinService;

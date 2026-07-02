@@ -3,6 +3,7 @@ package com.echocampus.user.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.echocampus.user.vo.FavoriteVO;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface FavoriteService {
@@ -15,4 +16,6 @@ public interface FavoriteService {
     Page<FavoriteVO> getFavorites(UUID userId, int page, int size);
 
     boolean isFavorited(UUID userId, UUID landmarkId);
+
+    void batchDelete(UUID userId, List<UUID> ids);
 }

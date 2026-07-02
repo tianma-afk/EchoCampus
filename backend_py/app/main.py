@@ -6,7 +6,7 @@ from loguru import logger
 import core.logger  # noqa: F401 — 初始化 loguru 配置
 from core.milvus_service import milvus_init
 from core.dependencies import get_extractor
-from routers import insert, search
+from routers import insert, search, delete
 
 
 @asynccontextmanager
@@ -23,6 +23,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(insert.router)
 app.include_router(search.router)
+app.include_router(delete.router)
 
 
 @app.get("/")

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.echocampus.user.vo.RatingVO;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public interface RatingService {
@@ -13,4 +14,6 @@ public interface RatingService {
     RatingVO getUserRating(UUID userId, UUID landmarkId);
 
     Page<RatingVO> getUserRatings(UUID userId, int page, int size);
+
+    void batchDelete(UUID userId, List<UUID> ids);
 }

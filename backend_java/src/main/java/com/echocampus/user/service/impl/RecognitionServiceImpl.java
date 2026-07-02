@@ -22,11 +22,14 @@ import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -62,6 +65,28 @@ public class RecognitionServiceImpl implements RecognitionService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDelete(UUID userId, List<UUID> ids) {
+        List<RecognitionRecord> entities = recognitionRecordMapper.selectList(new LambdaQueryWrapper<RecognitionRecord>()
+                .in(RecognitionRecord::getId, ids)
+                .eq(RecognitionRecord::getUserId, userId));
+        if (entities.isEmpty()) return;
+
+        List<UUID> validIds = entities.stream().map(RecognitionRecord::getId).collect(Collectors.toList());
+        List<UUID> userImageIds = entities.stream()
+                .map(RecognitionRecord::getImageId)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toList());
+
+        recognitionRecordMapper.delete(new LambdaQueryWrapper<RecognitionRecord>().in(RecognitionRecord::getId, validIds));
+        if (!userImageIds.isEmpty()) {
+            userImageMapper.delete(new LambdaQueryWrapper<UserImage>().in(UserImage::getId, userImageIds));
+        }
+        log.info("[识别] 批量删除 -> userId={}, count={}, images={}", userId, validIds.size(), userImageIds.size());
+    }
+
+    @Override
     public Page<RecognitionVO> getRecognitionHistory(UUID userId, int page, int size) {
         Page<RecognitionRecord> entityPage = new Page<>(page, size);
         recognitionRecordMapper.selectPage(entityPage, new LambdaQueryWrapper<RecognitionRecord>()
@@ -80,8 +105,13 @@ public class RecognitionServiceImpl implements RecognitionService {
                 .map(RecognitionRecord::getImageId)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<UUID, UserImage> imageMap = userImageMapper.selectBatchIds(imageIds).stream()
-                .collect(Collectors.toMap(UserImage::getId, img -> img));
+        Map<UUID, UserImage> imageMap;
+        if (imageIds.isEmpty()) {
+            imageMap = new HashMap<>();
+        } else {
+            imageMap = userImageMapper.selectBatchIds(imageIds).stream()
+                    .collect(Collectors.toMap(UserImage::getId, img -> img));
+        }
 
         // 批量查匹配的地标
         List<UUID> landmarkIds = records.stream()
@@ -89,8 +119,13 @@ public class RecognitionServiceImpl implements RecognitionService {
                 .filter(id -> id != null)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<UUID, LandmarkEntity> landmarkMap = landmarkMapper.selectBatchIds(landmarkIds).stream()
-                .collect(Collectors.toMap(LandmarkEntity::getId, l -> l));
+        Map<UUID, LandmarkEntity> landmarkMap;
+        if (landmarkIds.isEmpty()) {
+            landmarkMap = new HashMap<>();
+        } else {
+            landmarkMap = landmarkMapper.selectBatchIds(landmarkIds).stream()
+                    .collect(Collectors.toMap(LandmarkEntity::getId, l -> l));
+        }
 
         // 批量查封面图 + campus + university 用于构造封面的预签名URL
         List<UUID> coverImageIds = landmarkMap.values().stream()
@@ -98,21 +133,36 @@ public class RecognitionServiceImpl implements RecognitionService {
                 .filter(id -> id != null)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<UUID, ImageEntity> coverImageMap = imageMapper.selectBatchIds(coverImageIds).stream()
-                .collect(Collectors.toMap(ImageEntity::getId, img -> img));
+        Map<UUID, ImageEntity> coverImageMap;
+        if (coverImageIds.isEmpty()) {
+            coverImageMap = new HashMap<>();
+        } else {
+            coverImageMap = imageMapper.selectBatchIds(coverImageIds).stream()
+                    .collect(Collectors.toMap(ImageEntity::getId, img -> img));
+        }
 
         List<UUID> campusIds = landmarkMap.values().stream()
                 .map(LandmarkEntity::getCampusId)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<UUID, CampusEntity> campusMap = campusMapper.selectBatchIds(campusIds).stream()
-                .collect(Collectors.toMap(CampusEntity::getId, c -> c));
+        Map<UUID, CampusEntity> campusMap;
+        if (campusIds.isEmpty()) {
+            campusMap = new HashMap<>();
+        } else {
+            campusMap = campusMapper.selectBatchIds(campusIds).stream()
+                    .collect(Collectors.toMap(CampusEntity::getId, c -> c));
+        }
         List<UUID> universityIds = campusMap.values().stream()
                 .map(CampusEntity::getUniversityId)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<UUID, UniversityEntity> universityMap = universityMapper.selectBatchIds(universityIds).stream()
-                .collect(Collectors.toMap(UniversityEntity::getId, u -> u));
+        Map<UUID, UniversityEntity> universityMap;
+        if (universityIds.isEmpty()) {
+            universityMap = new HashMap<>();
+        } else {
+            universityMap = universityMapper.selectBatchIds(universityIds).stream()
+                    .collect(Collectors.toMap(UniversityEntity::getId, u -> u));
+        }
 
         List<RecognitionVO> voList = records.stream()
                 .map(r -> {

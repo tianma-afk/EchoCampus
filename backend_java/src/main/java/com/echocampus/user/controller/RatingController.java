@@ -3,6 +3,7 @@ package com.echocampus.user.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.echocampus.shared.annotation.RequireRole;
 import com.echocampus.shared.context.AuthContext;
+import com.echocampus.shared.dto.BatchDeleteRequest;
 import com.echocampus.shared.enums.RoleEnum;
 import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.vo.Result;
@@ -56,5 +57,13 @@ public class RatingController {
             @RequestParam(defaultValue = "10") int size) {
         UUID userId = UUID.fromString(AuthContext.get().getUserId());
         return Result.success(ratingService.getUserRatings(userId, page, size));
+    }
+
+    @DeleteMapping
+    @Operation(summary = "批量删除评分记录")
+    public Result<Void> batchDelete(@Valid @RequestBody BatchDeleteRequest request) {
+        UUID userId = UUID.fromString(AuthContext.get().getUserId());
+        ratingService.batchDelete(userId, request.getIds());
+        return Result.success(ErrorCode.SUCCESS, "删除成功", null);
     }
 }

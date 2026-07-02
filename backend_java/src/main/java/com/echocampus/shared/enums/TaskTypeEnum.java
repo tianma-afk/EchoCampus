@@ -14,7 +14,10 @@ public enum TaskTypeEnum {
     VECTORIZE("VECTORIZE", "向量化任务"),
 
     @Schema(description = "图搜任务")
-    SEARCH("SEARCH", "图搜任务");
+    SEARCH("SEARCH", "图搜任务"),
+
+    @Schema(description = "向量删除任务")
+    DELETE("DELETE", "向量删除任务");
 
     @EnumValue
     @JsonValue

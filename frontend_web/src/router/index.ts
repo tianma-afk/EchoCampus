@@ -98,6 +98,16 @@ const router = createRouter({
       ],
     },
     {
+      path: '/cleanup',
+      component: Layout,
+      children: [
+        {
+          path: '',
+          component: () => import('../views/ImageCleanup.vue'),
+        },
+      ],
+    },
+    {
       path: '/:pathMatch(.*)*',
       component: Layout,
       children: [

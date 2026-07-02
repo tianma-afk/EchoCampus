@@ -14,6 +14,7 @@ import com.echocampus.shared.exception.ErrorCode;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -69,7 +70,7 @@ public class FeedbackUserServiceImpl implements FeedbackUserService {
 
         List<UUID> landmarkIds = entities.stream().map(FeedbackEntity::getLandmarkId)
                 .filter(id -> id != null).distinct().toList();
-        Map<UUID, String> landmarkNameMap = landmarkIds.isEmpty() ? Map.of()
+        Map<UUID, String> landmarkNameMap = landmarkIds.isEmpty() ? new HashMap<>()
                 : landmarkMapper.selectBatchIds(landmarkIds).stream()
                         .collect(Collectors.toMap(LandmarkEntity::getId, LandmarkEntity::getName));
 

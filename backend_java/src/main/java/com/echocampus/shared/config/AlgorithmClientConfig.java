@@ -25,4 +25,13 @@ public class AlgorithmClientConfig {
             @Value("${algorithm.client.search.half-open-success-rate-threshold:0.5}") float halfOpenSuccessRateThreshold) {
         return new CircuitBreaker(failureThreshold, timeoutMs, halfOpenMaxRequests, halfOpenSuccessRateThreshold);
     }
+
+    @Bean(name = "deleteCircuitBreaker")
+    public CircuitBreaker deleteCircuitBreaker(
+            @Value("${algorithm.client.delete.failure-threshold:5}") int failureThreshold,
+            @Value("${algorithm.client.delete.timeout-ms:30000}") long timeoutMs,
+            @Value("${algorithm.client.delete.half-open-max-requests:3}") int halfOpenMaxRequests,
+            @Value("${algorithm.client.delete.half-open-success-rate-threshold:0.5}") float halfOpenSuccessRateThreshold) {
+        return new CircuitBreaker(failureThreshold, timeoutMs, halfOpenMaxRequests, halfOpenSuccessRateThreshold);
+    }
 }

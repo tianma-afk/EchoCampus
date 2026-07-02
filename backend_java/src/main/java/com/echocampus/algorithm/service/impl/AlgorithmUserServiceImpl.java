@@ -15,6 +15,7 @@ import com.echocampus.algorithm.mapper.TaskMapper;
 import com.echocampus.algorithm.service.AlgorithmUserService;
 import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.exception.ErrorCode;
+import com.echocampus.shared.annotation.TimedTask;
 import com.echocampus.shared.util.CallBackUrlBuilder;
 import com.echocampus.shared.util.ImageUrlBuilder;
 import com.echocampus.algorithm.vo.SearchResultVO;
@@ -91,6 +92,7 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
      * @return 任务 ID（Java 端生成的 UUID，用于前端查询任务状态）
      */
     @Override
+    @TimedTask
     @Transactional(rollbackFor = Exception.class)
     public UUID createSearchTask(UUID userId, String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
@@ -164,6 +166,7 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
      * @param request Python 回调请求，包含任务状态和匹配结果
      */
     @Override
+    @TimedTask
     public void updateSearchTaskStatus(UUID taskId, SearchCallbackRequest request) {
         TaskEntity task = taskMapper.selectById(taskId);
         if (task == null) {
@@ -236,36 +239,33 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
             Double maxScore = entry.getValue();
 
             LandmarkEntity landmark = landmarkMapper.selectById(landmarkId);
-            if (landmark == null || landmark.getCoverImageId() == null) {
-                log.warn("地标信息不完整: landmarkId={}", landmarkId);
+            if (landmark == null) {
+                log.warn("地标不存在: landmarkId={}", landmarkId);
                 continue;
             }
 
-            ImageEntity coverImage = imageMapper.selectById(landmark.getCoverImageId());
-            if (coverImage == null) {
-                log.warn("封面图片不存在: coverImageId={}", landmark.getCoverImageId());
-                continue;
-            }
-
-            UUID universityId = null;
-            if (landmark.getCampusId() != null) {
-                CampusEntity campus = campusMapper.selectById(landmark.getCampusId());
-                if (campus != null) {
-                    universityId = campus.getUniversityId();
+            String coverUrl = null;
+            if (landmark.getCoverImageId() != null) {
+                ImageEntity coverImage = imageMapper.selectById(landmark.getCoverImageId());
+                if (coverImage != null) {
+                    UUID universityId = null;
+                    if (landmark.getCampusId() != null) {
+                        CampusEntity campus = campusMapper.selectById(landmark.getCampusId());
+                        if (campus != null) {
+                            universityId = campus.getUniversityId();
+                        }
+                    }
+                    if (universityId != null) {
+                        coverUrl = imageUrlBuilder.buildUrl(
+                                universityId,
+                                landmark.getCampusId(),
+                                landmarkId,
+                                coverImage.getId(),
+                                coverImage.getFileExt()
+                        );
+                    }
                 }
             }
-            if (universityId == null) {
-                log.warn("无法获取大学ID: landmarkId={}, campusId={}", landmarkId, landmark.getCampusId());
-                continue;
-            }
-
-            String coverUrl = imageUrlBuilder.buildUrl(
-                    universityId,
-                    landmark.getCampusId(),
-                    landmarkId,
-                    coverImage.getId(),
-                    coverImage.getFileExt()
-            );
 
             results.add(new SearchResultVO(
                     landmarkId.toString(),

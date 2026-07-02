@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -90,6 +91,18 @@ public class CheckinServiceImpl implements CheckinService {
         } catch (Exception e) {
             log.warn("[打卡] Redis ZSET 更新失败, landmarkId={}", landmarkId, e);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDelete(UUID userId, List<UUID> ids) {
+        List<CheckinEntity> entities = checkinMapper.selectList(new LambdaQueryWrapper<CheckinEntity>()
+                .in(CheckinEntity::getId, ids)
+                .eq(CheckinEntity::getUserId, userId));
+        if (entities.isEmpty()) return;
+        List<UUID> validIds = entities.stream().map(CheckinEntity::getId).collect(Collectors.toList());
+        checkinMapper.delete(new LambdaQueryWrapper<CheckinEntity>().in(CheckinEntity::getId, validIds));
+        log.info("[打卡] 批量删除 -> userId={}, count={}", userId, validIds.size());
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {

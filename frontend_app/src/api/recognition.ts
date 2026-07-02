@@ -24,3 +24,8 @@ export async function getRecognitions(page = 1, size = 10): Promise<{ code: stri
   const res = await axios.get(API_BASE, { params: { page, size } })
   return res.data
 }
+
+export async function batchDeleteRecognitions(ids: string[]): Promise<{ code: string; message: string }> {
+  const res = await axios.delete(API_BASE, { data: { ids } })
+  return res.data
+}

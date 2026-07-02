@@ -21,6 +21,7 @@ import com.echocampus.user.service.RatingService;
 import com.echocampus.user.vo.RatingVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -137,6 +138,18 @@ public class RatingServiceImpl implements RatingService {
         Page<RatingVO> voPage = new Page<>(page, size, entityPage.getTotal());
         voPage.setRecords(voList);
         return voPage;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDelete(UUID userId, List<UUID> ids) {
+        List<Rating> entities = ratingMapper.selectList(new LambdaQueryWrapper<Rating>()
+                .in(Rating::getId, ids)
+                .eq(Rating::getUserId, userId));
+        if (entities.isEmpty()) return;
+        List<UUID> validIds = entities.stream().map(Rating::getId).collect(Collectors.toList());
+        ratingMapper.delete(new LambdaQueryWrapper<Rating>().in(Rating::getId, validIds));
+        log.info("[评分] 批量删除 -> userId={}, count={}", userId, validIds.size());
     }
 
     private RatingVO buildRatingVO(Rating rating) {
