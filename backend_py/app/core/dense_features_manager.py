@@ -1,13 +1,30 @@
 import io
+import socket
 import numpy as np
 import torch
 import asyncio
+import httpx
+from datetime import timedelta
 from typing import Optional
 from loguru import logger
 from minio import Minio
 from minio.error import S3Error
 
 from core.settings import settings
+
+# ── IPv4 解析（避免 Windows 上 localhost 走 IPv6 超时） ───
+
+def _resolve_ipv4(endpoint: str) -> str:
+    host, _, port = endpoint.rpartition(":")
+    port = port or "9000"
+    try:
+        addrs = socket.getaddrinfo(host, int(port), socket.AF_INET)
+        if addrs:
+            return f"{addrs[0][4][0]}:{port}"
+    except socket.gaierror:
+        pass
+    return endpoint
+
 
 # ── MinIO 客户端模块级单例 ──────────────────────────────
 
@@ -18,8 +35,9 @@ def _get_minio_client() -> Minio:
     """延迟初始化 MinIO 客户端（与 milvus_service 同一模式）。"""
     global _minio_client
     if _minio_client is None:
+        endpoint = _resolve_ipv4(settings.MINIO_ENDPOINT)
         _minio_client = Minio(
-            endpoint=settings.MINIO_ENDPOINT,
+            endpoint=endpoint,
             access_key=settings.MINIO_ACCESS_KEY,
             secret_key=settings.MINIO_SECRET_KEY,
             secure=settings.MINIO_SECURE,
@@ -96,3 +114,26 @@ async def save_image_dense_features_async(image_uuid, dense_features):
 async def load_image_dense_features_async(image_uuid, device=None):
     """异步加载（签名不变）。"""
     return await asyncio.to_thread(load_image_dense_features, image_uuid, device)
+
+
+async def load_image_dense_features_http_async(image_uuid, device=None):
+    """异步 HTTP 预签名 URL 下载 dense_features .npy，绕过 sync MinIO client。"""
+    object_name = _object_key(image_uuid)
+    client = _get_minio_client()
+    presigned_url = await asyncio.to_thread(
+        client.presigned_get_object,
+        settings.MINIO_BUCKET,
+        object_name,
+        expires=timedelta(minutes=5),
+    )
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as http_client:
+            resp = await http_client.get(presigned_url)
+            resp.raise_for_status()
+            dense_features_ndarray = np.load(io.BytesIO(resp.content))
+            if device is not None:
+                return torch.from_numpy(dense_features_ndarray).to(device)
+            return dense_features_ndarray
+    except Exception as e:
+        logger.error(f"HTTP 加载 dense_features 失败 [{image_uuid}]: {e}")
+        return None

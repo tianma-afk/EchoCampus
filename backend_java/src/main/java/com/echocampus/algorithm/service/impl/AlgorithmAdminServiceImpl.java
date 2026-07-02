@@ -18,6 +18,7 @@ import com.echocampus.landmark.mapper.LandmarkMapper;
 import com.echocampus.algorithm.mapper.TaskMapper;
 import com.echocampus.university.mapper.UniversityMapper;
 import com.echocampus.algorithm.service.AlgorithmAdminService;
+import com.echocampus.shared.annotation.TimedTask;
 import com.echocampus.shared.util.CallBackUrlBuilder;
 import com.echocampus.shared.util.ImageUrlBuilder;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
     }
 
     @Override
+    @TimedTask
     public UUID createVectorTaskForAllImages() {
         List<ImageEntity> images = getUnvectoredImages();
         if (images.isEmpty()) {
@@ -104,6 +106,7 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
     }
 
     @Override
+    @TimedTask
     public void updateTaskStatus(UUID taskId, CallbackRequest request) {
         TaskEntity task = taskMapper.selectById(taskId);
         if (task == null) {

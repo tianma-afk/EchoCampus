@@ -15,6 +15,7 @@ import com.echocampus.algorithm.mapper.TaskMapper;
 import com.echocampus.algorithm.service.AlgorithmUserService;
 import com.echocampus.shared.exception.BusinessException;
 import com.echocampus.shared.exception.ErrorCode;
+import com.echocampus.shared.annotation.TimedTask;
 import com.echocampus.shared.util.CallBackUrlBuilder;
 import com.echocampus.shared.util.ImageUrlBuilder;
 import com.echocampus.algorithm.vo.SearchResultVO;
@@ -91,6 +92,7 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
      * @return 任务 ID（Java 端生成的 UUID，用于前端查询任务状态）
      */
     @Override
+    @TimedTask
     @Transactional(rollbackFor = Exception.class)
     public UUID createSearchTask(UUID userId, String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
@@ -164,6 +166,7 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
      * @param request Python 回调请求，包含任务状态和匹配结果
      */
     @Override
+    @TimedTask
     public void updateSearchTaskStatus(UUID taskId, SearchCallbackRequest request) {
         TaskEntity task = taskMapper.selectById(taskId);
         if (task == null) {
