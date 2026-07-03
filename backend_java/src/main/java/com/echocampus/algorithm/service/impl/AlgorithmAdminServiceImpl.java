@@ -28,7 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
 
     private final AlgorithmClient algorithmClient;
@@ -73,19 +76,36 @@ public class AlgorithmAdminServiceImpl implements AlgorithmAdminService {
             UUID landmarkId = image.getLandmarkId();
             LandmarkEntity landmark = landmarkCache.computeIfAbsent(landmarkId,
                     id -> landmarkMapper.selectById(id));
+            if (landmark == null) {
+                log.warn("图片 {} 关联的地标 {} 不存在，跳过", image.getId(), landmarkId);
+                continue;
+            }
 
             UUID campusId = landmark.getCampusId();
             CampusEntity campus = campusCache.computeIfAbsent(campusId,
                     id -> campusMapper.selectById(id));
+            if (campus == null) {
+                log.warn("地标 {} 关联的校区 {} 不存在，跳过", landmarkId, campusId);
+                continue;
+            }
 
             UUID universityId = campus.getUniversityId();
             UniversityEntity university = universityCache.computeIfAbsent(universityId,
                     id -> universityMapper.selectById(id));
+            if (university == null) {
+                log.warn("校区 {} 关联的大学 {} 不存在，跳过", campusId, universityId);
+                continue;
+            }
 
             String url = imageUrlBuilder.buildUrl(
                     university.getId(), campus.getId(), landmark.getId(),
                     image.getId(), image.getFileExt());
             idsAndUrls.put(image.getId(), url);
+        }
+
+        if (idsAndUrls.isEmpty()) {
+            log.warn("没有可向量化的有效图片");
+            return null;
         }
 
         //创建任务
