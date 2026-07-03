@@ -42,6 +42,7 @@ public enum ErrorCode {
     CAMPUS_NAME_CONFLICT("L0004", "校区名称已存在"),
     UNIVERSITY_NAME_CONFLICT("L0005", "大学名称已存在"),
     IMAGE_NOT_FOUND("L0006", "图片不存在"),
+    LIBRARY_EMPTY("L0007", "图像库为空"),
 
     // ===== 收藏模块 (FAV) =====
     FAVORITE_ALREADY("FAV001", "已收藏"),

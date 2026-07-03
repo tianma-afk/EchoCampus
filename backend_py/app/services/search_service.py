@@ -26,6 +26,13 @@ class SearchService:
     async def search_process(self, params: SearchParams):
         t0 = time.time()
         try:
+            # 前置检查：Milvus 图像库是否为空
+            collection_count = await milvus_service.service.get_collection_count_async()
+            if collection_count == 0:
+                logger.warning("Milvus 图像库为空，取消搜索任务")
+                await self.search_callback(params.callbackUrl, "LIBRARY_EMPTY", [])
+                return
+
             img = await download_image_to_pil(params.imgUrl)
             t1 = time.time()
             logger.info(f"[计时] 下载图片: {t1-t0:.2f}s")

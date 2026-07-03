@@ -188,7 +188,14 @@ const startPolling = (taskId: string) => {
         clearInterval(pollTimer!)
         pollTimer = null
         isRecognizing.value = false
-        alert(res.data.message)
+        if (code === 'L0007') {
+          alert('图像库为空')
+          showPreview.value = false
+          previewImageUrl.value = ''
+          resultShowImageUrl.value = ''
+        } else {
+          alert(res.data.message)
+        }
       }
 
 

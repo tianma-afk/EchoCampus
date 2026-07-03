@@ -85,6 +85,11 @@ class MilvusService:
         )
         return [{"uuid": r["uuid"], "score": r["distance"]} for r in results[0]]
 
+    def get_collection_count(self):
+        """获取集合中的向量总数"""
+        stats = self.client.get_collection_stats(collection_name=COLLECTION_NAME)
+        return stats.get("row_count", 0)
+
     def reset_collection(self):
         """清空并重新创建集合（测试专用）"""
         if self.client.has_collection(COLLECTION_NAME):
@@ -110,6 +115,9 @@ class MilvusService:
 
     async def load_collection_async(self):
         await asyncio.to_thread(self.client.load_collection, collection_name=COLLECTION_NAME)
+
+    async def get_collection_count_async(self):
+        return await asyncio.to_thread(self.get_collection_count)
 
     async def search_similar_async(self, query_vector, top_k: int = 10):
         results = await asyncio.to_thread(
