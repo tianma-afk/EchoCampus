@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
+import { API_BASE, MINIO_BASE } from '../../config'
 import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 const emit = defineEmits<{
@@ -13,10 +14,10 @@ const stream = ref<MediaStream | null>(null)
 const facingMode = ref<'user' | 'environment'>('environment')
 const fileInput = ref<HTMLInputElement | null>(null)
 
-const API_BASE_URL = 'http://localhost:8080/api/v1'
+const API_BASE_URL = `${API_BASE}/api/v1`
 const UPLOAD_API = `${API_BASE_URL}/upload`
 const SEARCH_API = `${API_BASE_URL}/user/algorithm/search`
-const MINIO_BASE_URL = 'http://localhost:9000'
+const MINIO_BASE_URL = MINIO_BASE
 
 const uploading = ref(false)
 const showPreview = ref(false)
@@ -115,25 +116,12 @@ const handleImageSelected = async (file: File | Blob) => {
   uploading.value = true
   showCamera.value = false
   try {
-    const res = await axios.post(`${UPLOAD_API}/presigned-url`)
-    const { uploadUrl, bucket, objectName } = res.data.data
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await axios.post(`${UPLOAD_API}/direct`, formData)
+    const { uploadUrl } = res.data.data
 
-    await new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-      xhr.open('PUT', uploadUrl)
-      xhr.setRequestHeader('Content-Type', 'image/jpeg')
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve()
-        } else {
-          reject(new Error('MinIO PUT failed (HTTP ' + xhr.status + ')'))
-        }
-      }
-      xhr.onerror = () => reject(new Error('网络错误'))
-      xhr.send(file)
-    })
-
-    previewImageUrl.value = `${MINIO_BASE_URL}/${bucket}/${objectName}`
+    previewImageUrl.value = uploadUrl
     showPreview.value = true
   } catch (error) {
     console.error('上传图片失败:', error)
@@ -990,8 +978,8 @@ onUnmounted(() => {
   text-align: center;
   scroll-snap-align: center;
   opacity: 0.5;
-  transform: scale(0.85);
-  transition: all 0.35s ease;
+  transform: scale(1);
+  transition: opacity 0.35s ease;
   cursor: default;
   padding-top: 5px;
 }
@@ -1006,16 +994,11 @@ onUnmounted(() => {
 
 .landmark-card.in-view {
   opacity: 1;
-  transform: scale(1);
-}
-
-.landmark-card:active {
-  transform: scale(0.95);
 }
 
 .circle-img-box {
-  width: 200px;
-  height: 200px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0,0,0,0.12);
@@ -1029,8 +1012,8 @@ onUnmounted(() => {
 }
 
 .circle-img-placeholder {
-  width: 200px;
-  height: 200px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   background: #f2f0eb;
   display: flex;

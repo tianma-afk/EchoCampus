@@ -2,8 +2,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 
+import { API_BASE } from '../../config'
+
 // API 配置
-const API_BASE_URL = 'http://localhost:8080/api/v1' // 本地后端地址
+const API_BASE_URL = `${API_BASE}/api/v1` // 后端地址
 const LANDMARK_API = `${API_BASE_URL}/landmarks` // 地标列表接口
 
 interface LandmarkSummary {

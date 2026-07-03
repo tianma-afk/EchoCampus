@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import { useNavigation } from '../../composables/useNavigation'
 import { useSpeech } from '../../composables/useSpeech'
 import { wgs84ToGcj02 } from '../../utils/coordConvert'
+import { API_BASE } from '../../config'
 
 interface LandmarkMarker {
   id: string
@@ -18,7 +19,7 @@ interface LandmarkMarker {
   checkins?: number
 }
 
-const API_BASE_URL = 'http://localhost:8080/api/v1'
+const API_BASE_URL = `${API_BASE}/api/v1`
 
 const emit = defineEmits<{
   'open-detail': [landmarkId: string]
@@ -397,6 +398,7 @@ watch(() => nav.userPosition.value, (pos) => {
   } else {
     userMarker.setLatLng([pos.lat, pos.lng])
     userMarker.setIcon(createUserMarkerIcon(pos.heading))
+    map.panTo([pos.lat, pos.lng])
   }
 })
 

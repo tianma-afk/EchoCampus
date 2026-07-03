@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { API_BASE } from '../config'
 
-const API_BASE = 'http://localhost:8080/api/v1/user/recognitions'
+const RECOGNITION_API = `${API_BASE}/api/v1/user/recognitions`
 
 export interface RecognitionRecord {
   id: string
@@ -21,11 +22,11 @@ export interface PageResult<T> {
 }
 
 export async function getRecognitions(page = 1, size = 10): Promise<{ code: string; message: string; data: PageResult<RecognitionRecord> }> {
-  const res = await axios.get(API_BASE, { params: { page, size } })
+  const res = await axios.get(RECOGNITION_API, { params: { page, size } })
   return res.data
 }
 
 export async function batchDeleteRecognitions(ids: string[]): Promise<{ code: string; message: string }> {
-  const res = await axios.delete(API_BASE, { data: { ids } })
+  const res = await axios.delete(RECOGNITION_API, { data: { ids } })
   return res.data
 }

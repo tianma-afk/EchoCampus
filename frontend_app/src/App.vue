@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useAuth } from './composables/useAuth'
+import { API_BASE } from './config'
 import SearchPage from './views/search/SearchPage.vue'
 import MapPage from './views/map/MapPage.vue'
 import LandmarkRepo from './views/repo/LandmarkRepo.vue'
@@ -10,7 +11,7 @@ import ProfilePage from './views/profile/ProfilePage.vue'
 import LoginPage from './views/auth/LoginPage.vue'
 import BottomNav from './components/BottomNav.vue'
 
-const API_BASE_URL = 'http://localhost:8080/api/v1'
+const API_BASE_URL = `${API_BASE}/api/v1`
 
 const { token, nickname, email, remainingNicknameChanges, isLoggedIn, loading, tryRestoreSession, logout, updateNickname } = useAuth()
 

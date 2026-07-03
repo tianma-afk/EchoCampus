@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
+import { API_BASE } from '../../config'
 
 const emit = defineEmits<{ back: []; logout: [] }>()
 
@@ -34,7 +35,7 @@ async function handleChangePassword() {
   passwordLoading.value = true
   try {
     const token = localStorage.getItem('auth_token') || ''
-    await axios.put('http://localhost:8080/api/v1/user/password', {
+    await axios.put(`${API_BASE}/api/v1/user/password`, {
       oldPassword: oldPassword.value,
       newPassword: newPassword.value,
     }, { headers: { Authorization: `Bearer ${token}` } })

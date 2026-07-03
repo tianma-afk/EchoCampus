@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { API_BASE } from '../config'
 
-const API_BASE = 'http://localhost:8080/api/v1/auth'
+const API_BASE_AUTH = `${API_BASE}/api/v1/auth`
 
 export interface SendCodeResult {
   expires_in: number
@@ -20,7 +21,7 @@ export interface ApiResponse<T> {
 }
 
 export async function sendCode(email: string): Promise<ApiResponse<SendCodeResult>> {
-  const res = await axios.post(`${API_BASE}/send-code`, { email })
+  const res = await axios.post(`${API_BASE_AUTH}/send-code`, { email })
   return res.data
 }
 
@@ -30,7 +31,7 @@ export async function register(params: {
   password: string
   nickname: string
 }): Promise<ApiResponse<LoginResult>> {
-  const res = await axios.post(`${API_BASE}/register`, params)
+  const res = await axios.post(`${API_BASE_AUTH}/register`, params)
   return res.data
 }
 
@@ -38,7 +39,7 @@ export async function login(params: {
   email: string
   password: string
 }): Promise<ApiResponse<LoginResult>> {
-  const res = await axios.post(`${API_BASE}/login`, params)
+  const res = await axios.post(`${API_BASE_AUTH}/login`, params)
   return res.data
 }
 
@@ -50,13 +51,13 @@ export interface UserProfile {
 }
 
 export async function getProfile(token: string): Promise<ApiResponse<UserProfile>> {
-  const res = await axios.get('http://localhost:8080/api/v1/user/profile', {
+  const res = await axios.get(`${API_BASE}/api/v1/user/profile`, {
     headers: { Authorization: `Bearer ${token}` }
   })
   return res.data
 }
 
 export async function updateProfile(nickname: string): Promise<ApiResponse<UserProfile>> {
-  const res = await axios.put('http://localhost:8080/api/v1/user/profile', { nickname })
+  const res = await axios.put(`${API_BASE}/api/v1/user/profile`, { nickname })
   return res.data
 }

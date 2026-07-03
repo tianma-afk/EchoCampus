@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { API_BASE } from '../config'
 
-const API_BASE = 'http://localhost:8080/api/v1/user/feedbacks'
+const FEEDBACK_API = `${API_BASE}/api/v1/user/feedbacks`
 
 export interface FeedbackRecord {
   id: string
@@ -25,12 +26,12 @@ export interface PageResult<T> {
 }
 
 export async function getMyFeedbacks(page = 1, size = 10): Promise<{ code: string; message: string; data: PageResult<FeedbackRecord> }> {
-  const res = await axios.get(`${API_BASE}/`, { params: { page, size } })
+  const res = await axios.get(`${FEEDBACK_API}/`, { params: { page, size } })
   return res.data
 }
 
 export async function getFeedbackDetail(id: string): Promise<{ code: string; message: string; data: FeedbackRecord }> {
-  const res = await axios.get(`${API_BASE}/${id}`)
+  const res = await axios.get(`${FEEDBACK_API}/${id}`)
   return res.data
 }
 

@@ -1,5 +1,6 @@
 package com.echocampus.upload.service.impl;
 
+import com.echocampus.shared.config.MinioConfig;
 import com.echocampus.upload.service.UploadService;
 import com.echocampus.shared.exception.ErrorCode;
 import com.echocampus.shared.exception.TechnicalException;
@@ -8,7 +9,9 @@ import com.echocampus.upload.vo.UploadPresignedUrlVO;
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -39,6 +42,10 @@ public class UploadServiceImpl implements UploadService {
             """;
 
     private final MinioUtil minioUtil;
+    private final MinioConfig minioConfig;
+
+    @Value("${api.public-base:http://localhost:8080}")
+    private String apiPublicBase;
 
     @Override
     public UploadPresignedUrlVO getPresignedUploadUrl() {
@@ -51,6 +58,7 @@ public class UploadServiceImpl implements UploadService {
                     PRESIGNED_EXPIRY, TimeUnit.MINUTES,
                     Method.PUT, null
             );
+            uploadUrl = uploadUrl.replace(minioConfig.getEndpoint(), minioConfig.getPublicEndpoint());
 
             log.info("生成预签名上传URL: bucket={}, objectName={}", BUCKET_NAME, objectName);
 
@@ -61,6 +69,28 @@ public class UploadServiceImpl implements UploadService {
                     .build();
         } catch (Exception e) {
             log.error("生成预签名上传URL失败", e);
+            throw new TechnicalException(ErrorCode.FILE_STORAGE_ERROR, e);
+        }
+    }
+
+    @Override
+    public UploadPresignedUrlVO uploadDirect(MultipartFile file) {
+        try {
+            ensureBucketExists();
+
+            String objectName = generateObjectName();
+            minioUtil.uploadFile(BUCKET_NAME, objectName, file);
+
+            String imageUrl = String.format("%s/api/v1/upload/files?bucket=%s&object=%s",
+                    apiPublicBase, BUCKET_NAME, objectName);
+
+            return UploadPresignedUrlVO.builder()
+                    .uploadUrl(imageUrl)
+                    .bucket(BUCKET_NAME)
+                    .objectName(objectName)
+                    .build();
+        } catch (Exception e) {
+            log.error("直传失败", e);
             throw new TechnicalException(ErrorCode.FILE_STORAGE_ERROR, e);
         }
     }

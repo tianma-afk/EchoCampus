@@ -34,6 +34,7 @@ let watchId: number | null = null
 let sdkLoaded = false
 let sdkLoading = false
 let sdkLoadResolve: (() => void) | null = null
+let lastLatLng: { lat: number; lng: number } | null = null
 
 function loadAmapSDK(): Promise<void> {
   if (sdkLoaded) return Promise.resolve()
@@ -199,7 +200,15 @@ export function useNavigation() {
     const gcj = wgs84ToGcj02(pos.coords.latitude, pos.coords.longitude)
     const lat = gcj.lat
     const lng = gcj.lng
-    userPosition.value = { lat, lng, heading: pos.coords.heading || undefined }
+
+    let heading = pos.coords.heading
+    if (heading === null || isNaN(heading)) {
+      if (lastLatLng) {
+        heading = computeBearing(lastLatLng.lat, lastLatLng.lng, lat, lng)
+      }
+    }
+    lastLatLng = { lat, lng }
+    userPosition.value = { lat, lng, heading: heading ?? undefined }
 
     if (routeCoords.value.length === 0) return
 
@@ -226,13 +235,14 @@ export function useNavigation() {
     }
 
     let remDist = 0
-    let remTime = 0
-    for (let i = currentStepIndex.value; i < steps.value.length; i++) {
-      remDist += steps.value[i].distance
-      remTime += steps.value[i].duration
+    for (let i = nearestIdx; i < routeCoords.value.length - 1; i++) {
+      remDist += distanceBetween(
+        routeCoords.value[i][0], routeCoords.value[i][1],
+        routeCoords.value[i + 1][0], routeCoords.value[i + 1][1]
+      )
     }
     remainingDistance.value = remDist
-    remainingTime.value = remTime
+    remainingTime.value = Math.round(remDist / 1.4)
 
     if (destination.value) {
       const d = distanceBetween(lat, lng, destination.value.lat, destination.value.lng)
@@ -284,4 +294,13 @@ function distanceBetween(
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLng / 2) ** 2
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function computeBearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const y = Math.sin(dLng) * Math.cos((lat2 * Math.PI) / 180)
+  const x = Math.cos((lat1 * Math.PI) / 180) * Math.sin((lat2 * Math.PI) / 180) -
+    Math.sin((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.cos(dLng)
+  let bearing = (Math.atan2(y, x) * 180) / Math.PI
+  return (bearing + 360) % 360
 }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
+import { API_BASE } from '../../config'
 
 const props = withDefaults(defineProps<{
   defaultType?: string
@@ -19,7 +20,7 @@ const emit = defineEmits<{
   back: []
 }>()
 
-const API_BASE_URL = 'http://localhost:8080/api/v1'
+const API_BASE_URL = `${API_BASE}/api/v1`
 
 const allTypes = [
   { value: 'INFO_ERROR', label: '信息错误' },

@@ -23,6 +23,10 @@ spring:
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -63,6 +67,10 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:echo_campus}
   secret-key: ${MINIO_SECRET_KEY:echo_campus}
   bucket: ${MINIO_BUCKET:image}
+  public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://localhost:9000}
+
+api:
+  public-base: ${API_PUBLIC_BASE:http://localhost:8080}
 
 callback:
   protocol: ${CALLBACK_PROTOCOL:http}
