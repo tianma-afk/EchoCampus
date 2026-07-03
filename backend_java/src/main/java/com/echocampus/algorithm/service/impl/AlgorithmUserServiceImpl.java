@@ -178,7 +178,7 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
 
         if ("LIBRARY_EMPTY".equals(result)) {
             task.setTaskStatus("SUCCESS");
-            task.setSearchResult("LIBRARY_EMPTY");
+            task.setSearchResult("\"LIBRARY_EMPTY\"");
             taskMapper.updateById(task);
             log.info("任务状态更新: taskId={}, 图像库为空", taskId);
             return;
@@ -311,19 +311,32 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
     @Override
     public List<SearchResultVO> getSearchResult(UUID taskId) {
         TaskEntity task = taskMapper.selectById(taskId);
-        if ("LIBRARY_EMPTY".equals(task.getSearchResult())) {
-            throw new BusinessException(ErrorCode.LIBRARY_EMPTY);
-        }
-        if(task.getTaskStatus().equals("FAILED")){
-            log.error("算法后台执行搜索任务失败: taskId={}", taskId);
-            throw new RuntimeException("算法后台执行搜索任务失败: taskId=" + taskId);
-        }
-        if (task == null || task.getSearchResult() == null) {
+        if (task == null) {
             return Collections.emptyList();
         }
 
+        if ("FAILED".equals(task.getTaskStatus())) {
+            log.error("算法后台执行搜索任务失败: taskId={}", taskId);
+            throw new RuntimeException("算法后台执行搜索任务失败: taskId=" + taskId);
+        }
+
+        if (task.getSearchResult() == null) {
+            return Collections.emptyList();
+        }
+
+        String searchResult = task.getSearchResult();
+
+        // JSONB 中存储的字符串值可能带引号，兼容两种格式
+        String trimmed = searchResult;
+        if (trimmed.startsWith("\"") && trimmed.endsWith("\"") && trimmed.length() >= 2) {
+            trimmed = trimmed.substring(1, trimmed.length() - 1);
+        }
+        if ("LIBRARY_EMPTY".equals(trimmed)) {
+            throw new BusinessException(ErrorCode.LIBRARY_EMPTY);
+        }
+
         try {
-            return objectMapper.readValue(task.getSearchResult(),
+            return objectMapper.readValue(searchResult,
                     new TypeReference<List<SearchResultVO>>() {});
         } catch (JsonProcessingException e) {
             log.error("反序列化搜索结果失败: taskId={}", taskId, e);
