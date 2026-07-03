@@ -175,6 +175,15 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
         }
 
         String result = request.getResult();
+
+        if ("LIBRARY_EMPTY".equals(result)) {
+            task.setTaskStatus("SUCCESS");
+            task.setSearchResult("LIBRARY_EMPTY");
+            taskMapper.updateById(task);
+            log.info("任务状态更新: taskId={}, 图像库为空", taskId);
+            return;
+        }
+
         task.setTaskStatus(result);
 
         if ("SUCCESS".equals(result) && request.getMatches() != null && !request.getMatches().isEmpty()) {
@@ -302,6 +311,9 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
     @Override
     public List<SearchResultVO> getSearchResult(UUID taskId) {
         TaskEntity task = taskMapper.selectById(taskId);
+        if ("LIBRARY_EMPTY".equals(task.getSearchResult())) {
+            throw new BusinessException(ErrorCode.LIBRARY_EMPTY);
+        }
         if(task.getTaskStatus().equals("FAILED")){
             log.error("算法后台执行搜索任务失败: taskId={}", taskId);
             throw new RuntimeException("算法后台执行搜索任务失败: taskId=" + taskId);
