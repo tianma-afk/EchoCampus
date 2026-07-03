@@ -9,7 +9,6 @@ import com.echocampus.landmark.entity.LandmarkEntity;
 import com.echocampus.landmark.mapper.ImageMapper;
 import com.echocampus.landmark.mapper.LandmarkMapper;
 import com.echocampus.shared.util.ImageUrlBuilder;
-import com.echocampus.shared.util.MinioUtil;
 import com.echocampus.university.entity.UniversityEntity;
 import com.echocampus.university.mapper.UniversityMapper;
 import com.echocampus.user.entity.RecognitionRecord;
@@ -18,15 +17,14 @@ import com.echocampus.user.mapper.RecognitionRecordMapper;
 import com.echocampus.user.mapper.UserImageMapper;
 import com.echocampus.user.service.RecognitionService;
 import com.echocampus.user.vo.RecognitionVO;
-import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +35,8 @@ public class RecognitionServiceImpl implements RecognitionService {
 
     private static final String UPLOAD_BUCKET = "campus";
 
+    private final String apiPublicBase;
+
     private final RecognitionRecordMapper recognitionRecordMapper;
     private final UserImageMapper userImageMapper;
     private final LandmarkMapper landmarkMapper;
@@ -44,16 +44,16 @@ public class RecognitionServiceImpl implements RecognitionService {
     private final CampusMapper campusMapper;
     private final UniversityMapper universityMapper;
     private final ImageUrlBuilder imageUrlBuilder;
-    private final MinioUtil minioUtil;
 
-    public RecognitionServiceImpl(RecognitionRecordMapper recognitionRecordMapper,
+    public RecognitionServiceImpl(@Value("${api.public-base:http://localhost:8080}") String apiPublicBase,
+                                  RecognitionRecordMapper recognitionRecordMapper,
                                   UserImageMapper userImageMapper,
                                   LandmarkMapper landmarkMapper,
                                   ImageMapper imageMapper,
                                   CampusMapper campusMapper,
                                   UniversityMapper universityMapper,
-                                  ImageUrlBuilder imageUrlBuilder,
-                                  MinioUtil minioUtil) {
+                                  ImageUrlBuilder imageUrlBuilder) {
+        this.apiPublicBase = apiPublicBase;
         this.recognitionRecordMapper = recognitionRecordMapper;
         this.userImageMapper = userImageMapper;
         this.landmarkMapper = landmarkMapper;
@@ -61,7 +61,6 @@ public class RecognitionServiceImpl implements RecognitionService {
         this.campusMapper = campusMapper;
         this.universityMapper = universityMapper;
         this.imageUrlBuilder = imageUrlBuilder;
-        this.minioUtil = minioUtil;
     }
 
     @Override
@@ -169,13 +168,8 @@ public class RecognitionServiceImpl implements RecognitionService {
                     UserImage img = imageMap.get(r.getImageId());
                     String imgUrl = null;
                     if (img != null) {
-                        try {
-                            imgUrl = minioUtil.getPresignedObjectUrl(
-                                    UPLOAD_BUCKET, img.getObjectName(),
-                                    5, TimeUnit.MINUTES, Method.GET, null);
-                        } catch (Exception e) {
-                            log.warn("生成图片预签名URL失败: objectName={}", img.getObjectName(), e);
-                        }
+                        imgUrl = String.format("%s/api/v1/upload/files?bucket=%s&object=%s",
+                                apiPublicBase, UPLOAD_BUCKET, img.getObjectName());
                     }
 
                     String landmarkName = null;

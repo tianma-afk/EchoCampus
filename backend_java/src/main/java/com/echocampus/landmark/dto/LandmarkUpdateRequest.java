@@ -52,6 +52,12 @@ public class LandmarkUpdateRequest {
     @Schema(description = "推荐率")
     private BigDecimal recommendRate;
 
+    @Schema(description = "GPS 纬度", example = "39.9928000")
+    private BigDecimal latitude;
+
+    @Schema(description = "GPS 经度", example = "116.3280000")
+    private BigDecimal longitude;
+
     @Schema(description = "楼层列表（传入则全量替换）")
     private List<FloorCreateDTO> floorList;
 }

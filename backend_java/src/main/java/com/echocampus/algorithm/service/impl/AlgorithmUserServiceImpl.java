@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLDecoder;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -293,9 +294,26 @@ public class AlgorithmUserServiceImpl implements AlgorithmUserService {
             java.net.URI uri = new java.net.URI(imageUrl);
             String path = uri.getPath();
             if (path == null) return "";
+
+            // 格式1: 代理URL — /api/v1/upload/files?bucket=XX&object=YY
+            if (path.endsWith("/upload/files")) {
+                String query = uri.getQuery();
+                if (query != null) {
+                    for (String param : query.split("&")) {
+                        String[] parts = param.split("=", 2);
+                        if (parts.length == 2 && "object".equals(parts[0])) {
+                            return java.net.URLDecoder.decode(parts[1], "UTF-8");
+                        }
+                    }
+                }
+                return "";
+            }
+
+            // 格式2: 旧版 MinIO 预签名URL — /campus/objectName
             if (path.startsWith("/" + UPLOAD_BUCKET + "/")) {
                 return path.substring(("/" + UPLOAD_BUCKET + "/").length());
             }
+
             return path.startsWith("/") ? path.substring(1) : path;
         } catch (Exception e) {
             log.warn("无法解析图片URL: {}", imageUrl, e);

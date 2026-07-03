@@ -30,6 +30,7 @@ import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +72,7 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public UUID createLandmark(LandmarkCreateRequest request) {
         LandmarkEntity entity = new LandmarkEntity();
         entity.setId(UUID.randomUUID());
@@ -88,9 +90,13 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
         entity.setCampusId(request.getCampusId());
         entity.setTotalFloors(request.getTotalFloors());
         entity.setRecommendRate(request.getRecommendRate());
+        entity.setLatitude(request.getLatitude());
+        entity.setLongitude(request.getLongitude());
         landmarkMapper.insert(entity);
 
         List<FloorCreateDTO> floorList = request.getFloorList();
+        log.info("创建地标楼层: landmarkId={}, floorCount={}", entity.getId(),
+                floorList != null ? floorList.size() : 0);
         if (floorList != null && !floorList.isEmpty()) {
             for (FloorCreateDTO dto : floorList) {
                 FloorEntity floor = new FloorEntity();
@@ -100,6 +106,8 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
                 floor.setFloorName(dto.getFloorName());
                 floor.setTags(dto.getTags());
                 floorMapper.insert(floor);
+                log.debug("  插入楼层: floorNumber={}, floorName={}, tags={}",
+                        dto.getFloorNumber(), dto.getFloorName(), dto.getTags());
             }
         }
 
@@ -243,11 +251,14 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
                 .universityId(campus != null ? campus.getUniversityId() : null)
                 .totalFloors(entity.getTotalFloors())
                 .recommendRate(entity.getRecommendRate())
+                .latitude(entity.getLatitude())
+                .longitude(entity.getLongitude())
                 .floorList(floorVOList)
                 .build();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateLandmark(UUID id, LandmarkUpdateRequest request) {
         LandmarkEntity entity = landmarkMapper.selectById(id);
         if (entity == null) {
@@ -267,6 +278,8 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
         if (request.getCampusId() != null) entity.setCampusId(request.getCampusId());
         if (request.getTotalFloors() != null) entity.setTotalFloors(request.getTotalFloors());
         if (request.getRecommendRate() != null) entity.setRecommendRate(request.getRecommendRate());
+        if (request.getLatitude() != null) entity.setLatitude(request.getLatitude());
+        if (request.getLongitude() != null) entity.setLongitude(request.getLongitude());
         landmarkMapper.updateById(entity);
 
         try {
@@ -275,9 +288,15 @@ public class LandmarkAdminServiceImpl implements LandmarkAdminService {
         } catch (Exception ignored) {
         }
 
-        if (request.getFloorList() != null) {
+        List<FloorCreateDTO> updateFloorList = request.getFloorList();
+        log.info("更新地标楼层: id={}, floorList={}", id,
+                updateFloorList != null ? updateFloorList.size() : null);
+        if (updateFloorList != null) {
+            updateFloorList.forEach(dto ->
+                    log.debug("  楼层: number={}, name={}, tags={}",
+                            dto.getFloorNumber(), dto.getFloorName(), dto.getTags()));
             floorMapper.delete(new LambdaQueryWrapper<FloorEntity>().eq(FloorEntity::getLandmarkId, id));
-            for (FloorCreateDTO dto : request.getFloorList()) {
+            for (FloorCreateDTO dto : updateFloorList) {
                 FloorEntity floor = new FloorEntity();
                 floor.setId(UUID.randomUUID());
                 floor.setLandmarkId(id);
