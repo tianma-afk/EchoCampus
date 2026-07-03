@@ -422,7 +422,7 @@ onMounted(() => { loadCheckinHistory(); loadFavoriteCount(); loadRecognitionCoun
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0 16px 84px;
-  padding-top: 200px;
+  padding-top: 220px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
