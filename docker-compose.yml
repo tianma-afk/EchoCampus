@@ -17,10 +17,6 @@ services:
 #      MINIO_ACCESS_KEY: echo_campus
 #      MINIO_SECRET_KEY: echo_campus
 #      MINIO_BUCKET: image
-#      SPRING_RABBITMQ_HOST: rabbitmq
-#      SPRING_RABBITMQ_PORT: 5672
-#      SPRING_RABBITMQ_USERNAME: echo_campus
-#      SPRING_RABBITMQ_PASSWORD: echo_campus
 #      REDIS_HOST: redis
 #      REDIS_PORT: 6379
 #      REDIS_PASSWORD: echo_campus
@@ -28,8 +24,6 @@ services:
 #      postgres:
 #        condition: service_healthy
 #      minio:
-#        condition: service_started
-#      rabbitmq:
 #        condition: service_started
 #      redis:
 #        condition: service_healthy
@@ -124,19 +118,6 @@ services:
       minio:
         condition: service_started
     command: milvus run standalone
-
-  rabbitmq:
-    image: rabbitmq:management
-    container_name: rabbitmq
-    restart: always
-    environment:
-      RABBITMQ_DEFAULT_USER: echo_campus
-      RABBITMQ_DEFAULT_PASS: echo_campus
-    ports:
-      - "15672:15672"   # 管理界面端口
-      - "5672:5672"     # 消息通信端口
-    volumes:
-      - /usr/local/docker/rabbitmq:/var/lib/rabbitmq
 
   redis:
     image: redis:7-alpine
