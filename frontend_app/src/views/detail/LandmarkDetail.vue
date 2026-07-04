@@ -8,7 +8,8 @@ import { submitRating } from '../../api/rating'
 import { wgs84ToGcj02 } from '../../utils/coordConvert'
 import FeedbackPage from '../feedback/FeedbackPage.vue'
 import ShareModal from '../../components/ShareModal.vue'
-  import { getComments, submitComment, likeComment, unlikeComment, type CommentItem } from '../../api/comment'
+import { getComments, submitComment, likeComment, unlikeComment, type CommentItem } from '../../api/comment'
+import { proxyImageUrl } from '../../config'
 
 interface LandmarkDetail {
   id?: string | number
@@ -445,7 +446,7 @@ const bubblePositions = computed(() => {
             @touchstart="handleTouchStart"
             @touchend="handleTouchEnd"
           >
-            <img :src="props.landmark.imgs[currentImageIndex]" :alt="props.landmark.name" />
+            <img :src="proxyImageUrl(props.landmark.imgs[currentImageIndex])" :alt="props.landmark.name" />
             <span class="image-counter" v-if="props.landmark.imgs.length > 1">
               {{ currentImageIndex + 1 }}/{{ props.landmark.imgs.length }}
             </span>
@@ -458,7 +459,7 @@ const bubblePositions = computed(() => {
               :class="{ active: i === currentImageIndex }"
               @click.stop="selectImage(i)"
             >
-              <img :src="img" :alt="'精选' + (i + 1)" />
+              <img :src="proxyImageUrl(img)" :alt="'精选' + (i + 1)" />
             </button>
           </div>
         </div>

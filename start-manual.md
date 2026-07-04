@@ -26,7 +26,7 @@ cd /mnt/d/JavaLearn/EchoCampusProject/EchoCampus
 # 启动全部容器
 docker compose up -d 
 
-# 验证
+# 验证  
 docker ps
 # 应有 6 个容器在运行
 ```
@@ -54,7 +54,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 **新开一个 PowerShell：**
 
-```powershell
+```powershell，注意要把10.195.103.116换成自己的ip
 cd D:\JavaLearn\EchoCampusProject\EchoCampus\backend_java
 
 $env:API_PUBLIC_BASE="http://192.168.48.6:8080"
@@ -68,6 +68,9 @@ mvn spring-boot:run
 
 等待输出 `Started EchoCampusApplication`（约 20 秒）。
 
+> `API_PUBLIC_BASE` 和 `MINIO_PUBLIC_ENDPOINT` 必须填本机局域网 IP，供手机端访问。
+> 移动端 API 调用和图片加载走 Vite 代理（`localhost:8080`），与这个 IP 无关。
+
 ---
 
 ## 4. 启动移动端前端（端口 5174）
@@ -77,14 +80,13 @@ mvn spring-boot:run
 ```powershell
 cd D:\JavaLearn\EchoCampusProject\EchoCampus\frontend_app
 
-$env:VITE_API_BASE="http://192.168.48.6:8080"
-# 示例：
-# $env:VITE_API_BASE="http://10.195.103.116:8080"
+# VITE_API_BASE 设为空，API 走 Vite 代理，避免 HTTPS 页面加载 HTTP 资源的混合内容问题
+$env:VITE_API_BASE=""
 
-npm run dev
+npx vite --host
 ```
 
-看到 `Network: http://<IP>:5174` 即可。
+看到 `Network: https://<IP>:5174` 即可。手机用 `https://<IP>:5174` 访问，浏览器提示不安全时点"高级"→"继续访问"。
 
 ---
 

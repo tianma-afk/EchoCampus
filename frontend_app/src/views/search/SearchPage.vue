@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
-import { API_BASE, MINIO_BASE } from '../../config'
+import { API_BASE, MINIO_BASE, proxyImageUrl } from '../../config'
 import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 const emit = defineEmits<{
@@ -22,6 +22,7 @@ const MINIO_BASE_URL = MINIO_BASE
 const uploading = ref(false)
 const showPreview = ref(false)
 const previewImageUrl = ref('')
+const fullImageUrl = ref('')
 const resultShowImageUrl = ref('')
 
 const isRecognizing = ref(false)
@@ -124,7 +125,9 @@ const handleImageSelected = async (file: File | Blob) => {
     const res = await axios.post(`${UPLOAD_API}/direct`, formData)
     const { uploadUrl } = res.data.data
 
-    previewImageUrl.value = uploadUrl
+    const u = new URL(uploadUrl)
+    fullImageUrl.value = uploadUrl
+    previewImageUrl.value = u.pathname + u.search
     showPreview.value = true
   } catch (error) {
     console.error('上传图片失败:', error)
@@ -138,7 +141,7 @@ const handleConfirm = async () => {
   showPreview.value = false
   resultShowImageUrl.value = previewImageUrl.value
   try {
-    const imageUrl = previewImageUrl.value
+    const imageUrl = fullImageUrl.value
     const res = await axios.post(SEARCH_API, { imageUrl })
     const taskId = res.data.data
 
@@ -377,7 +380,7 @@ onUnmounted(() => {
                :class="{ 'in-view': visibleCards.has(index), 'card-first': index === 0, 'card-last': index === recognitionResults.length - 1 }"
                @click="handleCardClick(item)">
             <div class="circle-img-box">
-              <img v-if="item.coverUrl" :src="item.coverUrl" alt="建筑封面" class="circle-img" @error="onCoverImgError" />
+              <img v-if="item.coverUrl" :src="proxyImageUrl(item.coverUrl)" alt="建筑封面" class="circle-img" @error="onCoverImgError" />
               <div v-else class="circle-img-placeholder">暂未设置封面</div>
             </div>
             <div class="card-text">
@@ -919,6 +922,8 @@ onUnmounted(() => {
   padding: 20px;
   background: #000;
   min-height: 0;
+  aspect-ratio: 1;
+  max-height: 80vh;
 }
 
 .preview-image {
