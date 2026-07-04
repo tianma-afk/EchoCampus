@@ -114,6 +114,17 @@ const comments = ref<CommentItem[]>([])
 const commentText = ref('')
 const replyTo = ref<{ id: string; nickname: string } | null>(null)
 const loadingComments = ref(false)
+const expandedReplies = ref<Set<string>>(new Set())
+
+const toggleReplies = (commentId: string) => {
+  const next = new Set(expandedReplies.value)
+  if (next.has(commentId)) {
+    next.delete(commentId)
+  } else {
+    next.add(commentId)
+  }
+  expandedReplies.value = next
+}
 
 const fetchComments = async () => {
   const landmarkId = String(props.landmark.id || '')
@@ -704,7 +715,14 @@ const bubblePositions = computed(() => {
                   </button>
                   <button class="comment-action-btn reply-btn" @click="setReplyTo(c)">回复</button>
                 </div>
-                <div v-if="c.replies && c.replies.length > 0" class="comment-replies">
+                <button
+                  v-if="c.replies && c.replies.length > 0"
+                  class="expand-replies-btn"
+                  @click="toggleReplies(c.id)"
+                >
+                  {{ expandedReplies.has(c.id) ? '收起回复' : `展开 ${c.replies.length} 条回复` }}
+                </button>
+                <div v-if="c.replies && expandedReplies.has(c.id)" class="comment-replies">
                   <div v-for="r in c.replies" :key="r.id" class="reply-item">
                     <div class="comment-avatar reply-avatar">{{ r.nickname.charAt(0) }}</div>
                     <div class="comment-body">
@@ -1754,6 +1772,19 @@ const bubblePositions = computed(() => {
 
 .reply-btn {
   color: #999;
+}
+
+.expand-replies-btn {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.expand-replies-btn:active {
+  opacity: 0.6;
 }
 
 .comment-replies {
