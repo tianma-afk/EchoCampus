@@ -60,8 +60,8 @@ cd D:\JavaLearn\EchoCampusProject\EchoCampus\backend_java
 $env:API_PUBLIC_BASE="http://192.168.48.6:8080"
 $env:MINIO_PUBLIC_ENDPOINT="http://192.168.48.6:9000"
 # 示例：
-# $env:API_PUBLIC_BASE="http://10.195.111.243:8080"
-# $env:MINIO_PUBLIC_ENDPOINT="http://10.195.111.243:9000"
+# $env:API_PUBLIC_BASE="http://10.195.103.116:8080"
+# $env:MINIO_PUBLIC_ENDPOINT="http://10.195.103.116:9000"
 
 mvn spring-boot:run
 ```
@@ -79,7 +79,7 @@ cd D:\JavaLearn\EchoCampusProject\EchoCampus\frontend_app
 
 $env:VITE_API_BASE="http://192.168.48.6:8080"
 # 示例：
-# $env:VITE_API_BASE="http://10.195.111.243:8080"
+# $env:VITE_API_BASE="http://10.195.103.116:8080"
 
 npm run dev
 ```
