@@ -66,14 +66,18 @@ class MilvusService:
         if len(uuid) != 36:
             logger.warning(f"uuid '{uuid}' 长度不是36位")
         data = [{"uuid": uuid, "vector": vector}]
-        return self.client.insert(collection_name=COLLECTION_NAME, data=data)
+        result = self.client.insert(collection_name=COLLECTION_NAME, data=data)
+        self.client.flush(collection_name=COLLECTION_NAME)
+        return result
 
     def insert_vectors(self, vectors, uuids: list):
         if not vectors or not uuids or len(vectors) != len(uuids):
             logger.error("vectors/uuids 不能为空且长度必须一致")
             return None
         data = [{"uuid": uuids[i], "vector": vectors[i]} for i in range(len(vectors))]
-        return self.client.insert(collection_name=COLLECTION_NAME, data=data)
+        result = self.client.insert(collection_name=COLLECTION_NAME, data=data)
+        self.client.flush(collection_name=COLLECTION_NAME)
+        return result
 
     def search_similar(self, query_vector, top_k: int = 10):
         results = self.client.search(
@@ -111,7 +115,9 @@ class MilvusService:
             logger.error("vectors/uuids 不能为空且长度必须一致")
             return None
         data = [{"uuid": uuids[i], "vector": vectors[i]} for i in range(len(vectors))]
-        return await asyncio.to_thread(self.client.insert, collection_name=COLLECTION_NAME, data=data)
+        result = await asyncio.to_thread(self.client.insert, collection_name=COLLECTION_NAME, data=data)
+        await asyncio.to_thread(self.client.flush, collection_name=COLLECTION_NAME)
+        return result
 
     async def load_collection_async(self):
         await asyncio.to_thread(self.client.load_collection, collection_name=COLLECTION_NAME)
