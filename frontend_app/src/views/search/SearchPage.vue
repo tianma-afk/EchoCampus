@@ -82,14 +82,20 @@ const switchCamera = () => {
 
 const takePhoto = () => {
   if (!videoElement.value) return
-  
+
+  const vw = videoElement.value.videoWidth
+  const vh = videoElement.value.videoHeight
+  const size = Math.min(vw, vh)
+
   const canvas = document.createElement('canvas')
-  canvas.width = videoElement.value.videoWidth
-  canvas.height = videoElement.value.videoHeight
-  
+  canvas.width = size
+  canvas.height = size
+
   const ctx = canvas.getContext('2d')
   if (ctx) {
-    ctx.drawImage(videoElement.value, 0, 0)
+    const sx = (vw - size) / 2
+    const sy = (vh - size) / 2
+    ctx.drawImage(videoElement.value, sx, sy, size, size, 0, 0, size, size)
     canvas.toBlob((blob) => {
       if (blob) {
         console.log('拍摄的照片:', blob)
@@ -97,7 +103,7 @@ const takePhoto = () => {
       }
     }, 'image/jpeg', 0.9)
   }
-  
+
   stopCamera()
 }
 
