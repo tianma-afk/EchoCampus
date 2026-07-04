@@ -11,7 +11,7 @@ const router = createRouter({
     {
       path: '/',
       component: Layout,
-      redirect: '/landmark',
+      redirect: '/home',
     },
     {
       path: '/landmark',
@@ -126,7 +126,7 @@ router.beforeEach((to) => {
     return '/login'
   }
   if (token && to.path === '/login') {
-    return '/landmark'
+    return '/home'
   }
 })
 

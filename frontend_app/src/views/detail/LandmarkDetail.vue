@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -8,6 +8,7 @@ import { submitRating } from '../../api/rating'
 import { wgs84ToGcj02 } from '../../utils/coordConvert'
 import FeedbackPage from '../feedback/FeedbackPage.vue'
 import ShareModal from '../../components/ShareModal.vue'
+  import { getComments, submitComment, likeComment, unlikeComment, type CommentItem } from '../../api/comment'
 
 interface LandmarkDetail {
   id?: string | number
@@ -107,6 +108,102 @@ const checkinBtnDisabled = ref(false)
 const showRatingPanel = ref(false)
 const showFeedback = ref(false)
 const showShareModal = ref(false)
+
+// 绀惧尯璇勮
+const comments = ref<CommentItem[]>([])
+const commentText = ref('')
+const replyTo = ref<{ id: string; nickname: string } | null>(null)
+const loadingComments = ref(false)
+const expandedReplies = ref<Set<string>>(new Set())
+
+const toggleReplies = (commentId: string) => {
+  const next = new Set(expandedReplies.value)
+  if (next.has(commentId)) {
+    next.delete(commentId)
+  } else {
+    next.add(commentId)
+  }
+  expandedReplies.value = next
+}
+
+const fetchComments = async () => {
+  const landmarkId = String(props.landmark.id || '')
+  if (!landmarkId) return
+  loadingComments.value = true
+  try {
+    const res = await getComments(landmarkId)
+    if (res.code === '00000') {
+      comments.value = res.data
+    }
+  } catch { /* ignore */ }
+  finally { loadingComments.value = false }
+}
+
+const handleSubmitComment = async () => {
+  if (!commentText.value.trim()) return
+  const landmarkId = String(props.landmark.id || '')
+  if (!landmarkId) return
+  try {
+    const parentId = replyTo.value?.id
+    const res = await submitComment(landmarkId, commentText.value.trim(), parentId)
+    if (res.code === '00000') {
+      commentText.value = ''
+      replyTo.value = null
+      await fetchComments()
+    } else {
+      console.error('提交评论失败:', res.message)
+      alert(res.message || '评论发送失败')
+    }
+  } catch (e) {
+    console.error('提交评论异常:', e)
+    alert('评论发送失败，请重试')
+  }
+}
+
+const handleToggleLike = async (comment: CommentItem) => {
+  try {
+    if (comment.isLiked) {
+      const res = await unlikeComment(comment.id)
+      if (res.code === '00000') {
+        comment.isLiked = false
+        comment.likeCount = Math.max(0, comment.likeCount - 1)
+      }
+    } else {
+      const res = await likeComment(comment.id)
+      if (res.code === '00000') {
+        comment.isLiked = true
+        comment.likeCount = comment.likeCount + 1
+      }
+    }
+  } catch (e) {
+    console.error('点赞操作失败:', e)
+  }
+}
+
+const setReplyTo = (c: CommentItem) => {
+  replyTo.value = { id: c.id, nickname: c.nickname }
+  commentText.value = ''
+}
+
+const cancelReply = () => {
+  replyTo.value = null
+  commentText.value = ''
+}
+
+const formatTime = (dateStr: string) => {
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  return d.toLocaleDateString('zh-CN')
+}
+
 const ratingValue = ref(0)
 const ratingHoverValue = ref(0)
 const ratingSubmitting = ref(false)
@@ -241,6 +338,8 @@ onMounted(() => {
   }).addTo(minimap)
 
   L.marker([lat, lng]).addTo(minimap)
+
+  fetchComments()
 })
 
 function handleViewLargeMap() {
@@ -359,7 +458,7 @@ const bubblePositions = computed(() => {
               :class="{ active: i === currentImageIndex }"
               @click.stop="selectImage(i)"
             >
-              <img :src="img" :alt="'精选 ' + (i + 1)" />
+              <img :src="img" :alt="'精选' + (i + 1)" />
             </button>
           </div>
         </div>
@@ -376,7 +475,7 @@ const bubblePositions = computed(() => {
           <div class="tags-row">
             <div class="campus-info">
               <span class="landmark-name">{{ props.landmark.name }}</span>
-              <span class="university-name">{{ props.landmark.universityName }}·{{ props.landmark.campusName }}</span>
+              <span class="university-name">{{ props.landmark.universityName }}路{{ props.landmark.campusName }}</span>
               <div class="rating-inline">
                 <div class="stars">
                   <template v-for="i in 5" :key="i">
@@ -569,8 +668,7 @@ const bubblePositions = computed(() => {
           <div class="card-header">
             <h3 class="card-title">地标位置</h3>
             <button class="view-map-btn" @click="handleViewLargeMap">
-              查看大地图
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              查看大地图              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
@@ -598,6 +696,83 @@ const bubblePositions = computed(() => {
         <div class="detail-feedback-row">
           <span class="feedback-text-link" @click="showFeedback = true">有问题？去反馈</span>
         </div>
+
+        <!-- 社区讨论 -->
+        <div class="comment-section">
+          <div class="comment-header">
+            <span class="comment-title">社区讨论</span>
+            <span class="comment-count" v-if="comments.length">{{ comments.length }} 条评论</span>
+          </div>
+
+          <div class="comment-list" v-if="comments.length > 0">
+            <div v-for="c in comments" :key="c.id" class="comment-item">
+              <div class="comment-avatar">{{ c.nickname.charAt(0) }}</div>
+              <div class="comment-body">
+                <div class="comment-info">
+                  <span class="comment-nickname">{{ c.nickname }}</span>
+                  <span class="comment-time">{{ formatTime(c.createdAt) }}</span>
+                </div>
+                <p class="comment-content">{{ c.content }}</p>
+                <div class="comment-actions">
+                  <button class="comment-action-btn" @click="handleToggleLike(c)">
+                    <svg viewBox="0 0 24 24" :fill="c.isLiked ? '#e74c3c' : 'none'" :stroke="c.isLiked ? '#e74c3c' : '#999'" stroke-width="2" width="16" height="16">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                    <span v-if="c.likeCount > 0" class="like-num">{{ c.likeCount }}</span>
+                  </button>
+                  <button class="comment-action-btn reply-btn" @click="setReplyTo(c)">回复</button>
+                </div>
+                <button
+                  v-if="c.replies && c.replies.length > 0"
+                  class="expand-replies-btn"
+                  @click="toggleReplies(c.id)"
+                >
+                  {{ expandedReplies.has(c.id) ? '收起回复' : `展开 ${c.replies.length} 条回复` }}
+                </button>
+                <div v-if="c.replies && expandedReplies.has(c.id)" class="comment-replies">
+                  <div v-for="r in c.replies" :key="r.id" class="reply-item">
+                    <div class="comment-avatar reply-avatar">{{ r.nickname.charAt(0) }}</div>
+                    <div class="comment-body">
+                      <div class="comment-info">
+                        <span class="comment-nickname">{{ r.nickname }}</span>
+                        <span class="comment-time">{{ formatTime(r.createdAt) }}</span>
+                      </div>
+                      <p class="comment-content">{{ r.content }}</p>
+                      <div class="comment-actions">
+                        <button class="comment-action-btn" @click="handleToggleLike(r)">
+                          <svg viewBox="0 0 24 24" :fill="r.isLiked ? '#e74c3c' : 'none'" :stroke="r.isLiked ? '#e74c3c' : '#999'" stroke-width="2" width="14" height="14">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                          </svg>
+                          <span v-if="r.likeCount > 0" class="like-num small">{{ r.likeCount }}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else-if="!loadingComments" class="comment-empty">暂无评论，来说两句吧</div>
+          <div v-else class="comment-empty">加载中...</div>
+
+          <div class="comment-input-bar">
+            <span v-if="replyTo" class="reply-hint">
+              回复 @{{ replyTo.nickname }}
+              <button class="cancel-reply" @click="cancelReply">取消</button>
+            </span>
+            <div class="input-row">
+              <input
+                v-model="commentText"
+                class="comment-input"
+                :placeholder="replyTo ? '写下你的回复...' : '写下你的评论...'"
+                maxlength="500"
+                @keyup.enter="handleSubmitComment"
+              />
+              <button class="send-btn" :disabled="!commentText.trim()" @click="handleSubmitComment">发送</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -623,7 +798,7 @@ const bubblePositions = computed(() => {
       {{ checkinMsg }}
     </div>
 
-    <!-- 评分半屏面板 -->
+    <!-- 璇勫垎鍗婂睆闈㈡澘 -->
     <div v-if="showRatingPanel" class="rating-overlay" @click.self="closeRatingPanel">
       <div class="rating-panel">
         <div class="rating-panel-header">
@@ -701,7 +876,7 @@ const bubblePositions = computed(() => {
   background: var(--color-bg);
 }
 
-/* ── Top Bar ── */
+/* 鈹€鈹€ Top Bar 鈹€鈹€ */
 .detail-topbar {
   position: relative;
   display: flex;
@@ -753,7 +928,7 @@ const bubblePositions = computed(() => {
   flex-shrink: 0;
 }
 
-/* ── Image Gallery ── */
+/* 鈹€鈹€ Image Gallery 鈹€鈹€ */
 .image-gallery {
   display: flex;
   flex-direction: column;
@@ -788,7 +963,7 @@ const bubblePositions = computed(() => {
   backdrop-filter: blur(4px);
 }
 
-/* ── Thumbnail Strip ── */
+/* 鈹€鈹€ Thumbnail Strip 鈹€鈹€ */
 .thumbnail-strip {
   display: flex;
   gap: 8px;
@@ -824,7 +999,7 @@ const bubblePositions = computed(() => {
   display: block;
 }
 
-/* ── Image Placeholder ── */
+/* 鈹€鈹€ Image Placeholder 鈹€鈹€ */
 .image-placeholder-card {
   border-radius: var(--radius-xl);
   background: var(--color-bg-input);
@@ -1380,7 +1555,7 @@ const bubblePositions = computed(() => {
   100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
 }
 
-/* 评分半屏面板 */
+/* 璇勫垎鍗婂睆闈㈡澘 */
 .rating-overlay {
   position: fixed;
   inset: 0;
@@ -1479,5 +1654,239 @@ const bubblePositions = computed(() => {
   background: var(--color-bg-input);
   color: var(--color-text-muted);
   cursor: not-allowed;
+}
+
+/* 绀惧尯璇勮 */
+.comment-section {
+  margin-top: 16px;
+  border-top: 1px solid var(--color-border);
+  padding-bottom: 16px;
+}
+
+.comment-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 0 10px;
+}
+
+.comment-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-heading);
+}
+
+.comment-count {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.comment-list {
+  padding-bottom: 8px;
+}
+
+.comment-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), #6db39e);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reply-avatar {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.comment-nickname {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-heading);
+}
+
+.comment-time {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.comment-content {
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.5;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.comment-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-size: 12px;
+  color: #999;
+  cursor: pointer;
+}
+
+.comment-action-btn:active {
+  opacity: 0.6;
+}
+
+.like-num {
+  font-size: 12px;
+  color: #999;
+}
+
+.like-num.small {
+  font-size: 11px;
+}
+
+.reply-btn {
+  color: #999;
+}
+
+.expand-replies-btn {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.expand-replies-btn:active {
+  opacity: 0.6;
+}
+
+.comment-replies {
+  margin-top: 8px;
+  padding: 8px 0 8px 12px;
+  background: rgba(0,0,0,0.02);
+  border-radius: 8px;
+  border-left: 2px solid rgba(0,0,0,0.06);
+}
+
+.reply-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.reply-item:last-child {
+  padding-bottom: 0;
+}
+
+.reply-item + .reply-item {
+  border-top: 1px solid rgba(0,0,0,0.03);
+}
+
+.comment-empty {
+  padding: 20px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.comment-input-bar {
+  padding: 10px 0;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.reply-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+}
+
+.cancel-reply {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #999;
+  cursor: pointer;
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.comment-input {
+  flex: 1;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 19px;
+  font-size: 14px;
+  background: rgba(0,0,0,0.03);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.comment-input:focus {
+  border-color: var(--color-primary);
+}
+
+.send-btn {
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 19px;
+  background: var(--color-primary);
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.send-btn:not(:disabled):active {
+  transform: scale(0.95);
 }
 </style>
