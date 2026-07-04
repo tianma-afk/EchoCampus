@@ -36,6 +36,14 @@ let sdkLoading = false
 let sdkLoadResolve: (() => void) | null = null
 let lastLatLng: { lat: number; lng: number } | null = null
 
+// 罗盘状态
+let compassRaw: number | null = null
+let compassStaleTimer: ReturnType<typeof setTimeout> | null = null
+let smoothHeading = 0
+let hasSmoothHeading = false
+const COMPASS_SMOOTH = 0.3
+const COMPASS_STALE_MS = 5000
+
 function loadAmapSDK(): Promise<void> {
   if (sdkLoaded) return Promise.resolve()
   if (sdkLoading) {
@@ -86,6 +94,11 @@ export function useNavigation() {
     isRouting.value = true
     navError.value = ''
 
+    const compassOk = await requestCompassPermission()
+    if (!compassOk) {
+      console.warn('罗盘权限未授权，将使用GPS方向')
+    }
+
     try {
       const pos = await getCurrentPosition()
       const gcj = wgs84ToGcj02(pos.coords.latitude, pos.coords.longitude)
@@ -100,9 +113,11 @@ export function useNavigation() {
 
       watchId = navigator.geolocation.watchPosition(
         onPositionUpdate,
-        () => {},
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
+        onPositionError,
+        { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
       )
+
+      if (compassOk) startCompass()
 
       isRouting.value = false
       isNavigating.value = true
@@ -119,6 +134,8 @@ export function useNavigation() {
       navigator.geolocation.clearWatch(watchId)
       watchId = null
     }
+    stopCompass()
+    gpsErrorCount = 0
     isNavigating.value = false
     isRouting.value = false
     hasArrived.value = false
@@ -131,6 +148,77 @@ export function useNavigation() {
     remainingTime.value = 0
     userPosition.value = null
     routeDeviation.value = false
+  }
+
+  let gpsErrorCount = 0
+
+  function onPositionError(err: GeolocationPositionError) {
+    gpsErrorCount++
+    console.warn('GPS error #' + gpsErrorCount + ':', err.code, err.message)
+    if (gpsErrorCount > 5) {
+      console.warn('GPS too many errors, lowering accuracy')
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId)
+      watchId = navigator.geolocation.watchPosition(
+        onPositionUpdate,
+        onPositionError,
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 3000 }
+      )
+    }
+  }
+
+  function onCompassUpdate(event: DeviceOrientationEvent) {
+    let raw = event.alpha
+    if (typeof (event as any).webkitCompassHeading === 'number') {
+      raw = (event as any).webkitCompassHeading
+    }
+    if (raw === null || raw === undefined) return
+
+    if (!hasSmoothHeading) {
+      smoothHeading = raw
+      hasSmoothHeading = true
+    } else {
+      let diff = raw - smoothHeading
+      if (diff > 180) diff -= 360
+      if (diff < -180) diff += 360
+      smoothHeading += COMPASS_SMOOTH * diff
+      smoothHeading = ((smoothHeading % 360) + 360) % 360
+    }
+
+    compassRaw = smoothHeading
+
+    if (compassStaleTimer) clearTimeout(compassStaleTimer)
+    compassStaleTimer = setTimeout(() => {
+      compassRaw = null
+      hasSmoothHeading = false
+    }, COMPASS_STALE_MS)
+
+    if (userPosition.value) {
+      userPosition.value = { ...userPosition.value, heading: smoothHeading }
+    }
+  }
+
+  function startCompass() {
+    window.addEventListener('deviceorientationabsolute', onCompassUpdate)
+    window.addEventListener('deviceorientation', onCompassUpdate)
+  }
+
+  function stopCompass() {
+    window.removeEventListener('deviceorientationabsolute', onCompassUpdate)
+    window.removeEventListener('deviceorientation', onCompassUpdate)
+    if (compassStaleTimer) { clearTimeout(compassStaleTimer); compassStaleTimer = null }
+    compassRaw = null
+    hasSmoothHeading = false
+  }
+
+  async function requestCompassPermission(): Promise<boolean> {
+    const api = (DeviceOrientationEvent as any)
+    if (typeof api.requestPermission === 'function') {
+      try {
+        const result = await api.requestPermission()
+        return result === 'granted'
+      } catch { return false }
+    }
+    return true
   }
 
   function repairStepPath(path: any[]): [number, number][] {
@@ -201,14 +289,18 @@ export function useNavigation() {
     const lat = gcj.lat
     const lng = gcj.lng
 
-    let heading = pos.coords.heading
-    if (heading === null || isNaN(heading)) {
-      if (lastLatLng) {
-        heading = computeBearing(lastLatLng.lat, lastLatLng.lng, lat, lng)
-      }
+    let heading: number | undefined
+
+    if (compassRaw !== null && !isNaN(compassRaw)) {
+      heading = compassRaw
+    } else if (pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
+      heading = pos.coords.heading
+    } else if (lastLatLng) {
+      heading = computeBearing(lastLatLng.lat, lastLatLng.lng, lat, lng)
     }
+
     lastLatLng = { lat, lng }
-    userPosition.value = { lat, lng, heading: heading ?? undefined }
+    userPosition.value = { lat, lng, heading }
 
     if (routeCoords.value.length === 0) return
 
@@ -235,6 +327,7 @@ export function useNavigation() {
     }
 
     let remDist = 0
+    remDist += distanceBetween(lat, lng, routeCoords.value[nearestIdx][0], routeCoords.value[nearestIdx][1])
     for (let i = nearestIdx; i < routeCoords.value.length - 1; i++) {
       remDist += distanceBetween(
         routeCoords.value[i][0], routeCoords.value[i][1],

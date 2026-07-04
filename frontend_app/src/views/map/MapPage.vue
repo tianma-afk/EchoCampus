@@ -388,17 +388,35 @@ watch(() => nav.hasArrived.value, (arrived) => {
   if (arrived) speak('您已到达目的地附近')
 })
 
-watch(() => nav.userPosition.value, (pos) => {
+watch(() => nav.userPosition.value, (pos, prevPos) => {
   if (!map || !pos || !nav.isNavigating.value) return
   if (!userMarker) {
     userMarker = L.marker([pos.lat, pos.lng], {
       icon: createUserMarkerIcon(pos.heading),
       zIndexOffset: 1000,
     }).addTo(map)
-  } else {
+    return
+  }
+
+  const latLngChanged = !prevPos || prevPos.lat !== pos.lat || prevPos.lng !== pos.lng
+
+  if (latLngChanged) {
     userMarker.setLatLng([pos.lat, pos.lng])
-    userMarker.setIcon(createUserMarkerIcon(pos.heading))
-    map.panTo([pos.lat, pos.lng])
+
+    const d = map.getCenter().distanceTo(L.latLng(pos.lat, pos.lng))
+    if (d > 50) {
+      map.panTo([pos.lat, pos.lng])
+    }
+  }
+
+  if (!prevPos || prevPos.heading !== pos.heading) {
+    const el = userMarker.getElement()
+    if (el) {
+      const arrow = el.querySelector<HTMLElement>('.user-arrow')
+      if (arrow) {
+        arrow.style.transform = `rotate(${pos.heading ?? 0}deg)`
+      }
+    }
   }
 })
 

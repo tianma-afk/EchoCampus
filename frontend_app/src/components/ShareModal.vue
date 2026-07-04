@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { proxyImageUrl } from '../config'
 
 interface LandmarkData {
   id?: string | number
@@ -95,7 +96,7 @@ async function fallbackCopy(url: string, target: string) {
 
       <div class="card-image">
         <img
-          :src="landmark.imgs?.[0]"
+          :src="proxyImageUrl(landmark.imgs?.[0])"
           :alt="landmark.name"
         />
       </div>
