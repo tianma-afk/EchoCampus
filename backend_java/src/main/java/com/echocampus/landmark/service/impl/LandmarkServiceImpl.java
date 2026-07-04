@@ -345,6 +345,16 @@ public class LandmarkServiceImpl implements LandmarkService {
             if (!rebuildIds.isEmpty()) {
                 log.info("[热门排行榜] 获得锁, 从 PG 加载 {} 个地标详情并回填缓存", rebuildIds.size());
                 List<LandmarkEntity> missEntities = landmarkMapper.selectBatchIds(rebuildIds);
+                // 清理 ZSET 中已不存在的脏数据
+                if (missEntities.size() < rebuildIds.size()) {
+                    Set<UUID> foundIds = missEntities.stream()
+                            .map(LandmarkEntity::getId).collect(Collectors.toSet());
+                    rebuildIds.stream()
+                            .filter(id -> !foundIds.contains(id))
+                            .forEach(id -> redisTemplate.opsForZSet()
+                                    .remove(HOT_RANKING_KEY, id.toString()));
+                    log.info("[热门排行榜] 清理 {} 个无效地标 ID", rebuildIds.size() - missEntities.size());
+                }
                 List<LandmarkVO> missVos = buildHotVoList(missEntities);
                 for (LandmarkVO vo : missVos) {
                     vo.setCheckins(scoreMap.get(vo.getId().toString()));
@@ -397,6 +407,11 @@ public class LandmarkServiceImpl implements LandmarkService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
+        if (voList.isEmpty()) {
+            log.warn("[热门排行榜] ZSET 无可用地标, 回退到 PostgreSQL 排序");
+            return fallbackHotList(request);
+        }
+
         Page<LandmarkVO> voPage = new Page<>(page, pageSize, total);
         voPage.setRecords(voList);
         return voPage;
@@ -406,7 +421,8 @@ public class LandmarkServiceImpl implements LandmarkService {
         log.info("[热门排行榜] 初始化 Redis ZSET, 从 PostgreSQL 加载数据");
         try {
             var wrapper = new LambdaQueryWrapper<LandmarkEntity>()
-                    .select(LandmarkEntity::getId, LandmarkEntity::getCheckInCount);
+                    .select(LandmarkEntity::getId, LandmarkEntity::getCheckInCount)
+                    .gt(LandmarkEntity::getCheckInCount, 0);
             List<LandmarkEntity> all = landmarkMapper.selectList(wrapper);
             if (all.isEmpty()) return;
 
@@ -415,6 +431,7 @@ public class LandmarkServiceImpl implements LandmarkService {
                             e.getId().toString(),
                             e.getCheckInCount() != null ? e.getCheckInCount().doubleValue() : 0.0))
                     .collect(Collectors.toSet());
+            redisTemplate.delete(HOT_RANKING_KEY);
             redisTemplate.opsForZSet().add(HOT_RANKING_KEY, tuples);
             log.info("[热门排行榜] 初始化完成, 共加载 {} 个地标", all.size());
         } catch (Exception e) {
