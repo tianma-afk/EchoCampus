@@ -145,6 +145,9 @@ public class CircuitBreaker {
             failurePolicy(halfOpenCurrentCount);
             throw e;
         }
+        if(state.get() == State.CLOSED){
+            failureCount.set(0);
+        }
         if(halfOpenCurrentCount != -1){
             halfOpenFinishCount.incrementAndGet();
             halfOpenSuccessCount.incrementAndGet();
