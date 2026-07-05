@@ -91,8 +91,8 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ```powershell，注意要把10.195.103.116换成自己的ip
 cd D:\JavaLearn\EchoCampusProject\EchoCampus\backend_java
 
-$env:API_PUBLIC_BASE="http://192.168.48.6:8080"
-$env:MINIO_PUBLIC_ENDPOINT="http://192.168.48.6:9000"
+$env:API_PUBLIC_BASE="http://192.168.172.6:8080"
+$env:MINIO_PUBLIC_ENDPOINT="http://192.168.172.6:9000"
 # 示例：
 # $env:API_PUBLIC_BASE="http://10.195.98.11:8080"
 # $env:MINIO_PUBLIC_ENDPOINT="http://10.195.98.11:9000"

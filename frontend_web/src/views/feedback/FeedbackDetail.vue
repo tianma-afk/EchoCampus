@@ -8,6 +8,7 @@ import {
   FEEDBACK_STATUS_MAP,
   type FeedbackAdminVO,
 } from '../../api/feedback'
+import { normalizeImageUrl } from '../../utils/url'
 
 const route = useRoute()
 const router = useRouter()
@@ -117,7 +118,7 @@ onMounted(() => {
         </div>
         <div class="info-content" v-if="feedback.uploadUrl">
           <span class="info-label">反馈图片</span>
-          <img :src="feedback.uploadUrl" class="feedback-image" />
+          <img :src="normalizeImageUrl(feedback.uploadUrl)" class="feedback-image" />
         </div>
         <div class="info-content">
           <span class="info-label">反馈正文</span>

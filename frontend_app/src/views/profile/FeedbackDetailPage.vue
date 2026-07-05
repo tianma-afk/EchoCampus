@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { type FeedbackRecord, FEEDBACK_TYPE_MAP, FEEDBACK_STATUS_MAP } from '../../api/feedback'
+import { proxyImageUrl } from '../../config'
 
 const props = defineProps<{ feedback: FeedbackRecord }>()
 defineEmits<{ back: [] }>()
@@ -70,7 +71,7 @@ function formatDateTime(d: string | null) {
       <div v-if="feedback.uploadUrl" class="content-section">
         <h3 class="section-title">反馈图片</h3>
         <div class="image-wrap">
-          <img :src="feedback.uploadUrl" alt="反馈图片" class="feedback-img" />
+          <img :src="proxyImageUrl(feedback.uploadUrl)" alt="反馈图片" class="feedback-img" />
         </div>
       </div>
 

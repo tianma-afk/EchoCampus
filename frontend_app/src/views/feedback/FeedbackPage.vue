@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import axios from 'axios'
-import { API_BASE } from '../../config'
+import { API_BASE, proxyImageUrl } from '../../config'
 
 const props = withDefaults(defineProps<{
   defaultType?: string
@@ -185,7 +185,7 @@ async function handleSubmit() {
       <div v-if="imageUrl" class="form-group">
         <label class="form-label">反馈图片</label>
         <div class="image-preview">
-          <img :src="imageUrl" alt="反馈图片" class="feedback-img" />
+          <img :src="proxyImageUrl(imageUrl)" alt="反馈图片" class="feedback-img" />
         </div>
       </div>
 
