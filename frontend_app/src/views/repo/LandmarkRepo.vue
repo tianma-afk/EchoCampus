@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 
-import { API_BASE } from '../../config'
+import { API_BASE, proxyImageUrl } from '../../config'
 
 // API 配置
 const API_BASE_URL = `${API_BASE}/api/v1` // 后端地址
@@ -339,7 +339,7 @@ const handleSortChange = () => {
             class="landmark-card"
             @click="handleCardClick(landmark)"
           >
-          <div class="landmark-image" :style="{ backgroundImage: `url(${landmark.coverImg})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
+          <div class="landmark-image" :style="{ backgroundImage: `url(${proxyImageUrl(landmark.coverImg)})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
           </div>
           <div class="landmark-info">
             <div class="landmark-header">

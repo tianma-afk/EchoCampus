@@ -32,7 +32,7 @@ async function handleLogin() {
     })
     if (res.code === '00000') {
       auth.login(res.data.access_token, res.data.nickname, res.data.role, res.data.email, res.data.admin_id)
-      router.replace('/landmark')
+      router.replace('/home')
     } else {
       errorMsg.value = res.message || '登录失败'
     }

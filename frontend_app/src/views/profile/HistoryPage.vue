@@ -4,6 +4,7 @@ import { getCheckinHistory, batchDeleteCheckins, type CheckinRecord } from '../.
 import { getFavorites, batchDeleteFavorites, type FavoriteRecord } from '../../api/favorite'
 import { getUserRatings, batchDeleteRatings, type RatingRecord } from '../../api/rating'
 import { getRecognitions, batchDeleteRecognitions, type RecognitionRecord } from '../../api/recognition'
+import { proxyImageUrl } from '../../config'
 
 const props = defineProps<{ defaultTab?: number }>()
 const emit = defineEmits<{ back: [] }>()
@@ -279,7 +280,7 @@ function renderStars(rating: number) {
             <div v-if="editMode" class="check-box" :class="{ checked: selectedIds.has(r.id) }">
               <svg v-if="selectedIds.has(r.id)" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </div>
-            <div class="card-img" :style="{ background: r.coverImageUrl ? `url(${r.coverImageUrl}) center/cover` : getColor(i) }">
+            <div class="card-img" :style="{ background: r.coverImageUrl ? `url(${proxyImageUrl(r.coverImageUrl)}) center/cover` : getColor(i) }">
               <span class="card-name" v-if="!r.coverImageUrl">{{ r.landmarkName }}</span>
             </div>
             <div class="card-info">
@@ -319,7 +320,7 @@ function renderStars(rating: number) {
             <div v-if="editMode" class="check-box" :class="{ checked: selectedIds.has(r.id) }">
               <svg v-if="selectedIds.has(r.id)" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </div>
-            <div class="card-img" :style="{ background: r.coverImageUrl ? `url(${r.coverImageUrl}) center/cover` : getColor(i) }">
+            <div class="card-img" :style="{ background: r.coverImageUrl ? `url(${proxyImageUrl(r.coverImageUrl)}) center/cover` : getColor(i) }">
               <span class="card-name" v-if="!r.coverImageUrl">{{ r.landmarkName }}</span>
             </div>
             <div class="card-info">
@@ -360,7 +361,7 @@ function renderStars(rating: number) {
             <div v-if="editMode" class="check-box" :class="{ checked: selectedIds.has(r.id) }">
               <svg v-if="selectedIds.has(r.id)" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </div>
-            <div class="card-img" :style="{ background: r.imageUrl ? `url(${r.imageUrl}) center/cover` : 'var(--color-bg-input)' }">
+            <div class="card-img" :style="{ background: r.imageUrl ? `url(${proxyImageUrl(r.imageUrl)}) center/cover` : 'var(--color-bg-input)' }">
             </div>
             <div class="card-info">
               <div class="card-title-row">

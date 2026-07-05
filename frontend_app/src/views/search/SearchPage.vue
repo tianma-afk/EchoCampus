@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick } from 'vue'
 import axios from 'axios'
-import { API_BASE, MINIO_BASE } from '../../config'
+import { API_BASE, MINIO_BASE, proxyImageUrl } from '../../config'
 import FeedbackPage from '../feedback/FeedbackPage.vue'
 
 const emit = defineEmits<{
@@ -22,10 +22,14 @@ const MINIO_BASE_URL = MINIO_BASE
 const uploading = ref(false)
 const showPreview = ref(false)
 const previewImageUrl = ref('')
+const fullImageUrl = ref('')
 const resultShowImageUrl = ref('')
 
 const isRecognizing = ref(false)
 const recognizingTaskId = ref('')
+const statusText = ref('正在分析图片...')
+const elapsedSeconds = ref(0)
+let elapsedTimer: ReturnType<typeof setInterval> | null = null
 const recognitionResults = ref<Array<{landmarkId: string, landmarkName: string, similarity: number, coverUrl: string}>>([])
 const showResult = ref(false)
 const showFeedback = ref(false)
@@ -78,14 +82,20 @@ const switchCamera = () => {
 
 const takePhoto = () => {
   if (!videoElement.value) return
-  
+
+  const vw = videoElement.value.videoWidth
+  const vh = videoElement.value.videoHeight
+  const size = Math.min(vw, vh)
+
   const canvas = document.createElement('canvas')
-  canvas.width = videoElement.value.videoWidth
-  canvas.height = videoElement.value.videoHeight
-  
+  canvas.width = size
+  canvas.height = size
+
   const ctx = canvas.getContext('2d')
   if (ctx) {
-    ctx.drawImage(videoElement.value, 0, 0)
+    const sx = (vw - size) / 2
+    const sy = (vh - size) / 2
+    ctx.drawImage(videoElement.value, sx, sy, size, size, 0, 0, size, size)
     canvas.toBlob((blob) => {
       if (blob) {
         console.log('拍摄的照片:', blob)
@@ -93,7 +103,7 @@ const takePhoto = () => {
       }
     }, 'image/jpeg', 0.9)
   }
-  
+
   stopCamera()
 }
 
@@ -121,7 +131,9 @@ const handleImageSelected = async (file: File | Blob) => {
     const res = await axios.post(`${UPLOAD_API}/direct`, formData)
     const { uploadUrl } = res.data.data
 
-    previewImageUrl.value = uploadUrl
+    const u = new URL(uploadUrl)
+    fullImageUrl.value = uploadUrl
+    previewImageUrl.value = u.pathname + u.search
     showPreview.value = true
   } catch (error) {
     console.error('上传图片失败:', error)
@@ -135,13 +147,14 @@ const handleConfirm = async () => {
   showPreview.value = false
   resultShowImageUrl.value = previewImageUrl.value
   try {
-    const imageUrl = previewImageUrl.value
+    const imageUrl = fullImageUrl.value
     const res = await axios.post(SEARCH_API, { imageUrl })
     const taskId = res.data.data
 
     recognizingTaskId.value = taskId
     isRecognizing.value = true
     startPolling(taskId)
+    elapsedTimer = setInterval(() => { elapsedSeconds.value++ }, 1000)
   } catch (error) {
     console.error('创建识别任务失败:', error)
     alert('创建识别任务失败，请重试')
@@ -149,8 +162,15 @@ const handleConfirm = async () => {
   }
 }
 
+const stopTimers = () => {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
+  if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null }
+}
+
 const startPolling = (taskId: string) => {
   let attempts = 0
+  elapsedSeconds.value = 0
+  statusText.value = '正在分析图片...'
 
   pollTimer = setInterval(async () => {
     attempts++
@@ -161,20 +181,21 @@ const startPolling = (taskId: string) => {
 
       if (code === '00000') {
         if (results && results.length > 0) {
-                clearInterval(pollTimer!)
-                pollTimer = null
+                stopTimers()
                 recognitionResults.value = results
                 isRecognizing.value = false
                 showResult.value = true
               } else if (attempts >= 30) {
-                clearInterval(pollTimer!)
-                pollTimer = null
+                stopTimers()
                 isRecognizing.value = false
                 alert('识别超时，请重试')
+              } else if (attempts === 5) {
+                statusText.value = '还在识别中，请耐心等待...'
+              } else if (attempts === 15) {
+                statusText.value = '网络有点慢，正在努力...'
               }
       }else{
-        clearInterval(pollTimer!)
-        pollTimer = null
+        stopTimers()
         isRecognizing.value = false
         if (code === 'L0007') {
           alert('图像库为空')
@@ -189,8 +210,7 @@ const startPolling = (taskId: string) => {
 
     } catch {
       if (attempts >= 30) {
-        clearInterval(pollTimer!)
-        pollTimer = null
+        stopTimers()
         isRecognizing.value = false
         alert('识别超时，请重试')
       }
@@ -259,7 +279,7 @@ watch(showResult, (val) => {
 onUnmounted(() => {
   stopCamera()
   cardObserver?.disconnect()
-  if (pollTimer) clearInterval(pollTimer)
+  stopTimers()
 })
 </script>
 
@@ -310,10 +330,20 @@ onUnmounted(() => {
     </div>
 
     <!-- 等待识别中 -->
-    <div v-if="isRecognizing" class="uploading-overlay">
-      <div class="uploading-spinner">
-        <div class="spinner-icon"></div>
-        <p class="uploading-text">等待识别中...</p>
+    <div v-if="isRecognizing" class="recognizing-overlay">
+      <div class="recognizing-content">
+        <div class="recognizing-visual">
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring ring2"></div>
+          <div class="pulse-ring ring3"></div>
+          <div class="center-dot">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="recognizing-status">{{ statusText }}</p>
+        <p class="recognizing-hint">{{ elapsedSeconds }} 秒</p>
       </div>
     </div>
 
@@ -356,7 +386,7 @@ onUnmounted(() => {
                :class="{ 'in-view': visibleCards.has(index), 'card-first': index === 0, 'card-last': index === recognitionResults.length - 1 }"
                @click="handleCardClick(item)">
             <div class="circle-img-box">
-              <img v-if="item.coverUrl" :src="item.coverUrl" alt="建筑封面" class="circle-img" @error="onCoverImgError" />
+              <img v-if="item.coverUrl" :src="proxyImageUrl(item.coverUrl)" alt="建筑封面" class="circle-img" @error="onCoverImgError" />
               <div v-else class="circle-img-placeholder">暂未设置封面</div>
             </div>
             <div class="card-text">
@@ -797,6 +827,85 @@ onUnmounted(() => {
   to { transform: rotate(360deg); }
 }
 
+.recognizing-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: radial-gradient(ellipse at center, rgba(30, 60, 50, 0.85) 0%, rgba(10, 20, 15, 0.92) 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recognizing-content {
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.recognizing-visual {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pulse-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  animation: pulseExpand 2.2s ease-out infinite;
+}
+
+.pulse-ring.ring2 { animation-delay: 0.6s; }
+.pulse-ring.ring3 { animation-delay: 1.2s; }
+
+.center-dot {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: rotateSearch 3s linear infinite;
+  z-index: 2;
+}
+
+.center-dot svg { width: 26px; height: 26px; }
+
+.recognizing-status {
+  font-size: 18px;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.recognizing-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+@keyframes pulseExpand {
+  0% { transform: scale(0.4); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes rotateSearch {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .preview-view {
   position: relative;
   z-index: 10;
@@ -819,6 +928,8 @@ onUnmounted(() => {
   padding: 20px;
   background: #000;
   min-height: 0;
+  aspect-ratio: 1;
+  max-height: 80vh;
 }
 
 .preview-image {
